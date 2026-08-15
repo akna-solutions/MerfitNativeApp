@@ -14,7 +14,7 @@ export default function WelcomeScreen() {
       <StatusBar style="light" />
       <BackgroundVideo />
       <WelcomeContent
-        onGetStarted={() => router.push("/pages/register")}
+        onGetStarted={() => router.push("/pages/onboarding")}
         onLogin={() => router.push("/pages/login")}
       />
     </View>
