@@ -1,7 +1,6 @@
-import { useRef } from "react";
-import { Animated, Pressable, StyleSheet, Text } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { GlassView } from "expo-glass-effect";
+import { useRef } from "react";
+import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { colors } from "../theme";
 
@@ -32,14 +31,9 @@ export function WelcomeButton({ label, onPress, variant }: Props) {
     >
       <Animated.View style={{ transform: [{ scale }] }}>
         {variant === "primary" ? (
-          <LinearGradient
-            colors={[colors.electricBlue, colors.violet]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.primary}
-          >
+          <View style={styles.primary}>
             <Text style={styles.primaryLabel}>{label}</Text>
-          </LinearGradient>
+          </View>
         ) : (
           <GlassView glassEffectStyle="clear" style={styles.secondary}>
             <Text style={styles.secondaryLabel}>{label}</Text>
@@ -56,6 +50,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: colors.buttonElectricBlue,
   },
   primaryLabel: {
     color: "#FFFFFF",
