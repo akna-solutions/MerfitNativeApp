@@ -52,8 +52,7 @@ export function OnboardingContainer() {
   };
 
   const handleStartTraining = () => {
-    // TODO: dashboard/home route'u eklendiğinde buraya yönlendir.
-    router.replace("/pages/welcome");
+    router.replace("/pages/dashboard");
   };
 
   if (showSuccess) {
