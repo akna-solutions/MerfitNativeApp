@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { PremiumFeature } from "../../../shared/plus/components/PremiumFeature";
 import { Achievements } from "./components/Achievements";
+import { AdvancedLeaderboardInsights } from "./components/AdvancedLeaderboardInsights";
 import { LeaderboardEmptyState } from "./components/LeaderboardEmptyState";
 import { LeaderboardHeader } from "./components/LeaderboardHeader";
 import { LeaderboardList } from "./components/LeaderboardList";
@@ -111,15 +113,25 @@ export function LeaderboardScreen() {
               </View>
 
               <View style={[styles.padded, styles.sectionGap]}>
-                <ScoreBreakdown items={SCORE_BREAKDOWN} />
+                <PremiumFeature feature="ADVANCED_LEADERBOARD">
+                  <AdvancedLeaderboardInsights />
+                </PremiumFeature>
               </View>
 
               <View style={[styles.padded, styles.sectionGap]}>
-                <ScoreChart
-                  points={MOCK_CURRENT_USER.points}
-                  weeklyChange={MOCK_CURRENT_USER.weeklyChange}
-                  history={SCORE_HISTORY}
-                />
+                <PremiumFeature feature="DETAILED_SCORE">
+                  <ScoreBreakdown items={SCORE_BREAKDOWN} />
+                </PremiumFeature>
+              </View>
+
+              <View style={[styles.padded, styles.sectionGap]}>
+                <PremiumFeature feature="DETAILED_SCORE">
+                  <ScoreChart
+                    points={MOCK_CURRENT_USER.points}
+                    weeklyChange={MOCK_CURRENT_USER.weeklyChange}
+                    history={SCORE_HISTORY}
+                  />
+                </PremiumFeature>
               </View>
 
               <View style={[styles.padded, styles.sectionGap]}>

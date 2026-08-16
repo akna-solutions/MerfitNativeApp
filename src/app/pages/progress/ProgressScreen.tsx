@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Animated, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { PremiumFeature } from "../../../shared/plus/components/PremiumFeature";
 import {
     BottomNavigation,
     NavTab,
@@ -14,6 +15,8 @@ import { CurrentWeightCard } from "./components/CurrentWeightCard";
 import { GoalProgress } from "./components/GoalProgress";
 import { MotivationalCard } from "./components/MotivationalCard";
 import { OverviewStats } from "./components/OverviewStats";
+import { PerformanceTrends } from "./components/PerformanceTrends";
+import { PersonalInsights } from "./components/PersonalInsights";
 import { ProgressEmptyState } from "./components/ProgressEmptyState";
 import { ProgressHeader } from "./components/ProgressHeader";
 import { RecentActivity } from "./components/RecentActivity";
@@ -167,6 +170,18 @@ export function ProgressScreen() {
                   currentWeight={data.currentWeight}
                   targetWeight={data.targetWeight}
                 />
+              </View>
+
+              <View style={[styles.padded, styles.sectionGap]}>
+                <PremiumFeature feature="ADVANCED_ANALYTICS">
+                  <PerformanceTrends />
+                </PremiumFeature>
+              </View>
+
+              <View style={[styles.padded, styles.sectionGap]}>
+                <PremiumFeature feature="PERSONAL_INSIGHTS">
+                  <PersonalInsights />
+                </PremiumFeature>
               </View>
 
               <View style={[styles.padded, styles.sectionGap]}>

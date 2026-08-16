@@ -4,11 +4,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Animated, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { PremiumFeature } from "../../../shared/plus/components/PremiumFeature";
 import {
     BottomNavigation,
     NavTab,
 } from "../dashboard/components/BottomNavigation";
 import { AddMealModal } from "./components/AddMealModal";
+import { AiNutritionPlanCard } from "./components/AiNutritionPlanCard";
 import { CalorieBreakdown } from "./components/CalorieBreakdown";
 import { CalorieCard } from "./components/CalorieCard";
 import { DateSelector } from "./components/DateSelector";
@@ -155,6 +157,12 @@ export function NutritionScreen() {
               >
                 <MacroOverview macros={MOCK_NUTRITION_DATA.macros} />
               </Animated.View>
+
+              <View style={[styles.padded, styles.sectionGap]}>
+                <PremiumFeature feature="AI_NUTRITION" borderRadius={18}>
+                  <AiNutritionPlanCard />
+                </PremiumFeature>
+              </View>
 
               <View style={[styles.padded, styles.sectionGap]}>
                 <MealsSection

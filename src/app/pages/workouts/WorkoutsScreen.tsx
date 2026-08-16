@@ -4,10 +4,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ScrollView, StyleSheet, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { PremiumFeature } from "../../../shared/plus/components/PremiumFeature";
 import {
     BottomNavigation,
     NavTab,
 } from "../dashboard/components/BottomNavigation";
+import { AiWorkoutPlanCard } from "./components/AiWorkoutPlanCard";
 import { FeaturedWorkout } from "./components/FeaturedWorkout";
 import { WorkoutCategories } from "./components/WorkoutCategories";
 import { WorkoutEmptyState } from "./components/WorkoutEmptyState";
@@ -166,6 +168,12 @@ export function WorkoutsScreen() {
                     onPress={() => goToWorkoutDetail(featured)}
                   />
                 ) : null}
+
+                <View style={styles.sectionGap}>
+                  <PremiumFeature feature="AI_WORKOUT" borderRadius={18}>
+                    <AiWorkoutPlanCard />
+                  </PremiumFeature>
+                </View>
 
                 {personalized.length > 0 ? (
                   <View style={styles.sectionGap}>

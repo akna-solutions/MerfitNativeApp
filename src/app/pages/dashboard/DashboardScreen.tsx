@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { Animated, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { PremiumFeature } from "../../../shared/plus/components/PremiumFeature";
+import { AiWorkoutCard } from "./components/AiWorkoutCard";
 import { BottomNavigation, NavTab } from "./components/BottomNavigation";
 import { DashboardHeader } from "./components/DashboardHeader";
 import { EmptyState } from "./components/EmptyState";
@@ -114,6 +116,12 @@ export function DashboardScreen() {
                 <GoalProgressCard goal={data.goalProgress} />
               </Animated.View>
 
+              <View style={[styles.padded, styles.gapTop]}>
+                <PremiumFeature feature="AI_WORKOUT" borderRadius={18}>
+                  <AiWorkoutCard />
+                </PremiumFeature>
+              </View>
+
               <RecommendedWorkouts
                 workouts={data.recommended}
                 onSelect={goToWorkout}
@@ -141,4 +149,5 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   scrollContent: { paddingBottom: 140 },
   padded: { paddingHorizontal: 24 },
+  gapTop: { marginTop: 28 },
 });

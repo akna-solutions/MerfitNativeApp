@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Animated, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { usePlus } from "../../../shared/plus/PlusContext";
 import {
     BottomNavigation,
     NavTab,
@@ -12,6 +13,7 @@ import { BodyStats } from "./components/BodyStats";
 import { FitnessGoalCard } from "./components/FitnessGoalCard";
 import { LogOutButton } from "./components/LogOutButton";
 import { MenuList } from "./components/MenuList";
+import { PlusStatusCard } from "./components/PlusStatusCard";
 import { ProfileHeader } from "./components/ProfileHeader";
 import { ProfileIdentity } from "./components/ProfileIdentity";
 import { ProfileStats } from "./components/ProfileStats";
@@ -22,6 +24,7 @@ import { colors } from "./theme";
 
 export function ProfileScreen() {
   const router = useRouter();
+  const { isPlusUser, openPlusModal } = usePlus();
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
 
   // TODO: Backend/API + onboarding state bağlandığında MOCK_PROFILE_DATA
@@ -117,6 +120,19 @@ export function ProfileScreen() {
               goal={data.goal}
               description={data.goalDescription}
               onChangeGoal={() => router.push("/pages/profile/goal" as never)}
+            />
+          </View>
+
+          <View style={[styles.padded, styles.sectionGap]}>
+            <PlusStatusCard
+              isPlusUser={isPlusUser}
+              onPress={() => {
+                if (isPlusUser) {
+                  // TODO: "Manage Subscription" ekranı eklendiğinde yönlendir.
+                  return;
+                }
+                openPlusModal();
+              }}
             />
           </View>
 
