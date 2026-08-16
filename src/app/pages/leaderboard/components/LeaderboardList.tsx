@@ -5,9 +5,9 @@ import { LeaderboardEntry } from "../types";
 import { LeaderboardRow } from "./LeaderboardRow";
 import { TopThree } from "./TopThree";
 
-type Props = { entries: LeaderboardEntry[] };
+type Props = { entries: LeaderboardEntry[]; anonymized?: boolean };
 
-export function LeaderboardList({ entries }: Props) {
+export function LeaderboardList({ entries, anonymized }: Props) {
   const topThree = entries.slice(0, 3);
   const rest = entries.slice(3);
 
@@ -21,7 +21,12 @@ export function LeaderboardList({ entries }: Props) {
 
       <View style={styles.listCard}>
         {rest.map((entry) => (
-          <LeaderboardRow key={entry.id} entry={entry} showRewardBadge />
+          <LeaderboardRow
+            key={entry.id}
+            entry={entry}
+            showRewardBadge
+            anonymized={anonymized}
+          />
         ))}
       </View>
     </View>

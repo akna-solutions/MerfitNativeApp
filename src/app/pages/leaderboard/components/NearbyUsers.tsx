@@ -4,15 +4,19 @@ import { colors } from "../theme";
 import { LeaderboardEntry } from "../types";
 import { LeaderboardRow } from "./LeaderboardRow";
 
-type Props = { entries: LeaderboardEntry[] };
+type Props = { entries: LeaderboardEntry[]; anonymized?: boolean };
 
-export function NearbyUsers({ entries }: Props) {
+export function NearbyUsers({ entries, anonymized }: Props) {
   return (
     <View>
       <Text style={styles.sectionTitle}>Around You</Text>
       <View style={styles.card}>
         {entries.map((entry) => (
-          <LeaderboardRow key={entry.id} entry={entry} />
+          <LeaderboardRow
+            key={entry.id}
+            entry={entry}
+            anonymized={anonymized}
+          />
         ))}
       </View>
     </View>

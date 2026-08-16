@@ -5,6 +5,7 @@ import { ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { PremiumFeature } from "../../../shared/plus/components/PremiumFeature";
+import { useProfile } from "../../../shared/profile/ProfileContext";
 import { Achievements } from "./components/Achievements";
 import { AdvancedLeaderboardInsights } from "./components/AdvancedLeaderboardInsights";
 import { LeaderboardEmptyState } from "./components/LeaderboardEmptyState";
@@ -34,8 +35,10 @@ import { PeriodFilter as PeriodFilterType } from "./types";
 
 export function LeaderboardScreen() {
   const router = useRouter();
+  const { profile } = useProfile();
   const [period, setPeriod] = useState<PeriodFilterType>("month");
   const [loading, setLoading] = useState(true);
+  const anonymized = !profile.privacy.profileVisibleOnLeaderboard;
 
   // TODO: Backend/API bağlandığında period değiştikçe gerçek veri
   // çekilecek. Şimdilik mock veri period'dan bağımsız sabit.
@@ -105,11 +108,14 @@ export function LeaderboardScreen() {
               </View>
 
               <View style={[styles.padded, styles.sectionGap]}>
-                <LeaderboardList entries={TOP_10_TURKIYE} />
+                <LeaderboardList
+                  entries={TOP_10_TURKIYE}
+                  anonymized={anonymized}
+                />
               </View>
 
               <View style={[styles.padded, styles.sectionGap]}>
-                <NearbyUsers entries={NEARBY_USERS} />
+                <NearbyUsers entries={NEARBY_USERS} anonymized={anonymized} />
               </View>
 
               <View style={[styles.padded, styles.sectionGap]}>

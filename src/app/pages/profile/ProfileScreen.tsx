@@ -5,31 +5,25 @@ import { Animated, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { usePlus } from "../../../shared/plus/PlusContext";
+import { useProfile } from "../../../shared/profile/ProfileContext";
+import { SettingsRow } from "../../../shared/profile/components/SettingsRow";
+import { SettingsSection } from "../../../shared/profile/components/SettingsSection";
+import { GOAL_LABELS } from "../../../shared/profile/types";
 import {
     BottomNavigation,
     NavTab,
 } from "../dashboard/components/BottomNavigation";
-import { BodyStats } from "./components/BodyStats";
-import { FitnessGoalCard } from "./components/FitnessGoalCard";
 import { LogOutButton } from "./components/LogOutButton";
-import { MenuList } from "./components/MenuList";
 import { PlusStatusCard } from "./components/PlusStatusCard";
 import { ProfileHeader } from "./components/ProfileHeader";
 import { ProfileIdentity } from "./components/ProfileIdentity";
-import { ProfileStats } from "./components/ProfileStats";
-import { TrainingProfile } from "./components/TrainingProfile";
-import { VersionFooter } from "./components/VersionFooter";
-import { MOCK_PROFILE_DATA } from "./mockData";
 import { colors } from "./theme";
 
 export function ProfileScreen() {
   const router = useRouter();
   const { isPlusUser, openPlusModal } = usePlus();
+  const { profile } = useProfile();
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
-
-  // TODO: Backend/API + onboarding state bağlandığında MOCK_PROFILE_DATA
-  // yerine gerçek kullanıcı verisi kullanılacak.
-  const data = MOCK_PROFILE_DATA;
 
   const headerAnim = useRef(new Animated.Value(0)).current;
   const identityAnim = useRef(new Animated.Value(0)).current;
@@ -76,9 +70,17 @@ export function ProfileScreen() {
 
   const handleConfirmLogout = () => {
     setLogoutModalVisible(false);
-    // TODO: gerçek authentication sistemi bağlandığında burada sign-out
-    // çağrısı yapılacak.
+    // TODO: gerçek authentication sistemi bağlandığında mevcut auth
+    // mimarisine göre token/session temizliği burada yapılacak.
     router.replace("/pages/welcome");
+  };
+
+  const handleMembershipRowPress = () => {
+    if (isPlusUser) {
+      router.push("/pages/profile/subscription" as never);
+    } else {
+      openPlusModal();
+    }
   };
 
   return (
@@ -91,15 +93,15 @@ export function ProfileScreen() {
           showsVerticalScrollIndicator={false}
         >
           <Animated.View style={[styles.padded, fadeUp(headerAnim, -8)]}>
-            <ProfileHeader onSettingsPress={() => {}} />
+            <ProfileHeader />
           </Animated.View>
 
           <Animated.View
             style={[styles.padded, styles.sectionGap, fadeUp(identityAnim)]}
           >
             <ProfileIdentity
-              firstName={data.firstName}
-              username={data.username}
+              firstName={profile.firstName}
+              username={`@${profile.username}`}
               onEditPress={() => router.push("/pages/profile/edit" as never)}
               onAvatarPress={() => router.push("/pages/profile/edit" as never)}
             />
@@ -108,159 +110,129 @@ export function ProfileScreen() {
           <Animated.View
             style={[styles.padded, styles.sectionGap, fadeUp(cardsAnim)]}
           >
-            <ProfileStats
-              workouts={data.stats.workouts}
-              streak={data.stats.streak}
-              weight={data.stats.weight}
+            <PlusStatusCard
+              isPlusUser={isPlusUser}
+              onPress={handleMembershipRowPress}
             />
           </Animated.View>
 
           <View style={[styles.padded, styles.sectionGap]}>
-            <FitnessGoalCard
-              goal={data.goal}
-              description={data.goalDescription}
-              onChangeGoal={() => router.push("/pages/profile/goal" as never)}
-            />
-          </View>
-
-          <View style={[styles.padded, styles.sectionGap]}>
-            <PlusStatusCard
-              isPlusUser={isPlusUser}
-              onPress={() => {
-                if (isPlusUser) {
-                  // TODO: "Manage Subscription" ekranı eklendiğinde yönlendir.
-                  return;
+            <SettingsSection title="Your Fitness">
+              <SettingsRow
+                icon="person-outline"
+                title="Personal Information"
+                subtitle="Name, age and basic details"
+                onPress={() =>
+                  router.push("/pages/profile/personal-information" as never)
                 }
-                openPlusModal();
-              }}
-            />
+              />
+              <SettingsRow
+                icon="flag-outline"
+                title="Goals"
+                subtitle={GOAL_LABELS[profile.goal]}
+                onPress={() => router.push("/pages/profile/goals" as never)}
+              />
+              <SettingsRow
+                icon="pulse-outline"
+                title="Body Measurements"
+                subtitle={`${profile.height} cm · ${profile.weight} kg`}
+                onPress={() =>
+                  router.push("/pages/profile/body-measurements" as never)
+                }
+              />
+              <SettingsRow
+                icon="barbell-outline"
+                title="Workout Preferences"
+                subtitle={`${profile.trainingDays.length} days · ${profile.workoutDurationMin} min`}
+                onPress={() =>
+                  router.push("/pages/profile/workout-preferences" as never)
+                }
+                isLast
+              />
+            </SettingsSection>
           </View>
 
           <View style={[styles.padded, styles.sectionGap]}>
-            <BodyStats
-              height={data.height}
-              weight={data.weight}
-              age={data.age}
-              onEditPress={() => router.push("/pages/profile/edit" as never)}
-            />
+            <SettingsSection title="Membership">
+              <SettingsRow
+                icon="sparkles-outline"
+                title="MERFIT Plus"
+                subtitle={isPlusUser ? "Active" : "Unlock advanced features"}
+                onPress={handleMembershipRowPress}
+              />
+              <SettingsRow
+                icon="card-outline"
+                title="Manage Subscription"
+                subtitle="Manage your membership"
+                onPress={() =>
+                  router.push("/pages/profile/subscription" as never)
+                }
+                isLast
+              />
+            </SettingsSection>
           </View>
 
           <View style={[styles.padded, styles.sectionGap]}>
-            <TrainingProfile
-              experience={data.experience}
-              activityLevel={data.activityLevel}
-              trainingDays={data.trainingDays}
-              workoutLocation={data.workoutLocation}
-              equipment={data.equipment}
-            />
+            <SettingsSection title="Preferences">
+              <SettingsRow
+                icon="notifications-outline"
+                title="Notifications"
+                subtitle="Workout reminders"
+                onPress={() =>
+                  router.push("/pages/profile/notifications" as never)
+                }
+              />
+              <SettingsRow
+                icon="swap-vertical-outline"
+                title="Units"
+                subtitle={
+                  profile.unitSystem === "metric" ? "Metric" : "Imperial"
+                }
+                onPress={() => router.push("/pages/profile/units" as never)}
+              />
+              <SettingsRow
+                icon="moon-outline"
+                title="Appearance"
+                subtitle="Dark"
+                onPress={() =>
+                  router.push("/pages/profile/appearance" as never)
+                }
+                isLast
+              />
+            </SettingsSection>
           </View>
 
           <View style={[styles.padded, styles.sectionGap]}>
-            <MenuList
-              title="Preferences"
-              items={[
-                {
-                  id: "workout-preferences",
-                  icon: "barbell-outline",
-                  title: "Workout Preferences",
-                  subtitle: "How often and where you train",
-                  onPress: () =>
-                    router.push("/pages/profile/workout-preferences" as never),
-                },
-                {
-                  id: "nutrition-preferences",
-                  icon: "restaurant-outline",
-                  title: "Nutrition Preferences",
-                  subtitle: "Manage your nutrition goals",
-                  onPress: () =>
-                    router.push(
-                      "/pages/profile/nutrition-preferences" as never,
-                    ),
-                },
-              ]}
-            />
-          </View>
-
-          <View style={[styles.padded, styles.sectionGap]}>
-            <MenuList
-              title="App Settings"
-              items={[
-                {
-                  id: "notifications",
-                  icon: "notifications-outline",
-                  title: "Notifications",
-                  subtitle: "Workout reminders",
-                  onPress: () =>
-                    router.push("/pages/profile/notifications" as never),
-                },
-                {
-                  id: "appearance",
-                  icon: "contrast-outline",
-                  title: "Appearance",
-                  subtitle: "Dark",
-                  onPress: () =>
-                    router.push("/pages/profile/appearance" as never),
-                },
-                {
-                  id: "units",
-                  icon: "swap-vertical-outline",
-                  title: "Units",
-                  subtitle:
-                    data.unitSystem === "metric" ? "kg / cm" : "lb / ft",
-                  onPress: () => router.push("/pages/profile/units" as never),
-                },
-                {
-                  id: "language",
-                  icon: "language-outline",
-                  title: "Language",
-                  subtitle: "English",
-                  onPress: () =>
-                    router.push("/pages/profile/language" as never),
-                },
-              ]}
-            />
-          </View>
-
-          <View style={[styles.padded, styles.sectionGap]}>
-            <MenuList
-              title="Account"
-              items={[
-                {
-                  id: "personal-information",
-                  icon: "person-outline",
-                  title: "Personal Information",
-                  onPress: () =>
-                    router.push("/pages/profile/personal-information" as never),
-                },
-                {
-                  id: "security",
-                  icon: "lock-closed-outline",
-                  title: "Security",
-                  onPress: () =>
-                    router.push("/pages/profile/security" as never),
-                },
-                {
-                  id: "privacy",
-                  icon: "shield-checkmark-outline",
-                  title: "Privacy",
-                  onPress: () => router.push("/pages/profile/privacy" as never),
-                },
-              ]}
-            />
-          </View>
-
-          <View style={[styles.padded, styles.sectionGap]}>
-            <MenuList
-              title="Help & Support"
-              items={[
-                {
-                  id: "help-support",
-                  icon: "help-circle-outline",
-                  title: "Help & Support",
-                  onPress: () => router.push("/pages/profile/help" as never),
-                },
-              ]}
-            />
+            <SettingsSection title="App">
+              <SettingsRow
+                icon="shield-checkmark-outline"
+                title="Privacy"
+                onPress={() => router.push("/pages/profile/privacy" as never)}
+              />
+              <SettingsRow
+                icon="help-circle-outline"
+                title="Help & Support"
+                onPress={() => router.push("/pages/profile/help" as never)}
+              />
+              <SettingsRow
+                icon="information-circle-outline"
+                title="About MERFIT"
+                onPress={() => router.push("/pages/profile/about" as never)}
+              />
+              <SettingsRow
+                icon="document-text-outline"
+                title="Terms & Conditions"
+                onPress={() => router.push("/pages/profile/terms" as never)}
+              />
+              <SettingsRow
+                icon="lock-closed-outline"
+                title="Privacy Policy"
+                onPress={() =>
+                  router.push("/pages/profile/privacy-policy" as never)
+                }
+                isLast
+              />
+            </SettingsSection>
           </View>
 
           <View style={[styles.padded, styles.sectionGap]}>
@@ -271,8 +243,6 @@ export function ProfileScreen() {
               onCancel={() => setLogoutModalVisible(false)}
             />
           </View>
-
-          <VersionFooter />
         </ScrollView>
       </SafeAreaView>
 
