@@ -97,8 +97,10 @@ export function WorkoutsScreen() {
   const showEmptyState = !loading && filteredWorkouts.length === 0;
 
   const goToWorkoutDetail = (workout: Workout) => {
-    // TODO: Workout Detail ekranı eklendiğinde workout.id ile yönlendir.
-    router.push(`/pages/workouts/${workout.id}` as never);
+    router.push({
+      pathname: "/pages/workout/active/[id]",
+      params: { id: workout.id, title: workout.title },
+    } as never);
   };
 
   const clearAllFilters = () => {

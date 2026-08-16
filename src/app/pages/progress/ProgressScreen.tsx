@@ -8,6 +8,7 @@ import {
     BottomNavigation,
     NavTab,
 } from "../dashboard/components/BottomNavigation";
+import { CURRENT_USER_ENTRY, MOCK_CURRENT_USER } from "../leaderboard/mockData";
 import { BodyMetrics } from "./components/BodyMetrics";
 import { CurrentWeightCard } from "./components/CurrentWeightCard";
 import { GoalProgress } from "./components/GoalProgress";
@@ -16,6 +17,7 @@ import { OverviewStats } from "./components/OverviewStats";
 import { ProgressEmptyState } from "./components/ProgressEmptyState";
 import { ProgressHeader } from "./components/ProgressHeader";
 import { RecentActivity } from "./components/RecentActivity";
+import { ScoreCard } from "./components/ScoreCard";
 import { TimeRangeSelector } from "./components/TimeRangeSelector";
 import { WeeklyActivity } from "./components/WeeklyActivity";
 import { WeightChart } from "./components/WeightChart";
@@ -104,6 +106,21 @@ export function ProgressScreen() {
 
           {data.hasCompletedFirstWorkout ? (
             <>
+              <Animated.View
+                style={[
+                  styles.padded,
+                  styles.sectionGap,
+                  fadeUp(weightCardAnim),
+                ]}
+              >
+                <ScoreCard
+                  points={MOCK_CURRENT_USER.points}
+                  weeklyChange={MOCK_CURRENT_USER.weeklyChange}
+                  rank={CURRENT_USER_ENTRY.rank}
+                  onPress={() => router.push("/pages/leaderboard")}
+                />
+              </Animated.View>
+
               <Animated.View
                 style={[
                   styles.padded,

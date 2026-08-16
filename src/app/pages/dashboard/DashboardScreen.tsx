@@ -75,8 +75,10 @@ export function DashboardScreen() {
   };
 
   const goToWorkout = (workout: WorkoutSummary) => {
-    // TODO: workout detay/oturum ekranı eklendiğinde workout.id ile yönlendir.
-    router.push(`/pages/workouts/${workout.id}` as never);
+    router.push({
+      pathname: "/pages/workout/active/[id]",
+      params: { id: workout.id, title: workout.title },
+    } as never);
   };
 
   return (
