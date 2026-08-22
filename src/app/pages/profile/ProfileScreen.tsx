@@ -254,7 +254,7 @@ export function ProfileScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
-  scrollContent: { paddingBottom: 140 },
+  scrollContent: { paddingTop: 16, paddingBottom: 156 },
   padded: { paddingHorizontal: 24 },
   sectionGap: { marginTop: 24 },
 });

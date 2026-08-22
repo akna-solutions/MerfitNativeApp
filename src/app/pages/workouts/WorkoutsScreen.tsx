@@ -216,7 +216,7 @@ export function WorkoutsScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
-  scrollContent: { paddingBottom: 140 },
+  scrollContent: { paddingTop: 16, paddingBottom: 156 },
   padded: { paddingHorizontal: 24 },
   searchGap: { marginTop: 20 },
   categoriesGap: { marginTop: 18 },

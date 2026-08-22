@@ -42,6 +42,6 @@ export function PremiumFeature({
 }
 
 const styles = StyleSheet.create({
-  wrapper: { overflow: "hidden" },
+  wrapper: { overflow: "hidden", minHeight: 190 },
   dimmed: { opacity: 0.35 },
 });
