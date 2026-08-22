@@ -163,7 +163,7 @@ export function LeaderboardScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
-  scrollContent: { paddingBottom: 40 },
+  scrollContent: { paddingTop: 16, paddingBottom: 40 },
   padded: { paddingHorizontal: 24 },
   sectionGap: { marginTop: 28 },
 });
