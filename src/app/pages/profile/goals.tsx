@@ -16,7 +16,7 @@ export default function GoalsRoute() {
   const { profile, updateProfile } = useProfile();
 
   return (
-    <ProfileDetailShell title="Goals" subtitle="Choose your main fitness goal">
+    <ProfileDetailShell title="Hedefler" subtitle="Ana fitness hedefini seç">
       {GOAL_OPTIONS.map((goal) => (
         <OnboardingOption
           key={goal}

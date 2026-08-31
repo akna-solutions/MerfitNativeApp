@@ -24,33 +24,33 @@ export function OverviewStats({
   }[] = [
     {
       id: "workouts",
-      label: "Workouts",
+      label: "Antrenman",
       value: `${workouts}`,
       icon: "barbell-outline",
     },
     {
       id: "calories",
-      label: "Calories",
+      label: "Kalori",
       value: calories.toLocaleString(),
       icon: "flame-outline",
     },
     {
       id: "streak",
-      label: "Streak",
-      value: `${streak} days`,
+      label: "Seri",
+      value: `${streak} gün`,
       icon: "flash-outline",
     },
     {
       id: "minutes",
-      label: "Training Time",
-      value: `${trainingMinutes} min`,
+      label: "Antrenman Süresi",
+      value: `${trainingMinutes} dk`,
       icon: "time-outline",
     },
   ];
 
   return (
     <View>
-      <Text style={styles.sectionTitle}>Overview</Text>
+      <Text style={styles.sectionTitle}>Genel Bakış</Text>
       <View style={styles.grid}>
         {items.map((item) => (
           <View key={item.id} style={styles.card}>

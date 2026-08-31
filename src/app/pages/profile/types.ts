@@ -1,18 +1,18 @@
 export type Goal =
-  | "Build Muscle"
-  | "Lose Weight"
-  | "Improve Fitness"
-  | "Build Strength"
-  | "Stay Active";
+  | "Kas Yapmak"
+  | "Kilo Vermek"
+  | "Fitness Seviyesini Artırmak"
+  | "Güç Kazanmak"
+  | "Aktif Kalmak";
 
-export type Experience = "Beginner" | "Intermediate" | "Advanced";
+export type Experience = "Başlangıç" | "Orta" | "İleri";
 export type ActivityLevel =
-  | "Sedentary"
-  | "Light"
-  | "Moderate"
-  | "Active"
-  | "Athlete";
-export type WorkoutLocation = "Home" | "Gym" | "Outdoor";
+  | "Hareketsiz"
+  | "Hafif"
+  | "Orta"
+  | "Aktif"
+  | "Sporcu";
+export type WorkoutLocation = "Ev" | "Spor Salonu" | "Açık Alan";
 export type UnitSystem = "metric" | "imperial";
 
 // Onboarding'de toplanan bilgilerle birebir örtüşüyor

@@ -15,12 +15,12 @@ export function ProgressCard({ progress }: Props) {
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>Today's Progress</Text>
+      <Text style={styles.title}>Bugünkü İlerleme</Text>
 
       <Text style={styles.count}>
         {progress.workoutsCompleted}{" "}
         <Text style={styles.countMuted}>
-          / {progress.workoutsTarget} workouts
+          / {progress.workoutsTarget} antrenman
         </Text>
       </Text>
 
@@ -38,12 +38,12 @@ export function ProgressCard({ progress }: Props) {
           <Text style={styles.statValue}>
             {progress.steps.toLocaleString()}
           </Text>
-          <Text style={styles.statLabel}>steps</Text>
+          <Text style={styles.statLabel}>adım</Text>
         </View>
         <View style={styles.divider} />
         <View style={styles.statItem}>
-          <Text style={styles.statValue}>{progress.sleepHours}h</Text>
-          <Text style={styles.statLabel}>sleep</Text>
+          <Text style={styles.statValue}>{progress.sleepHours}s</Text>
+          <Text style={styles.statLabel}>uyku</Text>
         </View>
       </View>
     </View>

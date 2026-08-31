@@ -35,7 +35,7 @@ export function WorkoutCard({ workout, onPress }: Props) {
           {workout.title}
         </Text>
         <Text style={styles.meta}>
-          {workout.duration} min • {workout.difficulty}
+          {workout.duration} dk • {workout.difficulty}
         </Text>
       </View>
     </Pressable>

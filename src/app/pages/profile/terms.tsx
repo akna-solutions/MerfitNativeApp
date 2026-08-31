@@ -5,9 +5,9 @@ import { colors } from "./theme";
 
 export default function TermsRoute() {
   return (
-    <ProfileDetailShell title="Terms & Conditions">
+    <ProfileDetailShell title="Şartlar ve Koşullar">
       <Text style={styles.text}>
-        Your Terms & Conditions content will appear here.
+        Şartlar ve Koşullar içeriğin burada görünecek.
       </Text>
     </ProfileDetailShell>
   );

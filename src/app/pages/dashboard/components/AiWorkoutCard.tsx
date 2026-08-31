@@ -12,10 +12,10 @@ export function AiWorkoutCard() {
           size={16}
           color={colors.electricBlue}
         />
-        <Text style={styles.title}>YOUR AI WORKOUT</Text>
+        <Text style={styles.title}>YAPAY ZEKA ANTRENMANIN</Text>
       </View>
       <Text style={styles.description}>
-        A workout plan built around your goals, experience and progress.
+        Hedeflerine, deneyimine ve ilerlemene göre oluşturulmuş bir antrenman planı.
       </Text>
     </View>
   );

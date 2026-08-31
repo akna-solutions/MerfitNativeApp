@@ -10,9 +10,9 @@ type Props = {
 
 export function ProfileStats({ workouts, streak, weight }: Props) {
   const items = [
-    { label: "Workouts", value: `${workouts}` },
-    { label: "Streak", value: `${streak}` },
-    { label: "Weight", value: `${weight}` },
+    { label: "Antrenman", value: `${workouts}` },
+    { label: "Seri", value: `${streak}` },
+    { label: "Kilo", value: `${weight}` },
   ];
 
   return (

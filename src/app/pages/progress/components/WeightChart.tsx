@@ -65,7 +65,7 @@ export function WeightChart({ data }: Props) {
 
   return (
     <View>
-      <Text style={styles.sectionTitle}>Weight Progress</Text>
+      <Text style={styles.sectionTitle}>Kilo İlerlemesi</Text>
 
       <View style={styles.card}>
         <View style={styles.chartArea} onLayout={onLayout}>

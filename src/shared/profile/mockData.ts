@@ -9,7 +9,7 @@ export const INITIAL_PROFILE_DATA: ProfileData = {
   username: "mert",
   email: "user@example.com",
   dateOfBirth: "1994-03-12",
-  gender: "Male",
+  gender: "Erkek",
 
   age: 31,
   height: 180,

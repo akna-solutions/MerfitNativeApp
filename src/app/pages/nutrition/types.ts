@@ -1,10 +1,10 @@
-export type MealType = "Breakfast" | "Lunch" | "Dinner" | "Snacks";
+export type MealType = "Kahvaltı" | "Öğle Yemeği" | "Akşam Yemeği" | "Atıştırmalık";
 
 export const MEAL_TYPES: MealType[] = [
-  "Breakfast",
-  "Lunch",
-  "Dinner",
-  "Snacks",
+  "Kahvaltı",
+  "Öğle Yemeği",
+  "Akşam Yemeği",
+  "Atıştırmalık",
 ];
 
 export type MealEntry = {

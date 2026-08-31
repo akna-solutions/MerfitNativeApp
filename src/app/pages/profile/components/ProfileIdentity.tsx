@@ -35,7 +35,7 @@ export function ProfileIdentity({
       <Text style={styles.username}>{username}</Text>
 
       <Pressable onPress={onEditPress} style={styles.editButton}>
-        <Text style={styles.editLabel}>Edit Profile</Text>
+        <Text style={styles.editLabel}>Profili Düzenle</Text>
       </Pressable>
     </View>
   );

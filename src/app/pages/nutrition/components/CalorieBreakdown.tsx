@@ -16,7 +16,7 @@ export function CalorieBreakdown({ meals }: Props) {
 
   return (
     <View>
-      <Text style={styles.sectionTitle}>Calorie Breakdown</Text>
+      <Text style={styles.sectionTitle}>Kalori Dağılımı</Text>
 
       <View style={styles.card}>
         {totals.map((item) => (
@@ -27,7 +27,7 @@ export function CalorieBreakdown({ meals }: Props) {
         ))}
         <View style={styles.divider} />
         <View style={styles.row}>
-          <Text style={styles.totalLabel}>Total</Text>
+          <Text style={styles.totalLabel}>Toplam</Text>
           <Text style={styles.totalValue}>{total}</Text>
         </View>
       </View>

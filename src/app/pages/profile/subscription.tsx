@@ -5,9 +5,9 @@ import { colors } from "./theme";
 
 export default function PrivacyPolicyRoute() {
   return (
-    <ProfileDetailShell title="Privacy Policy">
+    <ProfileDetailShell title="Gizlilik Politikası">
       <Text style={styles.text}>
-        Your Privacy Policy content will appear here.
+        Gizlilik Politikası içeriğin burada görünecek.
       </Text>
     </ProfileDetailShell>
   );

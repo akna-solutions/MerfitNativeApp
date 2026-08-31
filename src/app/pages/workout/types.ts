@@ -6,7 +6,7 @@ export type Exercise = {
   restSec: number;
   // Video dosyası projeye eklendiğinde require(...) sonucu (number) ya da
   // uzak bir URI (string) buraya konur. Henüz dosya yoksa null - bu durumda
-  // ExerciseVideo görsel + "Exercise demonstration" fallback gösterir.
+  // ExerciseVideo görsel + "Egzersiz gösterimi" fallback gösterir.
   video: number | string | null;
   imageUrl: string;
 };

@@ -18,7 +18,7 @@ export function LogOutButton({
   return (
     <>
       <Pressable onPress={onRequestOpen} style={styles.button}>
-        <Text style={styles.label}>Log Out</Text>
+        <Text style={styles.label}>Çıkış Yap</Text>
       </Pressable>
 
       <Modal
@@ -31,17 +31,17 @@ export function LogOutButton({
           <Pressable style={StyleSheet.absoluteFillObject} onPress={onCancel} />
 
           <View style={styles.dialog}>
-            <Text style={styles.title}>Log out of MERFIT?</Text>
+            <Text style={styles.title}>MERFIT'ten çıkış yapılsın mı?</Text>
             <Text style={styles.message}>
-              Are you sure you want to log out of your account?
+              Hesabından çıkış yapmak istediğine emin misin?
             </Text>
 
             <View style={styles.actions}>
               <Pressable onPress={onCancel} style={styles.cancelButton}>
-                <Text style={styles.cancelLabel}>Cancel</Text>
+                <Text style={styles.cancelLabel}>İptal</Text>
               </Pressable>
               <Pressable onPress={onConfirm} style={styles.confirmButton}>
-                <Text style={styles.confirmLabel}>Log Out</Text>
+                <Text style={styles.confirmLabel}>Çıkış Yap</Text>
               </Pressable>
             </View>
           </View>

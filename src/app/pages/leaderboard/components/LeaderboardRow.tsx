@@ -6,13 +6,13 @@ import { LeaderboardEntry } from "../types";
 type Props = {
   entry: LeaderboardEntry;
   showRewardBadge?: boolean;
-  /** Kullanıcı Privacy ayarından "Show profile on leaderboard"ı kapattıysa true gelir. */
+  /** Kullanıcı Gizlilik ayarından "Profili liderlik tablosunda göster"ü kapattıysa true gelir. */
   anonymized?: boolean;
 };
 
 export function LeaderboardRow({ entry, showRewardBadge, anonymized }: Props) {
   const isHiddenSelf = entry.isCurrentUser && anonymized;
-  const displayName = isHiddenSelf ? "Anonymous" : entry.name;
+  const displayName = isHiddenSelf ? "Anonim" : entry.name;
   const initial = isHiddenSelf
     ? "?"
     : entry.name.trim().charAt(0).toUpperCase() || "?";
@@ -31,16 +31,16 @@ export function LeaderboardRow({ entry, showRewardBadge, anonymized }: Props) {
         <Text style={styles.name} numberOfLines={1}>
           {entry.isCurrentUser
             ? isHiddenSelf
-              ? "Anonymous (You)"
-              : `${displayName} (You)`
+              ? "Anonim (Sen)"
+              : `${displayName} (Sen)`
             : displayName}
         </Text>
-        <Text style={styles.workouts}>{entry.workouts} workouts</Text>
+        <Text style={styles.workouts}>{entry.workouts} antrenman</Text>
       </View>
 
       {showRewardBadge && entry.rank <= 10 ? (
         <View style={styles.rewardBadge}>
-          <Text style={styles.rewardBadgeLabel}>Reward</Text>
+          <Text style={styles.rewardBadgeLabel}>Ödül</Text>
         </View>
       ) : null}
 

@@ -15,7 +15,7 @@ export function CalorieCard({ consumedCalories, dailyCalories }: Props) {
   return (
     <View style={styles.card}>
       <Text style={styles.value}>{remaining.toLocaleString()}</Text>
-      <Text style={styles.label}>kcal left</Text>
+      <Text style={styles.label}>kalan kcal</Text>
 
       <View style={styles.track}>
         <View style={[styles.fill, { width: `${ratio * 100}%` }]} />
@@ -25,7 +25,7 @@ export function CalorieCard({ consumedCalories, dailyCalories }: Props) {
         {consumedCalories.toLocaleString()} / {dailyCalories.toLocaleString()}{" "}
         kcal
       </Text>
-      <Text style={styles.caption}>Daily calorie goal</Text>
+      <Text style={styles.caption}>Günlük kalori hedefi</Text>
     </View>
   );
 }

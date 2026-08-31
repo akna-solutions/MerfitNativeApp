@@ -5,12 +5,12 @@ import { useProfile } from "../../../shared/profile/ProfileContext";
 import { NotificationSettings } from "../../../shared/profile/types";
 
 const ROWS: { key: keyof NotificationSettings; title: string }[] = [
-  { key: "workoutReminders", title: "Workout Reminders" },
-  { key: "dailyGoalReminder", title: "Daily Goal Reminder" },
-  { key: "streakReminder", title: "Streak Reminder" },
-  { key: "progressUpdates", title: "Progress Updates" },
-  { key: "leaderboardUpdates", title: "Leaderboard Updates" },
-  { key: "productUpdates", title: "Product Updates" },
+  { key: "workoutReminders", title: "Antrenman Hatırlatmaları" },
+  { key: "dailyGoalReminder", title: "Günlük Hedef Hatırlatıcısı" },
+  { key: "streakReminder", title: "Seri Hatırlatıcısı" },
+  { key: "progressUpdates", title: "İlerleme Güncellemeleri" },
+  { key: "leaderboardUpdates", title: "Liderlik Tablosu Güncellemeleri" },
+  { key: "productUpdates", title: "Ürün Güncellemeleri" },
 ];
 
 export default function NotificationsRoute() {
@@ -23,7 +23,7 @@ export default function NotificationsRoute() {
   };
 
   return (
-    <ProfileDetailShell title="Notifications">
+    <ProfileDetailShell title="Bildirimler">
       <SettingsSection>
         {ROWS.map((row, index) => (
           <SettingsToggle

@@ -19,11 +19,11 @@ const TABS: {
   label: string;
   icon: keyof typeof Ionicons.glyphMap;
 }[] = [
-  { id: "home", label: "Home", icon: "home-outline" },
-  { id: "workouts", label: "Workouts", icon: "barbell-outline" },
-  { id: "progress", label: "Progress", icon: "stats-chart-outline" },
-  { id: "nutrition", label: "Nutrition", icon: "restaurant-outline" },
-  { id: "profile", label: "Profile", icon: "person-outline" },
+  { id: "home", label: "Ana Sayfa", icon: "home-outline" },
+  { id: "workouts", label: "Antrenmanlar", icon: "barbell-outline" },
+  { id: "progress", label: "İlerleme", icon: "stats-chart-outline" },
+  { id: "nutrition", label: "Beslenme", icon: "restaurant-outline" },
+  { id: "profile", label: "Profil", icon: "person-outline" },
 ];
 
 type Props = {

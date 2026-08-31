@@ -59,16 +59,16 @@ export function LoginScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.title}>Welcome back.</Text>
+          <Text style={styles.title}>Tekrar hoş geldin.</Text>
           <Text style={styles.subtitle}>
-            Log in to continue your MERFIT journey.
+            MERFIT yolculuğuna devam etmek için giriş yap.
           </Text>
 
           <View style={styles.form}>
             <OnboardingInput
               value={email}
               onChangeText={setEmail}
-              placeholder="Email"
+              placeholder="E-posta"
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
@@ -78,31 +78,31 @@ export function LoginScreen() {
             <OnboardingInput
               value={password}
               onChangeText={setPassword}
-              placeholder="Password"
+              placeholder="Şifre"
               secureTextEntry
               autoCapitalize="none"
               style={styles.fieldFont}
             />
 
             <Pressable hitSlop={8} style={styles.forgotRow}>
-              <Text style={styles.forgotLabel}>Forgot password?</Text>
+              <Text style={styles.forgotLabel}>Şifreni mi unuttun?</Text>
             </Pressable>
 
             <View style={styles.dividerRow}>
               <View style={styles.dividerLine} />
-              <Text style={styles.dividerLabel}>or</Text>
+              <Text style={styles.dividerLabel}>veya</Text>
               <View style={styles.dividerLine} />
             </View>
 
             <Pressable onPress={handleGoogleLogin} style={styles.googleButton}>
-              <Text style={styles.googleLabel}>Continue with Google</Text>
+              <Text style={styles.googleLabel}>Google ile devam et</Text>
             </Pressable>
           </View>
         </ScrollView>
 
         <View style={styles.footer}>
           <OnboardingButton
-            label="Log in"
+            label="Giriş yap"
             onPress={handleLogin}
             disabled={!canSubmit}
           />
@@ -112,8 +112,8 @@ export function LoginScreen() {
             style={styles.signupRow}
           >
             <Text style={styles.signupText}>
-              Don&apos;t have an account?{" "}
-              <Text style={styles.signupLink}>Sign up</Text>
+              Hesabın yok mu?{" "}
+              <Text style={styles.signupLink}>Kayıt ol</Text>
             </Text>
           </Pressable>
         </View>

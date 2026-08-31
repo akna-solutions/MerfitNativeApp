@@ -10,24 +10,24 @@ export default function UnitsRoute() {
   const isMetric = profile.unitSystem === "metric";
 
   return (
-    <ProfileDetailShell title="Units">
+    <ProfileDetailShell title="Birimler">
       <OnboardingOption
-        label="Metric"
+        label="Metrik"
         subtitle="kg · cm · km"
         selected={isMetric}
         onPress={() => updateProfile({ unitSystem: "metric" })}
       />
       <OnboardingOption
-        label="Imperial"
+        label="İngiliz"
         subtitle="lb · ft · mi"
         selected={!isMetric}
         onPress={() => updateProfile({ unitSystem: "imperial" })}
       />
 
       <View style={styles.previewCard}>
-        <PreviewRow label="Weight" value={isMetric ? "kg" : "lb"} />
-        <PreviewRow label="Height" value={isMetric ? "cm" : "ft"} />
-        <PreviewRow label="Energy" value="kcal" isLast />
+        <PreviewRow label="Kilo" value={isMetric ? "kg" : "lb"} />
+        <PreviewRow label="Boy" value={isMetric ? "cm" : "ft"} />
+        <PreviewRow label="Enerji" value="kcal" isLast />
       </View>
     </ProfileDetailShell>
   );

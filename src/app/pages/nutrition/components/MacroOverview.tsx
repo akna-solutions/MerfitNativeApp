@@ -13,7 +13,7 @@ export function MacroOverview({ macros }: Props) {
 
   return (
     <View>
-      <Text style={styles.sectionTitle}>Today's Macros</Text>
+      <Text style={styles.sectionTitle}>Bugünün Makrobesinleri</Text>
 
       <View style={styles.row}>
         <MacroCard
@@ -23,7 +23,7 @@ export function MacroOverview({ macros }: Props) {
           onPress={openDetail}
         />
         <MacroCard
-          label="Carbs"
+          label="Karbonhidrat"
           consumed={macros.carbs.consumed}
           target={macros.carbs.target}
           onPress={openDetail}
@@ -32,7 +32,7 @@ export function MacroOverview({ macros }: Props) {
 
       <View style={styles.fatsGap}>
         <MacroCard
-          label="Fats"
+          label="Yağ"
           consumed={macros.fats.consumed}
           target={macros.fats.target}
           onPress={openDetail}

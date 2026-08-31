@@ -14,7 +14,7 @@ export type RecentActivityItem = {
   id: string;
   title: string;
   durationMin: number;
-  dateLabel: string; // "Today" / "Yesterday" / "Aug 12"
+  dateLabel: string; // "Bugün" / "Dün" / "12 Ağu"
 };
 
 export type BodyMetric = {

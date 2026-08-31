@@ -11,12 +11,12 @@ export function ProgressEmptyState({ onStartWorkout }: Props) {
       <View style={styles.badge}>
         <Text style={styles.badgeGlyph}>↗</Text>
       </View>
-      <Text style={styles.title}>Your progress starts today.</Text>
+      <Text style={styles.title}>İlerlemen bugün başlıyor.</Text>
       <Text style={styles.description}>
-        Complete your first workout to start tracking your journey.
+        Yolculuğunu takip etmeye başlamak için ilk antrenmanını tamamla.
       </Text>
       <View style={styles.button}>
-        <OnboardingButton label="Start Workout" onPress={onStartWorkout} />
+        <OnboardingButton label="Antrenmana Başla" onPress={onStartWorkout} />
       </View>
     </View>
   );

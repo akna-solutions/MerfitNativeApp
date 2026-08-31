@@ -9,9 +9,9 @@ type Props = {
 
 function getGreeting() {
   const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
+  if (hour < 12) return "Günaydın";
+  if (hour < 18) return "İyi günler";
+  return "İyi akşamlar";
 }
 
 export function DashboardHeader({ name }: Props) {
@@ -23,7 +23,7 @@ export function DashboardHeader({ name }: Props) {
         <Text style={styles.greeting}>
           {getGreeting()}, {name}
         </Text>
-        <Text style={styles.subtitle}>Let's make today count.</Text>
+        <Text style={styles.subtitle}>Bugünü değerlendirelim.</Text>
       </View>
 
       <View style={styles.actions}>

@@ -23,26 +23,26 @@ import {
 } from "../types";
 
 const DIFFICULTY_OPTIONS: Difficulty[] = [
-  "Beginner",
-  "Intermediate",
-  "Advanced",
+  "Başlangıç",
+  "Orta",
+  "İleri",
 ];
 const DURATION_OPTIONS: { label: string; value: DurationRange }[] = [
-  { label: "Under 20 min", value: "under20" },
-  { label: "20 - 40 min", value: "20to40" },
-  { label: "40+ min", value: "40plus" },
+  { label: "20 dk altı", value: "under20" },
+  { label: "20 - 40 dk", value: "20to40" },
+  { label: "40+ dk", value: "40plus" },
 ];
 const EQUIPMENT_OPTIONS: Equipment[] = [
-  "No equipment",
-  "Dumbbells",
-  "Barbell",
-  "Machines",
-  "Resistance bands",
+  "Ekipman yok",
+  "Dambıl",
+  "Halter",
+  "Makineler",
+  "Direnç bandı",
 ];
 const MUSCLE_GROUP_OPTIONS: MuscleGroup[] = [
-  "Full Body",
-  "Upper Body",
-  "Lower Body",
+  "Tüm Vücut",
+  "Üst Vücut",
+  "Alt Vücut",
   "Core",
 ];
 
@@ -83,7 +83,7 @@ export function WorkoutFilterModal({
 
         <SafeAreaView style={styles.sheet} edges={["bottom"]}>
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>Filter Workouts</Text>
+            <Text style={styles.headerTitle}>Antrenmanları Filtrele</Text>
             <Pressable
               onPress={onClose}
               hitSlop={10}
@@ -94,7 +94,7 @@ export function WorkoutFilterModal({
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} style={styles.body}>
-            <Text style={styles.groupTitle}>Difficulty</Text>
+            <Text style={styles.groupTitle}>Zorluk</Text>
             {DIFFICULTY_OPTIONS.map((option) => (
               <OnboardingOption
                 key={option}
@@ -109,7 +109,7 @@ export function WorkoutFilterModal({
               />
             ))}
 
-            <Text style={styles.groupTitle}>Duration</Text>
+            <Text style={styles.groupTitle}>Süre</Text>
             {DURATION_OPTIONS.map((option) => (
               <OnboardingOption
                 key={option.value}
@@ -124,7 +124,7 @@ export function WorkoutFilterModal({
               />
             ))}
 
-            <Text style={styles.groupTitle}>Equipment</Text>
+            <Text style={styles.groupTitle}>Ekipman</Text>
             {EQUIPMENT_OPTIONS.map((option) => (
               <OnboardingOption
                 key={option}
@@ -140,7 +140,7 @@ export function WorkoutFilterModal({
               />
             ))}
 
-            <Text style={styles.groupTitle}>Muscle Group</Text>
+            <Text style={styles.groupTitle}>Kas Grubu</Text>
             {MUSCLE_GROUP_OPTIONS.map((option) => (
               <OnboardingOption
                 key={option}
@@ -161,11 +161,11 @@ export function WorkoutFilterModal({
 
           <View style={styles.footer}>
             <Pressable onPress={() => setDraft(EMPTY_FILTERS)} hitSlop={8}>
-              <Text style={styles.clearLabel}>Clear all</Text>
+              <Text style={styles.clearLabel}>Tümünü temizle</Text>
             </Pressable>
             <View style={styles.applyButton}>
               <OnboardingButton
-                label="Apply Filters"
+                label="Filtreleri Uygula"
                 onPress={() => onApply(draft)}
               />
             </View>

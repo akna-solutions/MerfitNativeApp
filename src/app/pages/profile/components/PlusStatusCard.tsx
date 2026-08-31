@@ -23,20 +23,20 @@ export function PlusStatusCard({ isPlusUser, onPress }: Props) {
           <Text style={styles.title}>MERFIT Plus</Text>
           {isPlusUser ? (
             <View style={styles.activeBadge}>
-              <Text style={styles.activeBadgeLabel}>ACTIVE</Text>
+              <Text style={styles.activeBadgeLabel}>AKTİF</Text>
             </View>
           ) : null}
         </View>
         <Text style={styles.description}>
           {isPlusUser
-            ? "Your premium experience is unlocked."
-            : "Unlock advanced features."}
+            ? "Premium deneyimin açık."
+            : "Gelişmiş özelliklerin kilidini aç."}
         </Text>
       </View>
 
       {!isPlusUser ? (
         <View style={styles.cta}>
-          <Text style={styles.ctaLabel}>View Plus</Text>
+          <Text style={styles.ctaLabel}>Plus'ı Gör</Text>
         </View>
       ) : (
         <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />

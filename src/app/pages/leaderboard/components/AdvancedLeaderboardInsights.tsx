@@ -9,13 +9,13 @@ export function AdvancedLeaderboardInsights() {
       <View style={styles.row}>
         <Ionicons name="trending-up" size={16} color={colors.electricBlue} />
         <Text style={styles.text}>
-          Your rank improved 32 positions this month.
+          Sıralaman bu ay 32 basamak yükseldi.
         </Text>
       </View>
       <View style={styles.row}>
         <Ionicons name="time-outline" size={16} color={colors.electricBlue} />
         <Text style={styles.text}>
-          You've been in the top 200 for 18 days straight.
+          18 gündür üst üste ilk 200'desin.
         </Text>
       </View>
     </View>

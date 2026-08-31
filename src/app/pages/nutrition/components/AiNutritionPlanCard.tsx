@@ -12,11 +12,11 @@ export function AiNutritionPlanCard() {
           size={16}
           color={colors.electricBlue}
         />
-        <Text style={styles.title}>AI NUTRITION PLAN</Text>
+        <Text style={styles.title}>YAPAY ZEKA BESLENME PLANI</Text>
       </View>
       <Text style={styles.description}>
-        Personalized meals, macro targets and daily nutrition suggestions built
-        around your goal.
+        Hedefine göre oluşturulmuş kişiselleştirilmiş öğünler, makro hedefleri
+        ve günlük beslenme önerileri.
       </Text>
     </View>
   );

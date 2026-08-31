@@ -203,7 +203,7 @@ export function NutritionScreen() {
               ]}
             >
               <NutritionEmptyState
-                onAddFirstMeal={() => setAddMealType("Breakfast")}
+                onAddFirstMeal={() => setAddMealType("Kahvaltı")}
               />
             </Animated.View>
           )}

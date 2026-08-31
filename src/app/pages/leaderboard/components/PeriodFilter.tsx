@@ -4,9 +4,9 @@ import { colors } from "../theme";
 import { PeriodFilter as PeriodFilterType } from "../types";
 
 const OPTIONS: { label: string; value: PeriodFilterType }[] = [
-  { label: "This Week", value: "week" },
-  { label: "This Month", value: "month" },
-  { label: "All Time", value: "allTime" },
+  { label: "Bu Hafta", value: "week" },
+  { label: "Bu Ay", value: "month" },
+  { label: "Tüm Zamanlar", value: "allTime" },
 ];
 
 type Props = {

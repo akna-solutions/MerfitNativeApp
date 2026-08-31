@@ -3,15 +3,15 @@ import { StyleSheet, Text, View } from "react-native";
 import { colors } from "../theme";
 
 const INSIGHTS: string[] = [
-  "You're improving consistently.",
-  "Your strength increased 12% this month.",
-  "Your workout consistency is better than last month.",
+  "İstikrarlı bir şekilde gelişiyorsun.",
+  "Gücün bu ay %12 arttı.",
+  "Antrenman düzenliliğin geçen aydan daha iyi.",
 ];
 
 export function PersonalInsights() {
   return (
     <View>
-      <Text style={styles.sectionTitle}>Your Insights</Text>
+      <Text style={styles.sectionTitle}>Kişisel Analizlerin</Text>
       <View style={styles.card}>
         {INSIGHTS.map((insight, index) => (
           <Text

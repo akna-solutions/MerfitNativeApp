@@ -11,7 +11,7 @@ export function ScoreBreakdown({ items }: Props) {
 
   return (
     <View>
-      <Text style={styles.sectionTitle}>How your score is built</Text>
+      <Text style={styles.sectionTitle}>Puanın nasıl hesaplanıyor</Text>
 
       <View style={styles.card}>
         {items.map((item) => (
@@ -32,7 +32,7 @@ export function ScoreBreakdown({ items }: Props) {
         ))}
 
         <View style={styles.totalRow}>
-          <Text style={styles.totalLabel}>Total</Text>
+          <Text style={styles.totalLabel}>Toplam</Text>
           <Text style={styles.totalValue}>{total.toLocaleString()}</Text>
         </View>
       </View>

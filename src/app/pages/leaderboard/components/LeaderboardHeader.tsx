@@ -29,8 +29,8 @@ export function LeaderboardHeader({
           <Ionicons name="chevron-back" size={18} color={colors.textPrimary} />
         </Pressable>
         <View style={styles.titleBlock}>
-          <Text style={styles.title}>MERFIT Ranking</Text>
-          <Text style={styles.subtitle}>See how you rank across Türkiye.</Text>
+          <Text style={styles.title}>MERFIT Sıralaması</Text>
+          <Text style={styles.subtitle}>Türkiye genelinde sıralamanı gör.</Text>
         </View>
         <View style={styles.backButtonGhost} />
       </View>
@@ -38,22 +38,22 @@ export function LeaderboardHeader({
       <View style={styles.card}>
         <Text style={styles.country}>Türkiye</Text>
         <Text style={styles.rank}>#{currentRank}</Text>
-        <Text style={styles.rankLabel}>Your current rank</Text>
+        <Text style={styles.rankLabel}>Mevcut sıralaman</Text>
 
         <View style={styles.statsRow}>
           <View style={styles.stat}>
             <Text style={styles.statValue}>{points.toLocaleString()}</Text>
-            <Text style={styles.statLabel}>MERFIT Points</Text>
+            <Text style={styles.statLabel}>MERFIT Puanı</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.stat}>
-            <Text style={styles.statValue}>Top {topPercent}%</Text>
-            <Text style={styles.statLabel}>{league} League</Text>
+            <Text style={styles.statValue}>İlk %{topPercent}</Text>
+            <Text style={styles.statLabel}>{league} Ligi</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.stat}>
             <Text style={styles.statValue}>#{bestRank}</Text>
-            <Text style={styles.statLabel}>Best · {bestRankMonthLabel}</Text>
+            <Text style={styles.statLabel}>En İyi · {bestRankMonthLabel}</Text>
           </View>
         </View>
       </View>

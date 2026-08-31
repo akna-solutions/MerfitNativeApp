@@ -25,7 +25,7 @@ export function GoalProgress({
 }: Props) {
   return (
     <View>
-      <Text style={styles.sectionTitle}>Goal Progress</Text>
+      <Text style={styles.sectionTitle}>Hedef İlerlemesi</Text>
 
       <View style={styles.card}>
         <Text style={styles.goalLabel}>{goalLabel}</Text>
@@ -58,18 +58,18 @@ function WeightGoalBody({
   const remaining = currentWeight - targetWeight;
   const label =
     remaining === 0
-      ? "You reached your goal"
-      : `${Math.abs(remaining).toFixed(1)} kg to go`;
+      ? "Hedefine ulaştın"
+      : `${Math.abs(remaining).toFixed(1)} kg kaldı`;
 
   return (
     <View style={styles.weightRow}>
       <View style={styles.weightTopRow}>
         <View>
-          <Text style={styles.metaLabel}>Current</Text>
+          <Text style={styles.metaLabel}>Güncel</Text>
           <Text style={styles.metaValue}>{currentWeight} kg</Text>
         </View>
         <View style={styles.alignEnd}>
-          <Text style={styles.metaLabel}>Target</Text>
+          <Text style={styles.metaLabel}>Hedef</Text>
           <Text style={styles.metaValue}>{targetWeight} kg</Text>
         </View>
       </View>
@@ -89,7 +89,7 @@ function WorkoutGoalBody({
   return (
     <View style={styles.percentBody}>
       <Text style={styles.percentValue}>
-        {completed} / {goal} <Text style={styles.percentUnit}>workouts</Text>
+        {completed} / {goal} <Text style={styles.percentUnit}>antrenman</Text>
       </Text>
       <View style={styles.track}>
         <View style={[styles.fill, { width: `${ratio * 100}%` }]} />
@@ -106,7 +106,7 @@ function PercentGoalBody({ percent }: { percent: number }) {
       <View style={styles.track}>
         <View style={[styles.fill, { width: `${clamped}%` }]} />
       </View>
-      <Text style={styles.remaining}>{100 - clamped}% remaining</Text>
+      <Text style={styles.remaining}>%{100 - clamped} kaldı</Text>
     </View>
   );
 }

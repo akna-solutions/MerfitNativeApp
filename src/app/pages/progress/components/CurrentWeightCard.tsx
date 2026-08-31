@@ -13,7 +13,7 @@ export function CurrentWeightCard({ currentWeight, monthlyChange }: Props) {
 
   return (
     <View style={styles.card}>
-      <Text style={styles.label}>Current Weight</Text>
+      <Text style={styles.label}>Güncel Kilo</Text>
       <Text style={styles.value}>{currentWeight} kg</Text>
 
       <View style={styles.changeRow}>
@@ -23,7 +23,7 @@ export function CurrentWeightCard({ currentWeight, monthlyChange }: Props) {
           color={colors.electricBlue}
         />
         <Text style={styles.changeText}>
-          {Math.abs(monthlyChange)} kg this month
+          {Math.abs(monthlyChange)} kg bu ay
         </Text>
       </View>
     </View>

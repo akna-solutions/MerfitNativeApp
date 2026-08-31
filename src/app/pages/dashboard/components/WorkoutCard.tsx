@@ -19,7 +19,7 @@ type Props = {
 export function WorkoutCard({ workout, onPress }: Props) {
   return (
     <View style={styles.wrapper}>
-      <Text style={styles.sectionTitle}>Today's Workout</Text>
+      <Text style={styles.sectionTitle}>Bugünkü Antrenman</Text>
 
       <ImageBackground
         source={{ uri: workout.imageUrl }}
@@ -38,7 +38,7 @@ export function WorkoutCard({ workout, onPress }: Props) {
           </Text>
 
           <Pressable onPress={onPress} style={styles.cta}>
-            <Text style={styles.ctaLabel}>Start Workout</Text>
+            <Text style={styles.ctaLabel}>Antrenmana Başla</Text>
             <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
           </Pressable>
         </View>

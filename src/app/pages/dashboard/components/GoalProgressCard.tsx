@@ -13,21 +13,21 @@ export function GoalProgressCard({ goal }: Props) {
   const remaining = currentWeightKg - goalWeightKg;
   const remainingLabel =
     remaining === 0
-      ? "You reached your goal"
-      : `${remaining > 0 ? "-" : "+"}${Math.abs(remaining).toFixed(1)} kg to goal`;
+      ? "Hedefine ulaştın"
+      : `${remaining > 0 ? "-" : "+"}${Math.abs(remaining).toFixed(1)} kg hedefe kaldı`;
 
   return (
     <View style={styles.wrapper}>
-      <Text style={styles.sectionTitle}>Your Progress</Text>
+      <Text style={styles.sectionTitle}>İlerlemen</Text>
 
       <View style={styles.card}>
         <View style={styles.row}>
           <View>
-            <Text style={styles.label}>Weight</Text>
+            <Text style={styles.label}>Kilo</Text>
             <Text style={styles.value}>{currentWeightKg} kg</Text>
           </View>
           <View style={styles.alignEnd}>
-            <Text style={styles.label}>Goal</Text>
+            <Text style={styles.label}>Hedef</Text>
             <Text style={styles.value}>{goalWeightKg} kg</Text>
           </View>
         </View>

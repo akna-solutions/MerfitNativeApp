@@ -6,9 +6,9 @@ import { AppearanceMode } from "../../../shared/profile/types";
 import { colors } from "./theme";
 
 const OPTIONS: { value: AppearanceMode; label: string; enabled: boolean }[] = [
-  { value: "dark", label: "Dark", enabled: true },
-  { value: "light", label: "Light", enabled: false },
-  { value: "system", label: "System", enabled: false },
+  { value: "dark", label: "Koyu", enabled: true },
+  { value: "light", label: "Açık", enabled: false },
+  { value: "system", label: "Sistem", enabled: false },
 ];
 
 export default function AppearanceRoute() {
@@ -16,8 +16,8 @@ export default function AppearanceRoute() {
 
   return (
     <ProfileDetailShell
-      title="Appearance"
-      subtitle="MERFIT currently supports Dark mode."
+      title="Görünüm"
+      subtitle="MERFIT şu anda yalnızca Koyu modu destekliyor."
     >
       {OPTIONS.map((option) => {
         const selected = profile.appearance === option.value;
@@ -43,7 +43,7 @@ export default function AppearanceRoute() {
               />
             ) : (
               <View style={styles.soonBadge}>
-                <Text style={styles.soonLabel}>Soon</Text>
+                <Text style={styles.soonLabel}>Yakında</Text>
               </View>
             )}
           </Pressable>

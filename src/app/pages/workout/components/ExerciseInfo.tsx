@@ -14,9 +14,9 @@ export function ExerciseInfo({ name, sets, reps, restSec }: Props) {
     <View style={styles.wrapper}>
       <Text style={styles.name}>{name}</Text>
       <Text style={styles.meta}>
-        {sets} sets × {reps} reps
+        {sets} set × {reps} tekrar
       </Text>
-      <Text style={styles.rest}>Rest {restSec} sec</Text>
+      <Text style={styles.rest}>{restSec} sn dinlenme</Text>
     </View>
   );
 }

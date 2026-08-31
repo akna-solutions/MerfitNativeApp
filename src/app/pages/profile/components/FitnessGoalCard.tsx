@@ -12,14 +12,14 @@ type Props = {
 export function FitnessGoalCard({ goal, description, onChangeGoal }: Props) {
   return (
     <View>
-      <Text style={styles.sectionTitle}>Fitness Goal</Text>
+      <Text style={styles.sectionTitle}>Fitness Hedefi</Text>
 
       <View style={styles.card}>
         <Text style={styles.goal}>{goal}</Text>
         <Text style={styles.description}>{description}</Text>
 
         <Pressable onPress={onChangeGoal} style={styles.changeRow}>
-          <Text style={styles.changeLabel}>Change goal</Text>
+          <Text style={styles.changeLabel}>Hedefi değiştir</Text>
           <Ionicons name="chevron-forward" size={15} color={colors.textMuted} />
         </Pressable>
       </View>

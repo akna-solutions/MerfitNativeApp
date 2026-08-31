@@ -6,41 +6,41 @@ type FeatureInfo = { title: string; description: string };
 // LockedOverlay ve PlusPurchaseModal aynı title/description'ı buradan okur.
 export const PLUS_FEATURES: Record<PlusFeature, FeatureInfo> = {
   ADVANCED_PROGRESS: {
-    title: "Advanced Progress",
-    description: "Understand your performance in detail.",
+    title: "Gelişmiş İlerleme",
+    description: "Performansını detaylı olarak anla.",
   },
   AI_WORKOUT: {
-    title: "AI Workout Plan",
-    description: "Get a workout plan built around your goals and progress.",
+    title: "Yapay Zeka Antrenman Planı",
+    description: "Hedeflerine ve ilerlemene göre hazırlanmış bir antrenman planı al.",
   },
   AI_NUTRITION: {
-    title: "AI Nutrition Plan",
-    description: "Get personalized meals and macro targets for your goal.",
+    title: "Yapay Zeka Beslenme Planı",
+    description: "Hedefine özel kişiselleştirilmiş öğünler ve makro hedefleri al.",
   },
   PERSONAL_INSIGHTS: {
-    title: "Personal Insights",
-    description: "Get personalized insights based on your progress.",
+    title: "Kişisel Öngörüler",
+    description: "İlerlemene dayalı kişiselleştirilmiş öngörüler al.",
   },
   ADVANCED_ANALYTICS: {
-    title: "Advanced Analytics",
-    description: "Unlock detailed performance trends and analytics.",
+    title: "Gelişmiş Analizler",
+    description: "Detaylı performans trendlerinin ve analizlerin kilidini aç.",
   },
   DETAILED_SCORE: {
-    title: "Detailed MERFIT Score",
-    description: "See exactly how your MERFIT score is calculated.",
+    title: "Detaylı MERFIT Skoru",
+    description: "MERFIT skorunun tam olarak nasıl hesaplandığını gör.",
   },
   ADVANCED_LEADERBOARD: {
-    title: "Advanced Leaderboard Insights",
-    description: "See your rank history and detailed standing.",
+    title: "Gelişmiş Liderlik Tablosu Öngörüleri",
+    description: "Sıralama geçmişini ve detaylı durumunu gör.",
   },
 };
 
 // Purchase modal'da gösterilen sabit fayda listesi (max 5-6 madde).
 export const PLUS_BENEFITS: string[] = [
-  "Advanced Progress Analytics",
-  "AI Workout Plans",
-  "AI Nutrition Plans",
-  "Personal Insights",
-  "Detailed MERFIT Score",
-  "Advanced Analytics",
+  "Gelişmiş İlerleme Analizleri",
+  "Yapay Zeka Antrenman Planları",
+  "Yapay Zeka Beslenme Planları",
+  "Kişisel Öngörüler",
+  "Detaylı MERFIT Skoru",
+  "Gelişmiş Analizler",
 ];

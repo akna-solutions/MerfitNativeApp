@@ -20,14 +20,14 @@ function useCountdown(target: Date) {
     function update() {
       const diffMs = target.getTime() - Date.now();
       if (diffMs <= 0) {
-        setLabel("0d 00h 00m");
+        setLabel("0g 00s 00d");
         return;
       }
       const days = Math.floor(diffMs / (24 * 60 * 60 * 1000));
       const hours = Math.floor((diffMs / (60 * 60 * 1000)) % 24);
       const minutes = Math.floor((diffMs / (60 * 1000)) % 60);
       setLabel(
-        `${days}d ${hours.toString().padStart(2, "0")}h ${minutes.toString().padStart(2, "0")}m`,
+        `${days}g ${hours.toString().padStart(2, "0")}s ${minutes.toString().padStart(2, "0")}d`,
       );
     }
     update();
@@ -53,11 +53,11 @@ export function RewardsSection({
   return (
     <View>
       <View style={styles.header}>
-        <Text style={styles.sectionTitle}>This Month's Rewards</Text>
-        <Text style={styles.countdown}>Resets in {countdown}</Text>
+        <Text style={styles.sectionTitle}>Bu Ayın Ödülleri</Text>
+        <Text style={styles.countdown}>{countdown} sonra yenilenir</Text>
       </View>
       <Text style={styles.subtitle}>
-        Reach the top 10 and earn exclusive rewards.
+        İlk 10'a gir ve özel ödüller kazan.
       </Text>
 
       <View style={styles.card}>

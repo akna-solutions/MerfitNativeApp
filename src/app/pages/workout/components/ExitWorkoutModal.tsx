@@ -24,17 +24,17 @@ export function ExitWorkoutModal({
         <Pressable style={StyleSheet.absoluteFillObject} onPress={onContinue} />
 
         <View style={styles.dialog}>
-          <Text style={styles.title}>Exit workout?</Text>
+          <Text style={styles.title}>Antrenmandan çıkılsın mı?</Text>
           <Text style={styles.message}>
-            Your current progress will be saved.
+            Mevcut ilerlemen kaydedilecek.
           </Text>
 
           <View style={styles.actions}>
             <Pressable onPress={onContinue} style={styles.continueButton}>
-              <Text style={styles.continueLabel}>Continue Workout</Text>
+              <Text style={styles.continueLabel}>Antrenmana Devam Et</Text>
             </Pressable>
             <Pressable onPress={onSaveAndExit} style={styles.exitButton}>
-              <Text style={styles.exitLabel}>Save & Exit</Text>
+              <Text style={styles.exitLabel}>Kaydet ve Çık</Text>
             </Pressable>
           </View>
         </View>

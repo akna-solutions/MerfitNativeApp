@@ -17,6 +17,15 @@ import { OnboardingOption } from "../onboarding/components/OnboardingOption";
 import { colors } from "./theme";
 
 const DURATION_OPTIONS = [15, 30, 45, 60, 90];
+const DAY_LABELS: Record<Weekday, string> = {
+  Mon: "Pt",
+  Tue: "Sa",
+  Wed: "Ça",
+  Thu: "Pe",
+  Fri: "Cu",
+  Sat: "Ct",
+  Sun: "Pz",
+};
 const EXPERIENCE_OPTIONS: ExperienceLevel[] = [
   "BEGINNER",
   "INTERMEDIATE",
@@ -60,10 +69,10 @@ export default function WorkoutPreferencesRoute() {
 
   return (
     <ProfileDetailShell
-      title="Workout Preferences"
-      footer={<OnboardingButton label="Save Changes" onPress={handleSave} />}
+      title="Antrenman Tercihleri"
+      footer={<OnboardingButton label="Değişiklikleri Kaydet" onPress={handleSave} />}
     >
-      <Text style={styles.label}>Training Days</Text>
+      <Text style={styles.label}>Antrenman Günleri</Text>
       <View style={styles.daysRow}>
         {WEEKDAYS.map((day) => {
           const active = trainingDays.includes(day);
@@ -74,24 +83,24 @@ export default function WorkoutPreferencesRoute() {
               style={[styles.dayPill, active && styles.dayPillActive]}
             >
               <Text style={[styles.dayLabel, active && styles.dayLabelActive]}>
-                {day.charAt(0)}
+                {DAY_LABELS[day]}
               </Text>
             </Pressable>
           );
         })}
       </View>
 
-      <Text style={[styles.label, styles.gapTop]}>Workout Duration</Text>
+      <Text style={[styles.label, styles.gapTop]}>Antrenman Süresi</Text>
       {DURATION_OPTIONS.map((minutes) => (
         <OnboardingOption
           key={minutes}
-          label={minutes === 90 ? "90+ min" : `${minutes} min`}
+          label={minutes === 90 ? "90+ dk" : `${minutes} dk`}
           selected={duration === minutes}
           onPress={() => setDuration(minutes)}
         />
       ))}
 
-      <Text style={[styles.label, styles.gapTop]}>Experience Level</Text>
+      <Text style={[styles.label, styles.gapTop]}>Deneyim Seviyesi</Text>
       {EXPERIENCE_OPTIONS.map((level) => (
         <OnboardingOption
           key={level}
@@ -101,7 +110,7 @@ export default function WorkoutPreferencesRoute() {
         />
       ))}
 
-      <Text style={[styles.label, styles.gapTop]}>Equipment</Text>
+      <Text style={[styles.label, styles.gapTop]}>Ekipman</Text>
       {EQUIPMENT_OPTIONS.map((option) => (
         <OnboardingOption
           key={option}

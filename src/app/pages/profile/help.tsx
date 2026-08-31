@@ -9,29 +9,29 @@ import { colors } from "./theme";
 
 const FAQ_ITEMS: { question: string; answer: string }[] = [
   {
-    question: "How does MERFIT Score work?",
+    question: "MERFIT Puanı nasıl hesaplanır?",
     answer:
-      "Your MERFIT Score is calculated from workout consistency, completion, progress, nutrition and streaks. See the breakdown on your Ranking screen.",
+      "MERFIT Puanın; antrenman düzenliliği, tamamlama, ilerleme, beslenme ve seri (streak) verilerinden hesaplanır. Ayrıntıları Sıralama ekranında görebilirsin.",
   },
   {
-    question: "What is MERFIT Plus?",
+    question: "MERFIT Plus nedir?",
     answer:
-      "MERFIT Plus unlocks advanced analytics, AI workout and nutrition plans, personal insights and detailed score breakdowns.",
+      "MERFIT Plus; gelişmiş analizler, yapay zeka destekli antrenman ve beslenme planları, kişisel analizler ve detaylı puan dökümünün kilidini açar.",
   },
   {
-    question: "How are workouts tracked?",
+    question: "Antrenmanlar nasıl takip edilir?",
     answer:
-      "Log your weight and reps for each set during an Active Workout session - MERFIT tracks your sets, volume and progress automatically.",
+      "Aktif Antrenman sırasında her set için ağırlık ve tekrar sayını gir - MERFIT setlerini, hacmini ve ilerlemeni otomatik olarak takip eder.",
   },
   {
-    question: "How can I cancel Plus?",
+    question: "Plus üyeliğimi nasıl iptal edebilirim?",
     answer:
-      "Go to Profile → Manage Subscription to view and cancel your MERFIT Plus membership at any time.",
+      "MERFIT Plus üyeliğini görüntülemek ve istediğin zaman iptal etmek için Profil → Aboneliği Yönet bölümüne git.",
   },
   {
-    question: "How does the leaderboard work?",
+    question: "Sıralama (liderlik tablosu) nasıl çalışır?",
     answer:
-      "You're ranked against other MERFIT users in Türkiye based on your MERFIT Score. You can hide your profile from the leaderboard in Privacy settings.",
+      "MERFIT Puanına göre Türkiye'deki diğer MERFIT kullanıcılarıyla sıralanırsın. Profilini Gizlilik ayarlarından liderlik tablosunda gizleyebilirsin.",
   },
 ];
 
@@ -45,8 +45,8 @@ export default function HelpRoute() {
   const [expanded, setExpanded] = useState<number | null>(null);
 
   return (
-    <ProfileDetailShell title="Help & Support">
-      <Text style={styles.sectionTitle}>Frequently Asked Questions</Text>
+    <ProfileDetailShell title="Yardım ve Destek">
+      <Text style={styles.sectionTitle}>Sıkça Sorulan Sorular</Text>
       <View style={styles.faqCard}>
         {FAQ_ITEMS.map((item, index) => {
           const isOpen = expanded === index;
@@ -81,18 +81,18 @@ export default function HelpRoute() {
         <SettingsSection>
           <SettingsRow
             icon="mail-outline"
-            title="Contact Support"
-            onPress={() => sendMail("MERFIT Support Request")}
+            title="Destekle İletişime Geç"
+            onPress={() => sendMail("MERFIT Destek Talebi")}
           />
           <SettingsRow
             icon="warning-outline"
-            title="Report a Problem"
-            onPress={() => sendMail("MERFIT Problem Report")}
+            title="Sorun Bildir"
+            onPress={() => sendMail("MERFIT Sorun Bildirimi")}
           />
           <SettingsRow
             icon="chatbubble-ellipses-outline"
-            title="Send Feedback"
-            onPress={() => sendMail("MERFIT Feedback")}
+            title="Geri Bildirim Gönder"
+            onPress={() => sendMail("MERFIT Geri Bildirim")}
             isLast
           />
         </SettingsSection>

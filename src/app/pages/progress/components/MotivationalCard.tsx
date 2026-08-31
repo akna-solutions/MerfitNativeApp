@@ -7,11 +7,11 @@ type Props = { workoutsThisMonth: number };
 export function MotivationalCard({ workoutsThisMonth }: Props) {
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>You're doing great.</Text>
+      <Text style={styles.title}>Harika gidiyorsun.</Text>
       <Text style={styles.body}>
-        You've completed{" "}
-        <Text style={styles.accent}>{workoutsThisMonth} workouts</Text> this
-        month. Keep the momentum going.
+        Bu ay{" "}
+        <Text style={styles.accent}>{workoutsThisMonth} antrenman</Text>{" "}
+        tamamladın. Bu ivmeyi sürdür.
       </Text>
     </View>
   );

@@ -3,12 +3,12 @@ import { View } from "react-native";
 import { OnboardingOption } from "../components/OnboardingOption";
 
 const OPTIONS: { label: string; value: number }[] = [
-  { label: "2 days / week", value: 2 },
-  { label: "3 days / week", value: 3 },
-  { label: "4 days / week", value: 4 },
-  { label: "5 days / week", value: 5 },
-  { label: "6 days / week", value: 6 },
-  { label: "Every day", value: 7 },
+  { label: "Haftada 2 gün", value: 2 },
+  { label: "Haftada 3 gün", value: 3 },
+  { label: "Haftada 4 gün", value: 4 },
+  { label: "Haftada 5 gün", value: 5 },
+  { label: "Haftada 6 gün", value: 6 },
+  { label: "Her gün", value: 7 },
 ];
 
 type Props = {

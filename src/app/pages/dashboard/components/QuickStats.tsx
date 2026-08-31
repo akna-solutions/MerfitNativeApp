@@ -16,7 +16,7 @@ type Props = { stats: QuickStat[] };
 export function QuickStats({ stats }: Props) {
   return (
     <View style={styles.wrapper}>
-      <Text style={styles.sectionTitle}>Quick Stats</Text>
+      <Text style={styles.sectionTitle}>Hızlı İstatistikler</Text>
       <View style={styles.grid}>
         {stats.map((stat) => (
           <View key={stat.id} style={styles.card}>

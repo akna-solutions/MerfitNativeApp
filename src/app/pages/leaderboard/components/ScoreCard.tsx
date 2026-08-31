@@ -16,8 +16,8 @@ export function ScoreCard({ points, weeklyChange, rank, onPress }: Props) {
       <View style={styles.textBlock}>
         <Text style={styles.title}>MERFIT Puanın</Text>
         <Text style={styles.points}>{points.toLocaleString()}</Text>
-        <Text style={styles.change}>+{weeklyChange} this week</Text>
-        <Text style={styles.rank}>🇹🇷 #{rank} in Türkiye</Text>
+        <Text style={styles.change}>+{weeklyChange} bu hafta</Text>
+        <Text style={styles.rank}>🇹🇷 Türkiye'de #{rank}</Text>
       </View>
       <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
     </Pressable>

@@ -49,7 +49,7 @@ export function AddMealModal({
         <SafeAreaView style={styles.sheet} edges={["bottom"]}>
           <View style={styles.header}>
             <View>
-              <Text style={styles.headerTitle}>Add Meal</Text>
+              <Text style={styles.headerTitle}>Öğün Ekle</Text>
               {mealType ? (
                 <Text style={styles.headerSubtitle}>{mealType}</Text>
               ) : null}
@@ -72,7 +72,7 @@ export function AddMealModal({
             <TextInput
               value={query}
               onChangeText={setQuery}
-              placeholder="Search food..."
+              placeholder="Yiyecek ara..."
               placeholderTextColor={colors.textMuted}
               autoCapitalize="none"
               autoCorrect={false}
@@ -93,7 +93,7 @@ export function AddMealModal({
               size={16}
               color={colors.electricBlue}
             />
-            <Text style={styles.scanLabel}>Scan barcode</Text>
+            <Text style={styles.scanLabel}>Barkod tara</Text>
           </Pressable>
 
           <FlatList

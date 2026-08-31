@@ -8,12 +8,12 @@ type Props = { onStartWorkout: () => void };
 export function LeaderboardEmptyState({ onStartWorkout }: Props) {
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>Leaderboard is getting ready.</Text>
+      <Text style={styles.title}>Sıralama tablosu hazırlanıyor.</Text>
       <Text style={styles.description}>
-        Complete your first workout to start earning MERFIT Points.
+        MERFIT Puanı kazanmaya başlamak için ilk antrenmanını tamamla.
       </Text>
       <View style={styles.button}>
-        <OnboardingButton label="Start Workout" onPress={onStartWorkout} />
+        <OnboardingButton label="Antrenmana Başla" onPress={onStartWorkout} />
       </View>
     </View>
   );

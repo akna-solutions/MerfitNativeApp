@@ -1,22 +1,22 @@
-export type Difficulty = "Beginner" | "Intermediate" | "Advanced";
+export type Difficulty = "Başlangıç" | "Orta" | "İleri";
 
 export type Category =
-  | "Strength"
-  | "Cardio"
+  | "Kuvvet"
+  | "Kardiyo"
   | "HIIT"
-  | "Mobility"
+  | "Hareketlilik"
   | "Core"
-  | "Upper Body"
-  | "Lower Body";
+  | "Üst Vücut"
+  | "Alt Vücut";
 
-export type MuscleGroup = "Full Body" | "Upper Body" | "Lower Body" | "Core";
+export type MuscleGroup = "Tüm Vücut" | "Üst Vücut" | "Alt Vücut" | "Core";
 
 export type Equipment =
-  | "No equipment"
-  | "Dumbbells"
-  | "Barbell"
-  | "Machines"
-  | "Resistance bands";
+  | "Ekipman yok"
+  | "Dambıl"
+  | "Halter"
+  | "Makineler"
+  | "Direnç bandı";
 
 export type Workout = {
   id: string;

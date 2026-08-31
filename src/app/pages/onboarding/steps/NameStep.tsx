@@ -10,7 +10,7 @@ export function NameStep({ value, onChange }: Props) {
     <OnboardingInput
       value={value}
       onChangeText={onChange}
-      placeholder="Your first name"
+      placeholder="Adın"
       autoFocus
       autoCapitalize="words"
       autoCorrect={false}

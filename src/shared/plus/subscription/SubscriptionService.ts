@@ -4,8 +4,8 @@ export type Product = {
   plan: SubscriptionPlan;
   price: string; // mock - gerçek fiyat App Store/Google Play'den gelecek
   currency: string;
-  period: string; // "per month" | "per year"
-  badge?: string; // ör. "SAVE 20%"
+  period: string; // "aylık" | "yıllık"
+  badge?: string; // ör. "%20 İNDİRİM"
 };
 
 export type SubscriptionStatus = {

@@ -20,7 +20,7 @@ export function WaterTracker({ consumedL, targetL, onAdd }: Props) {
 
   return (
     <View>
-      <Text style={styles.sectionTitle}>Water</Text>
+      <Text style={styles.sectionTitle}>Su</Text>
 
       <View style={styles.card}>
         <View style={styles.row}>

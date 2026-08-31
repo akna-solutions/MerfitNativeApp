@@ -6,10 +6,10 @@ import { MEAL_TYPES, MealEntry, MealType } from "../types";
 import { MealCard } from "./MealCard";
 
 const MEAL_ICONS: Record<MealType, keyof typeof Ionicons.glyphMap> = {
-  Breakfast: "sunny-outline",
-  Lunch: "restaurant-outline",
-  Dinner: "moon-outline",
-  Snacks: "fast-food-outline",
+  "Kahvaltı": "sunny-outline",
+  "Öğle Yemeği": "restaurant-outline",
+  "Akşam Yemeği": "moon-outline",
+  "Atıştırmalık": "fast-food-outline",
 };
 
 type Props = {
@@ -21,7 +21,7 @@ type Props = {
 export function MealsSection({ meals, onAddMeal, onSelectMeal }: Props) {
   return (
     <View>
-      <Text style={styles.sectionTitle}>Today's Meals</Text>
+      <Text style={styles.sectionTitle}>Bugünün Öğünleri</Text>
 
       {MEAL_TYPES.map((type, index) => {
         const entries = meals.filter((meal) => meal.type === type);
@@ -66,8 +66,8 @@ export function MealsSection({ meals, onAddMeal, onSelectMeal }: Props) {
                 onPress={() => onAddMeal(type)}
                 style={styles.emptyCard}
               >
-                <Text style={styles.emptyLabel}>No meal added yet</Text>
-                <Text style={styles.emptyAction}>+ Add meal</Text>
+                <Text style={styles.emptyLabel}>Henüz öğün eklenmedi</Text>
+                <Text style={styles.emptyAction}>+ Öğün ekle</Text>
               </Pressable>
             )}
           </View>

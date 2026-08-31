@@ -4,15 +4,15 @@ import { StyleSheet, Text, View } from "react-native";
 import { colors } from "../theme";
 
 const TRENDS: { label: string; value: string; positive: boolean }[] = [
-  { label: "Strength Trend", value: "+12%", positive: true },
-  { label: "Workout Consistency", value: "+8%", positive: true },
-  { label: "Weight Trend", value: "-3.4 kg", positive: true },
+  { label: "Güç Trendi", value: "+%12", positive: true },
+  { label: "Antrenman Düzenliliği", value: "+%8", positive: true },
+  { label: "Kilo Trendi", value: "-3,4 kg", positive: true },
 ];
 
 export function PerformanceTrends() {
   return (
     <View>
-      <Text style={styles.sectionTitle}>Performance Trends</Text>
+      <Text style={styles.sectionTitle}>Performans Trendleri</Text>
       <View style={styles.card}>
         {TRENDS.map((trend, index) => (
           <View

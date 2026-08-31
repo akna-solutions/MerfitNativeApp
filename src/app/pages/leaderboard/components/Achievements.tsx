@@ -16,7 +16,7 @@ type Props = { achievements: Achievement[] };
 export function Achievements({ achievements }: Props) {
   return (
     <View>
-      <Text style={styles.sectionTitle}>Achievements</Text>
+      <Text style={styles.sectionTitle}>Başarılar</Text>
 
       <View style={styles.grid}>
         {achievements.map((achievement) => (
