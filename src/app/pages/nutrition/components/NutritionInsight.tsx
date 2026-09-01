@@ -18,12 +18,12 @@ export function NutritionInsight({ onViewSuggestions }: Props) {
       </View>
 
       <Text style={styles.message}>
-        You're low on protein today. Try adding Greek yogurt, eggs or chicken to
-        your next meal.
+        Bugün protein alımın düşük. Bir sonraki öğününe Yunan yoğurdu, yumurta
+        veya tavuk eklemeyi dene.
       </Text>
 
       <View style={styles.footer}>
-        <Text style={styles.link}>View suggestions</Text>
+        <Text style={styles.link}>Önerileri görüntüle</Text>
         <Ionicons name="arrow-forward" size={13} color={colors.electricBlue} />
       </View>
     </Pressable>

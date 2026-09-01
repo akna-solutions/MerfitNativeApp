@@ -18,16 +18,16 @@ export function TrainingProfile({
   equipment,
 }: Props) {
   const rows = [
-    { label: "Experience", value: experience },
-    { label: "Activity Level", value: activityLevel },
-    { label: "Training Days", value: `${trainingDays} / week` },
-    { label: "Location", value: workoutLocation },
-    { label: "Equipment", value: equipment.join(", ") || "None" },
+    { label: "Deneyim", value: experience },
+    { label: "Aktivite Seviyesi", value: activityLevel },
+    { label: "Antrenman Günleri", value: `${trainingDays} / hafta` },
+    { label: "Konum", value: workoutLocation },
+    { label: "Ekipman", value: equipment.join(", ") || "Yok" },
   ];
 
   return (
     <View>
-      <Text style={styles.sectionTitle}>Training Profile</Text>
+      <Text style={styles.sectionTitle}>Antrenman Profili</Text>
 
       <View style={styles.card}>
         {rows.map((row, index) => (

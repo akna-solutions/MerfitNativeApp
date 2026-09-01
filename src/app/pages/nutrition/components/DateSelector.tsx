@@ -20,9 +20,9 @@ export function DateSelector({ date, onChangeDay }: Props) {
   const today = new Date();
   const isToday = isSameDay(date, today);
   const label = isToday
-    ? "Today"
+    ? "Bugün"
     : date
-        .toLocaleDateString("en-US", { month: "short", day: "numeric" })
+        .toLocaleDateString("tr-TR", { month: "short", day: "numeric" })
         .toUpperCase();
 
   return (

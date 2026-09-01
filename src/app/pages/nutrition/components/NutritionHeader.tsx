@@ -9,8 +9,8 @@ export function NutritionHeader({ onNotificationsPress }: Props) {
   return (
     <View style={styles.row}>
       <View style={styles.textBlock}>
-        <Text style={styles.title}>Nutrition</Text>
-        <Text style={styles.subtitle}>Fuel your progress.</Text>
+        <Text style={styles.title}>Beslenme</Text>
+        <Text style={styles.subtitle}>Gelişimini besle.</Text>
       </View>
 
       <Pressable

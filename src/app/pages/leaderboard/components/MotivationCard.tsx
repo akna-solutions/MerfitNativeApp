@@ -11,13 +11,13 @@ export function MotivationCard({ pointsToNextRank, nextRank }: Props) {
   return (
     <View style={styles.card}>
       <Text style={styles.text}>
-        You're only{" "}
+        #{nextRank} sıraya sadece{" "}
         <Text style={styles.accent}>
-          {pointsToNextRank.toLocaleString()} points
+          {pointsToNextRank.toLocaleString()} puan
         </Text>{" "}
-        away from #{nextRank}.
+        kaldı.
       </Text>
-      <Text style={styles.subtext}>Keep going.</Text>
+      <Text style={styles.subtext}>Devam et.</Text>
     </View>
   );
 }

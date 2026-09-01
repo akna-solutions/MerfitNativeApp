@@ -29,7 +29,7 @@ export function AccountStep({
       <OnboardingInput
         value={email}
         onChangeText={onEmailChange}
-        placeholder="Email"
+        placeholder="E-posta"
         keyboardType="email-address"
         autoCapitalize="none"
         autoCorrect={false}
@@ -39,7 +39,7 @@ export function AccountStep({
       <OnboardingInput
         value={password}
         onChangeText={onPasswordChange}
-        placeholder="Password"
+        placeholder="Şifre"
         secureTextEntry
         autoCapitalize="none"
         style={styles.fieldFont}
@@ -48,7 +48,7 @@ export function AccountStep({
       <OnboardingInput
         value={confirmPassword}
         onChangeText={onConfirmPasswordChange}
-        placeholder="Confirm password"
+        placeholder="Şifreyi onayla"
         secureTextEntry
         autoCapitalize="none"
         style={styles.fieldFont}
@@ -56,17 +56,17 @@ export function AccountStep({
 
       <View style={styles.dividerRow}>
         <View style={styles.dividerLine} />
-        <Text style={styles.dividerLabel}>or</Text>
+        <Text style={styles.dividerLabel}>veya</Text>
         <View style={styles.dividerLine} />
       </View>
 
       <Pressable onPress={onGooglePress} style={styles.googleButton}>
-        <Text style={styles.googleLabel}>Continue with Google</Text>
+        <Text style={styles.googleLabel}>Google ile devam et</Text>
       </Pressable>
 
       <Pressable onPress={onLoginPress} hitSlop={8} style={styles.loginRow}>
         <Text style={styles.loginText}>
-          Already have an account? <Text style={styles.loginLink}>Log in</Text>
+          Zaten bir hesabın var mı? <Text style={styles.loginLink}>Giriş yap</Text>
         </Text>
       </Pressable>
     </View>

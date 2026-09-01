@@ -91,34 +91,34 @@ export function PlusPurchaseModal({
           {state === "processing" ? (
             <View style={styles.centerState}>
               <ActivityIndicator color={colors.electricBlue} size="large" />
-              <Text style={styles.centerTitle}>Processing...</Text>
+              <Text style={styles.centerTitle}>İşleniyor...</Text>
             </View>
           ) : state === "success" ? (
             <View style={styles.centerState}>
               <View style={styles.successBadge}>
                 <Ionicons name="checkmark" size={26} color="#FFFFFF" />
               </View>
-              <Text style={styles.centerTitle}>Welcome to MERFIT Plus.</Text>
+              <Text style={styles.centerTitle}>MERFIT Plus'a hoş geldin.</Text>
               <Text style={styles.centerSubtitle}>
-                Your premium features are now unlocked.
+                Premium özelliklerinin kilidi artık açık.
               </Text>
               <Pressable onPress={onPurchased} style={styles.primaryButton}>
-                <Text style={styles.primaryLabel}>Continue</Text>
+                <Text style={styles.primaryLabel}>Devam Et</Text>
               </Pressable>
             </View>
           ) : state === "error" ? (
             <View style={styles.centerState}>
-              <Text style={styles.centerTitle}>Something went wrong.</Text>
-              <Text style={styles.centerSubtitle}>Please try again.</Text>
+              <Text style={styles.centerTitle}>Bir şeyler ters gitti.</Text>
+              <Text style={styles.centerSubtitle}>Lütfen tekrar dene.</Text>
               <Pressable onPress={handlePurchase} style={styles.primaryButton}>
-                <Text style={styles.primaryLabel}>Try Again</Text>
+                <Text style={styles.primaryLabel}>Tekrar Dene</Text>
               </Pressable>
               <Pressable
                 onPress={onClose}
                 hitSlop={8}
                 style={styles.textButton}
               >
-                <Text style={styles.textButtonLabel}>Close</Text>
+                <Text style={styles.textButtonLabel}>Kapat</Text>
               </Pressable>
             </View>
           ) : (
@@ -129,8 +129,8 @@ export function PlusPurchaseModal({
               <Text style={styles.brand}>MERFIT+</Text>
               <Text style={styles.title}>
                 {info
-                  ? `Unlock ${info.title}`
-                  : "Train smarter. Progress further."}
+                  ? `${info.title} kilidini aç`
+                  : "Daha akıllı antrenman yap. Daha ileri git."}
               </Text>
               {info ? (
                 <Text style={styles.subtitle}>{info.description}</Text>
@@ -164,11 +164,11 @@ export function PlusPurchaseModal({
                           active && styles.planPillLabelActive,
                         ]}
                       >
-                        {option === "monthly" ? "Monthly" : "Yearly"}
+                        {option === "monthly" ? "Aylık" : "Yıllık"}
                       </Text>
                       {option === "yearly" ? (
                         <View style={styles.saveBadge}>
-                          <Text style={styles.saveBadgeLabel}>SAVE 20%</Text>
+                          <Text style={styles.saveBadgeLabel}>%20 TASARRUF</Text>
                         </View>
                       ) : null}
                     </Pressable>
@@ -179,7 +179,7 @@ export function PlusPurchaseModal({
               {selectedProduct ? (
                 <View style={styles.priceCard}>
                   <Text style={styles.priceLabel}>
-                    {plan === "monthly" ? "MONTHLY" : "YEARLY"}
+                    {plan === "monthly" ? "AYLIK" : "YILLIK"}
                   </Text>
                   <Text style={styles.price}>${selectedProduct.price}</Text>
                   <Text style={styles.pricePeriod}>
@@ -189,7 +189,7 @@ export function PlusPurchaseModal({
               ) : null}
 
               <Pressable onPress={handlePurchase} style={styles.primaryButton}>
-                <Text style={styles.primaryLabel}>Continue with Plus</Text>
+                <Text style={styles.primaryLabel}>Plus ile Devam Et</Text>
               </Pressable>
 
               <Pressable
@@ -197,10 +197,10 @@ export function PlusPurchaseModal({
                 hitSlop={8}
                 style={styles.textButton}
               >
-                <Text style={styles.textButtonLabel}>Restore Purchase</Text>
+                <Text style={styles.textButtonLabel}>Satın Almayı Geri Yükle</Text>
               </Pressable>
 
-              <Text style={styles.legal}>Terms · Privacy</Text>
+              <Text style={styles.legal}>Şartlar · Gizlilik</Text>
             </ScrollView>
           )}
         </SafeAreaView>

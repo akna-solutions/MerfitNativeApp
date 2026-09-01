@@ -36,7 +36,7 @@ export function WorkoutsScreen() {
   // (aynı Workout[] şekli) kullanılacak.
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState<"All" | Category>("All");
+  const [activeCategory, setActiveCategory] = useState<"Tümü" | Category>("Tümü");
   const [filters, setFilters] = useState<WorkoutFilters>(EMPTY_FILTERS);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
 
@@ -59,7 +59,7 @@ export function WorkoutsScreen() {
     const query = searchQuery.trim().toLowerCase();
 
     return MOCK_WORKOUTS.filter((workout) => {
-      if (activeCategory !== "All" && workout.category !== activeCategory) {
+      if (activeCategory !== "Tümü" && workout.category !== activeCategory) {
         return false;
       }
       if (query && !workout.title.toLowerCase().includes(query)) {
@@ -107,7 +107,7 @@ export function WorkoutsScreen() {
 
   const clearAllFilters = () => {
     setFilters(EMPTY_FILTERS);
-    setActiveCategory("All");
+    setActiveCategory("Tümü");
     setSearchQuery("");
   };
 
@@ -178,7 +178,7 @@ export function WorkoutsScreen() {
                 {personalized.length > 0 ? (
                   <View style={styles.sectionGap}>
                     <WorkoutGrid
-                      title="Recommended for you"
+                      title="Sana özel öneriler"
                       workouts={personalized}
                       onSelect={goToWorkoutDetail}
                     />
@@ -187,7 +187,7 @@ export function WorkoutsScreen() {
 
                 <View style={styles.sectionGap}>
                   <WorkoutGrid
-                    title="All Workouts"
+                    title="Tüm Antrenmanlar"
                     workouts={filteredWorkouts}
                     onSelect={goToWorkoutDetail}
                   />

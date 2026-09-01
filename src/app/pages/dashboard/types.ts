@@ -3,7 +3,7 @@ export type WorkoutSummary = {
   title: string;
   duration: string; // "45 min"
   meta: string; // "6 exercises"
-  difficulty: "Beginner" | "Intermediate" | "Advanced";
+  difficulty: "Başlangıç" | "Orta" | "İleri";
   imageUrl: string;
 };
 

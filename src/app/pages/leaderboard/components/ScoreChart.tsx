@@ -40,11 +40,11 @@ export function ScoreChart({ points, weeklyChange, history }: Props) {
 
   return (
     <View>
-      <Text style={styles.sectionTitle}>Score Progress</Text>
+      <Text style={styles.sectionTitle}>Puan İlerlemesi</Text>
 
       <View style={styles.card}>
         <Text style={styles.points}>{points.toLocaleString()}</Text>
-        <Text style={styles.change}>+{weeklyChange} this week</Text>
+        <Text style={styles.change}>+{weeklyChange} bu hafta</Text>
 
         <View style={styles.chartArea} onLayout={onLayout}>
           {width > 0 ? (

@@ -54,7 +54,7 @@ export function WelcomeContent({ onGetStarted, onLogin }: Props) {
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <Animated.View style={[styles.logoBlock, rise(logoAnim, -10)]}>
         <Text style={styles.logoText}>MERFIT</Text>
-        <Text style={styles.slogan}>TRAIN SMARTER. LIVE BETTER.</Text>
+        <Text style={styles.slogan}>DAHA AKILLI ANTRENMAN. DAHA İYİ YAŞAM.</Text>
       </Animated.View>
 
       <View style={styles.spacer} />
@@ -62,24 +62,24 @@ export function WelcomeContent({ onGetStarted, onLogin }: Props) {
       <View style={styles.bottomBlock}>
         <Animated.View style={rise(headlineAnim, 16)}>
           <Text style={styles.headline}>
-            Train smarter.{"\n"}Become{" "}
-            <Text style={styles.headlineAccent}>stronger</Text>.
+            Daha akıllı antrenman yap.{"\n"}Daha{" "}
+            <Text style={styles.headlineAccent}>güçlü</Text> ol.
           </Text>
         </Animated.View>
 
         <Animated.View style={rise(ctaAnim, 16)}>
           <WelcomeButton
-            label="GET STARTED"
+            label="BAŞLA"
             onPress={onGetStarted}
             variant="primary"
           />
           <View style={styles.ctaGap} />
           <WelcomeButton
-            label="I ALREADY HAVE AN ACCOUNT"
+            label="ZATEN BİR HESABIM VAR"
             onPress={onLogin}
             variant="secondary"
           />
-          <Text style={styles.footer}>Your journey starts here.</Text>
+          <Text style={styles.footer}>Yolculuğun burada başlıyor.</Text>
         </Animated.View>
       </View>
     </SafeAreaView>

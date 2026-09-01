@@ -1,4 +1,4 @@
-export type Gender = "Male" | "Female" | "Other" | "Prefer not to say";
+export type Gender = "Erkek" | "Kadın" | "Diğer" | "Belirtmek istemiyorum";
 
 export type Goal =
   | "LOSE_WEIGHT"
@@ -71,25 +71,25 @@ export type ProfileData = {
 };
 
 export const GOAL_LABELS: Record<Goal, string> = {
-  LOSE_WEIGHT: "Lose Weight",
-  BUILD_MUSCLE: "Build Muscle",
-  MAINTAIN_WEIGHT: "Maintain Weight",
-  IMPROVE_ENDURANCE: "Improve Endurance",
-  GET_STRONGER: "Get Stronger",
-  GENERAL_FITNESS: "General Fitness",
+  LOSE_WEIGHT: "Kilo Vermek",
+  BUILD_MUSCLE: "Kas Yapmak",
+  MAINTAIN_WEIGHT: "Kiloyu Korumak",
+  IMPROVE_ENDURANCE: "Dayanıklılığı Artırmak",
+  GET_STRONGER: "Daha Güçlü Olmak",
+  GENERAL_FITNESS: "Genel Fitness",
 };
 
 export const EXPERIENCE_LABELS: Record<ExperienceLevel, string> = {
-  BEGINNER: "Beginner",
-  INTERMEDIATE: "Intermediate",
-  ADVANCED: "Advanced",
+  BEGINNER: "Başlangıç",
+  INTERMEDIATE: "Orta",
+  ADVANCED: "İleri",
 };
 
 export const EQUIPMENT_LABELS: Record<Equipment, string> = {
-  FULL_GYM: "Full Gym",
-  HOME_GYM: "Home Gym",
-  BODYWEIGHT: "Bodyweight",
-  MINIMAL_EQUIPMENT: "Minimal Equipment",
+  FULL_GYM: "Tam Donanımlı Salon",
+  HOME_GYM: "Ev Salonu",
+  BODYWEIGHT: "Vücut Ağırlığı",
+  MINIMAL_EQUIPMENT: "Minimal Ekipman",
 };
 
 export const WEEKDAYS: Weekday[] = [

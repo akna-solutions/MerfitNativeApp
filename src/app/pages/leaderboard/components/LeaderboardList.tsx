@@ -13,7 +13,7 @@ export function LeaderboardList({ entries, anonymized }: Props) {
 
   return (
     <View>
-      <Text style={styles.sectionTitle}>Top 10 Türkiye</Text>
+      <Text style={styles.sectionTitle}>Türkiye İlk 10</Text>
 
       <View style={styles.podiumCard}>
         <TopThree entries={topThree} />

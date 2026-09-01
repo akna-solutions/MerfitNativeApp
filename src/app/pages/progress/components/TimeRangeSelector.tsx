@@ -4,10 +4,10 @@ import { colors } from "../theme";
 import { TimeRange } from "../types";
 
 const OPTIONS: { label: string; value: TimeRange }[] = [
-  { label: "Week", value: "week" },
-  { label: "Month", value: "month" },
-  { label: "3 Months", value: "3months" },
-  { label: "Year", value: "year" },
+  { label: "Hafta", value: "week" },
+  { label: "Ay", value: "month" },
+  { label: "3 Ay", value: "3months" },
+  { label: "Yıl", value: "year" },
 ];
 
 type Props = {

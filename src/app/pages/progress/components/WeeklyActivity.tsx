@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { colors } from "../theme";
 
-const DAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
+const DAY_LABELS = ["P", "S", "Ç", "P", "C", "C", "P"];
 
 type Props = { days: boolean[] };
 
@@ -11,7 +11,7 @@ export function WeeklyActivity({ days }: Props) {
 
   return (
     <View>
-      <Text style={styles.sectionTitle}>This Week</Text>
+      <Text style={styles.sectionTitle}>Bu Hafta</Text>
 
       <View style={styles.card}>
         <View style={styles.row}>
@@ -22,7 +22,7 @@ export function WeeklyActivity({ days }: Props) {
             </View>
           ))}
         </View>
-        <Text style={styles.caption}>{completedCount} workouts this week</Text>
+        <Text style={styles.caption}>Bu hafta {completedCount} antrenman</Text>
       </View>
     </View>
   );

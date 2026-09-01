@@ -23,12 +23,12 @@ export function SetInput({
   return (
     <View style={styles.card}>
       <Text style={styles.title}>
-        SET {setNumber} OF {totalSets}
+        SET {setNumber} / {totalSets}
       </Text>
 
       <View style={styles.row}>
         <View style={styles.field}>
-          <Text style={styles.label}>Weight (kg)</Text>
+          <Text style={styles.label}>Ağırlık (kg)</Text>
           <OnboardingInput
             value={weight}
             onChangeText={(text) =>
@@ -40,7 +40,7 @@ export function SetInput({
           />
         </View>
         <View style={styles.field}>
-          <Text style={styles.label}>Reps</Text>
+          <Text style={styles.label}>Tekrar</Text>
           <OnboardingInput
             value={reps}
             onChangeText={(text) =>

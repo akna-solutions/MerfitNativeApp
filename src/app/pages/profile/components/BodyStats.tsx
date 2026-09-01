@@ -13,18 +13,18 @@ export function BodyStats({ height, weight, age, onEditPress }: Props) {
   const bmi = height > 0 ? weight / Math.pow(height / 100, 2) : 0;
 
   const items = [
-    { label: "Height", value: `${height}`, unit: "cm" },
-    { label: "Weight", value: `${weight}`, unit: "kg" },
-    { label: "Age", value: `${age}`, unit: "" },
-    { label: "BMI", value: bmi.toFixed(1), unit: "" },
+    { label: "Boy", value: `${height}`, unit: "cm" },
+    { label: "Kilo", value: `${weight}`, unit: "kg" },
+    { label: "Yaş", value: `${age}`, unit: "" },
+    { label: "VKİ", value: bmi.toFixed(1), unit: "" },
   ];
 
   return (
     <View>
       <View style={styles.header}>
-        <Text style={styles.sectionTitle}>Your Stats</Text>
+        <Text style={styles.sectionTitle}>İstatistiklerin</Text>
         <Pressable onPress={onEditPress} hitSlop={8}>
-          <Text style={styles.edit}>Edit</Text>
+          <Text style={styles.edit}>Düzenle</Text>
         </Pressable>
       </View>
 

@@ -38,7 +38,7 @@ export function OnboardingScreen({
   onContinue,
   onSkip,
   continueDisabled,
-  continueLabel = "Continue",
+  continueLabel = "Devam et",
 }: Props) {
   const fade = useRef(new Animated.Value(0)).current;
 
@@ -65,7 +65,7 @@ export function OnboardingScreen({
           </View>
           <ProgressBar current={step} total={totalSteps} />
           <Text style={styles.stepLabel}>
-            Step {step} of {totalSteps}
+            Adım {step} / {totalSteps}
           </Text>
         </View>
 
@@ -107,7 +107,7 @@ export function OnboardingScreen({
           />
           {onSkip ? (
             <OnboardingButton
-              label="Skip for now"
+              label="Şimdilik atla"
               onPress={onSkip}
               variant="text"
             />

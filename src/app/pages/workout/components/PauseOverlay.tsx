@@ -14,15 +14,15 @@ export function PauseOverlay({ onResume, onExit }: Props) {
     <View style={styles.overlay}>
       <SafeAreaView style={styles.content} edges={["top", "bottom"]}>
         <View style={styles.center}>
-          <Text style={styles.title}>Workout Paused</Text>
-          <Text style={styles.subtitle}>Take a break.</Text>
+          <Text style={styles.title}>Antrenman Duraklatıldı</Text>
+          <Text style={styles.subtitle}>Biraz mola ver.</Text>
         </View>
 
         <View style={styles.actions}>
-          <OnboardingButton label="Resume" onPress={onResume} />
+          <OnboardingButton label="Devam Et" onPress={onResume} />
           <View style={styles.exitGap}>
             <OnboardingButton
-              label="Exit Workout"
+              label="Antrenmandan Çık"
               onPress={onExit}
               variant="text"
             />

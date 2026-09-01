@@ -9,7 +9,7 @@ type Props = { entries: LeaderboardEntry[]; anonymized?: boolean };
 export function NearbyUsers({ entries, anonymized }: Props) {
   return (
     <View>
-      <Text style={styles.sectionTitle}>Around You</Text>
+      <Text style={styles.sectionTitle}>Çevrendekiler</Text>
       <View style={styles.card}>
         {entries.map((entry) => (
           <LeaderboardRow

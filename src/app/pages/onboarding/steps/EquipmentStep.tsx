@@ -5,19 +5,19 @@ import { colors } from "../theme";
 import { Equipment, TrainingLocation } from "../types";
 
 const LOCATION_OPTIONS: { label: string; value: TrainingLocation }[] = [
-  { label: "Gym", value: "gym" },
-  { label: "Home", value: "home" },
-  { label: "Outdoor", value: "outdoor" },
+  { label: "Spor salonu", value: "gym" },
+  { label: "Ev", value: "home" },
+  { label: "Açık alan", value: "outdoor" },
 ];
 
 const EQUIPMENT_OPTIONS: { label: string; value: Equipment }[] = [
-  { label: "Dumbbells", value: "dumbbells" },
-  { label: "Barbell", value: "barbell" },
-  { label: "Resistance bands", value: "bands" },
-  { label: "Machines", value: "machines" },
-  { label: "Pull-up bar", value: "pullup_bar" },
+  { label: "Dambıl", value: "dumbbells" },
+  { label: "Halter", value: "barbell" },
+  { label: "Direnç bandı", value: "bands" },
+  { label: "Makineler", value: "machines" },
+  { label: "Barfiks barı", value: "pullup_bar" },
   { label: "Kettlebell", value: "kettlebell" },
-  { label: "No equipment", value: "none" },
+  { label: "Ekipman yok", value: "none" },
 ];
 
 type Props = {
@@ -59,7 +59,7 @@ export function EquipmentStep({
 
       {location ? (
         <View style={styles.equipmentBlock}>
-          <Text style={styles.equipmentTitle}>What equipment do you have?</Text>
+          <Text style={styles.equipmentTitle}>Hangi ekipmanlara sahipsin?</Text>
           {EQUIPMENT_OPTIONS.map((option) => (
             <OnboardingOption
               key={option.value}

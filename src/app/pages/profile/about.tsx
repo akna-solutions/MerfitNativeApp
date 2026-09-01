@@ -5,15 +5,15 @@ import { colors } from "./theme";
 
 export default function AboutRoute() {
   return (
-    <ProfileDetailShell title="About MERFIT">
+    <ProfileDetailShell title="MERFIT Hakkında">
       <View style={styles.center}>
         <Text style={styles.brand}>MERFIT</Text>
         <Text style={styles.tagline}>
-          Train smarter.{"\n"}Progress further.
+          Daha akıllı antrenman yap.{"\n"}Daha ileri git.
         </Text>
-        <Text style={styles.version}>Version 1.0.0</Text>
+        <Text style={styles.version}>Sürüm 1.0.0</Text>
         <Text style={styles.description}>
-          Made for people who want to become better every day.
+          Her gün daha iyi olmak isteyenler için tasarlandı.
         </Text>
       </View>
     </ProfileDetailShell>

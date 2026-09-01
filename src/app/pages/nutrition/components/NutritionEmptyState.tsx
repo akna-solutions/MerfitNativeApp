@@ -11,12 +11,12 @@ export function NutritionEmptyState({ onAddFirstMeal }: Props) {
       <View style={styles.badge}>
         <Text style={styles.badgeGlyph}>+</Text>
       </View>
-      <Text style={styles.title}>Your nutrition journey starts here.</Text>
+      <Text style={styles.title}>Beslenme yolculuğun burada başlıyor.</Text>
       <Text style={styles.description}>
-        Log your first meal to start tracking your daily nutrition.
+        Günlük beslenmeni takip etmeye başlamak için ilk öğününü ekle.
       </Text>
       <View style={styles.button}>
-        <OnboardingButton label="Add First Meal" onPress={onAddFirstMeal} />
+        <OnboardingButton label="İlk Öğünü Ekle" onPress={onAddFirstMeal} />
       </View>
     </View>
   );

@@ -17,8 +17,8 @@ export function WorkoutHeader({
   return (
     <View style={styles.row}>
       <View style={styles.textBlock}>
-        <Text style={styles.title}>Workouts</Text>
-        <Text style={styles.subtitle}>Find your next challenge.</Text>
+        <Text style={styles.title}>Antrenmanlar</Text>
+        <Text style={styles.subtitle}>Bir sonraki mücadeleni bul.</Text>
       </View>
 
       <View style={styles.actions}>

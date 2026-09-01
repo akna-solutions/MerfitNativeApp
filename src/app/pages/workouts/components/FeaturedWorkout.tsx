@@ -19,7 +19,7 @@ type Props = {
 export function FeaturedWorkout({ workout, onPress }: Props) {
   return (
     <View>
-      <Text style={styles.sectionTitle}>Featured</Text>
+      <Text style={styles.sectionTitle}>Öne Çıkan</Text>
 
       <ImageBackground
         source={{ uri: workout.imageUrl }}
@@ -37,11 +37,11 @@ export function FeaturedWorkout({ workout, onPress }: Props) {
             <Text style={styles.tagline}>{workout.tagline}</Text>
           ) : null}
           <Text style={styles.meta}>
-            {workout.duration} min • {workout.difficulty}
+            {workout.duration} dk • {workout.difficulty}
           </Text>
 
           <Pressable onPress={onPress} style={styles.cta}>
-            <Text style={styles.ctaLabel}>Start Workout</Text>
+            <Text style={styles.ctaLabel}>Antrenmana Başla</Text>
             <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
           </Pressable>
         </View>

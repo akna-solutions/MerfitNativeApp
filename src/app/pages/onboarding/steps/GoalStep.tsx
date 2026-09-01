@@ -4,12 +4,12 @@ import { OnboardingOption } from "../components/OnboardingOption";
 import { Goal } from "../types";
 
 const OPTIONS: { label: string; value: Goal }[] = [
-  { label: "Lose weight", value: "lose_weight" },
-  { label: "Build muscle", value: "build_muscle" },
-  { label: "Get stronger", value: "get_stronger" },
-  { label: "Improve fitness", value: "improve_fitness" },
-  { label: "Maintain my weight", value: "maintain_weight" },
-  { label: "Improve endurance", value: "improve_endurance" },
+  { label: "Kilo vermek", value: "lose_weight" },
+  { label: "Kas yapmak", value: "build_muscle" },
+  { label: "Daha güçlü olmak", value: "get_stronger" },
+  { label: "Fitness seviyesini artırmak", value: "improve_fitness" },
+  { label: "Kilomu korumak", value: "maintain_weight" },
+  { label: "Dayanıklılığı artırmak", value: "improve_endurance" },
 ];
 
 type Props = {

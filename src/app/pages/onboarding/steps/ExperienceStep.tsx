@@ -9,18 +9,18 @@ const OPTIONS: {
   value: TrainingExperience;
 }[] = [
   {
-    label: "Beginner",
-    subtitle: "I'm new to structured training",
+    label: "Başlangıç",
+    subtitle: "Yapılandırılmış antrenmana yeniyim",
     value: "beginner",
   },
   {
-    label: "Intermediate",
-    subtitle: "I've been training consistently",
+    label: "Orta",
+    subtitle: "Düzenli olarak antrenman yapıyorum",
     value: "intermediate",
   },
   {
-    label: "Advanced",
-    subtitle: "I have significant training experience",
+    label: "İleri",
+    subtitle: "Ciddi antrenman deneyimim var",
     value: "advanced",
   },
 ];

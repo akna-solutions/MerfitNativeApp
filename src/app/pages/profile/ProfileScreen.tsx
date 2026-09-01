@@ -117,24 +117,24 @@ export function ProfileScreen() {
           </Animated.View>
 
           <View style={[styles.padded, styles.sectionGap]}>
-            <SettingsSection title="Your Fitness">
+            <SettingsSection title="Fitness Bilgilerin">
               <SettingsRow
                 icon="person-outline"
-                title="Personal Information"
-                subtitle="Name, age and basic details"
+                title="Kişisel Bilgiler"
+                subtitle="Ad, yaş ve temel bilgiler"
                 onPress={() =>
                   router.push("/pages/profile/personal-information" as never)
                 }
               />
               <SettingsRow
                 icon="flag-outline"
-                title="Goals"
+                title="Hedefler"
                 subtitle={GOAL_LABELS[profile.goal]}
                 onPress={() => router.push("/pages/profile/goals" as never)}
               />
               <SettingsRow
                 icon="pulse-outline"
-                title="Body Measurements"
+                title="Vücut Ölçümleri"
                 subtitle={`${profile.height} cm · ${profile.weight} kg`}
                 onPress={() =>
                   router.push("/pages/profile/body-measurements" as never)
@@ -142,8 +142,8 @@ export function ProfileScreen() {
               />
               <SettingsRow
                 icon="barbell-outline"
-                title="Workout Preferences"
-                subtitle={`${profile.trainingDays.length} days · ${profile.workoutDurationMin} min`}
+                title="Antrenman Tercihleri"
+                subtitle={`${profile.trainingDays.length} gün · ${profile.workoutDurationMin} dk`}
                 onPress={() =>
                   router.push("/pages/profile/workout-preferences" as never)
                 }
@@ -153,17 +153,17 @@ export function ProfileScreen() {
           </View>
 
           <View style={[styles.padded, styles.sectionGap]}>
-            <SettingsSection title="Membership">
+            <SettingsSection title="Üyelik">
               <SettingsRow
                 icon="sparkles-outline"
                 title="MERFIT Plus"
-                subtitle={isPlusUser ? "Active" : "Unlock advanced features"}
+                subtitle={isPlusUser ? "Aktif" : "Gelişmiş özelliklerin kilidini aç"}
                 onPress={handleMembershipRowPress}
               />
               <SettingsRow
                 icon="card-outline"
-                title="Manage Subscription"
-                subtitle="Manage your membership"
+                title="Aboneliği Yönet"
+                subtitle="Üyeliğini yönet"
                 onPress={() =>
                   router.push("/pages/profile/subscription" as never)
                 }
@@ -173,27 +173,27 @@ export function ProfileScreen() {
           </View>
 
           <View style={[styles.padded, styles.sectionGap]}>
-            <SettingsSection title="Preferences">
+            <SettingsSection title="Tercihler">
               <SettingsRow
                 icon="notifications-outline"
-                title="Notifications"
-                subtitle="Workout reminders"
+                title="Bildirimler"
+                subtitle="Antrenman hatırlatmaları"
                 onPress={() =>
                   router.push("/pages/profile/notifications" as never)
                 }
               />
               <SettingsRow
                 icon="swap-vertical-outline"
-                title="Units"
+                title="Birimler"
                 subtitle={
-                  profile.unitSystem === "metric" ? "Metric" : "Imperial"
+                  profile.unitSystem === "metric" ? "Metrik" : "İngiliz"
                 }
                 onPress={() => router.push("/pages/profile/units" as never)}
               />
               <SettingsRow
                 icon="moon-outline"
-                title="Appearance"
-                subtitle="Dark"
+                title="Görünüm"
+                subtitle="Koyu"
                 onPress={() =>
                   router.push("/pages/profile/appearance" as never)
                 }
@@ -203,30 +203,30 @@ export function ProfileScreen() {
           </View>
 
           <View style={[styles.padded, styles.sectionGap]}>
-            <SettingsSection title="App">
+            <SettingsSection title="Uygulama">
               <SettingsRow
                 icon="shield-checkmark-outline"
-                title="Privacy"
+                title="Gizlilik"
                 onPress={() => router.push("/pages/profile/privacy" as never)}
               />
               <SettingsRow
                 icon="help-circle-outline"
-                title="Help & Support"
+                title="Yardım ve Destek"
                 onPress={() => router.push("/pages/profile/help" as never)}
               />
               <SettingsRow
                 icon="information-circle-outline"
-                title="About MERFIT"
+                title="MERFIT Hakkında"
                 onPress={() => router.push("/pages/profile/about" as never)}
               />
               <SettingsRow
                 icon="document-text-outline"
-                title="Terms & Conditions"
+                title="Şartlar ve Koşullar"
                 onPress={() => router.push("/pages/profile/terms" as never)}
               />
               <SettingsRow
                 icon="lock-closed-outline"
-                title="Privacy Policy"
+                title="Gizlilik Politikası"
                 onPress={() =>
                   router.push("/pages/profile/privacy-policy" as never)
                 }

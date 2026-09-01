@@ -12,14 +12,14 @@ export const MOCK_PROFILE_DATA: ProfileData = {
   height: 180,
   weight: 78.4,
 
-  goal: "Build Muscle",
-  goalDescription: "Build strength & muscle mass",
+  goal: "Kas Yapmak",
+  goalDescription: "Güç ve kas kütlesi kazan",
 
-  experience: "Beginner",
-  activityLevel: "Moderate",
+  experience: "Başlangıç",
+  activityLevel: "Orta",
   trainingDays: 4,
-  workoutLocation: "Home",
-  equipment: ["Dumbbells", "Resistance Bands"],
+  workoutLocation: "Ev",
+  equipment: ["Dambıl", "Direnç Bandı"],
 
   stats: {
     workouts: 18,

@@ -29,7 +29,7 @@ export function WorkoutTopBar({
           {title.toUpperCase()}
         </Text>
         <Text style={styles.subtitle}>
-          Exercise {exerciseIndex + 1} of {totalExercises}
+          Egzersiz {exerciseIndex + 1} / {totalExercises}
         </Text>
       </View>
 

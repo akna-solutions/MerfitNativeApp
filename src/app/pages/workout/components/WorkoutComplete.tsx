@@ -27,22 +27,22 @@ export function WorkoutComplete({
           <Ionicons name="checkmark" size={30} color="#FFFFFF" />
         </View>
 
-        <Text style={styles.title}>WORKOUT COMPLETE</Text>
-        <Text style={styles.subtitle}>Great work!</Text>
+        <Text style={styles.title}>ANTRENMAN TAMAMLANDI</Text>
+        <Text style={styles.subtitle}>Harika iş çıkardın!</Text>
 
         <View style={styles.statsRow}>
-          <Stat value={durationLabel} label="Duration" />
+          <Stat value={durationLabel} label="Süre" />
           <View style={styles.divider} />
-          <Stat value={`${exerciseCount}`} label="Exercises" />
+          <Stat value={`${exerciseCount}`} label="Egzersiz" />
           <View style={styles.divider} />
-          <Stat value={`${setCount}`} label="Sets" />
+          <Stat value={`${setCount}`} label="Set" />
         </View>
       </View>
 
       <View style={styles.footer}>
-        <OnboardingButton label="View Summary" onPress={onViewSummary} />
+        <OnboardingButton label="Özeti Gör" onPress={onViewSummary} />
         <View style={styles.doneGap}>
-          <OnboardingButton label="Done" onPress={onDone} variant="text" />
+          <OnboardingButton label="Bitti" onPress={onDone} variant="text" />
         </View>
       </View>
     </SafeAreaView>

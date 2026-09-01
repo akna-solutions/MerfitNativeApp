@@ -3,20 +3,20 @@ import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
 import { colors } from "../theme";
 import { Category } from "../types";
 
-const CATEGORIES: ("All" | Category)[] = [
-  "All",
-  "Strength",
-  "Cardio",
+const CATEGORIES: ("Tümü" | Category)[] = [
+  "Tümü",
+  "Kuvvet",
+  "Kardiyo",
   "HIIT",
-  "Mobility",
+  "Hareketlilik",
   "Core",
-  "Upper Body",
-  "Lower Body",
+  "Üst Vücut",
+  "Alt Vücut",
 ];
 
 type Props = {
-  active: "All" | Category;
-  onChange: (category: "All" | Category) => void;
+  active: "Tümü" | Category;
+  onChange: (category: "Tümü" | Category) => void;
 };
 
 export function WorkoutCategories({ active, onChange }: Props) {

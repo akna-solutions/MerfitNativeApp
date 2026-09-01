@@ -31,7 +31,7 @@ export function RestTimer({
 
   return (
     <View style={styles.wrapper}>
-      <Text style={styles.label}>REST</Text>
+      <Text style={styles.label}>DİNLENME</Text>
       <Text style={styles.timer}>{formatTime(remainingSec)}</Text>
 
       <View style={styles.track}>
@@ -45,7 +45,7 @@ export function RestTimer({
 
       {nextExercise ? (
         <View style={styles.nextBlock}>
-          <Text style={styles.nextLabel}>NEXT EXERCISE</Text>
+          <Text style={styles.nextLabel}>SONRAKİ EGZERSİZ</Text>
           <Text style={styles.nextName}>{nextExercise.name}</Text>
           <Text style={styles.nextMeta}>
             {nextExercise.sets} × {nextExercise.reps}
@@ -54,7 +54,7 @@ export function RestTimer({
       ) : null}
 
       <View style={styles.skipButton}>
-        <OnboardingButton label="Skip Rest" onPress={onSkip} variant="text" />
+        <OnboardingButton label="Dinlenmeyi Atla" onPress={onSkip} variant="text" />
       </View>
     </View>
   );
@@ -73,7 +73,7 @@ function AdjustButton({
       hitSlop={10}
       style={styles.adjustButtonWrapper}
     >
-      <Text style={styles.adjustLabel}>{label} sec</Text>
+      <Text style={styles.adjustLabel}>{label} sn</Text>
     </Pressable>
   );
 }

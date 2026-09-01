@@ -46,7 +46,7 @@ export function ExerciseVideo({ video, imageUrl }: Props) {
           size={14}
           color={colors.textPrimary}
         />
-        <Text style={styles.placeholderLabel}>Exercise demonstration</Text>
+        <Text style={styles.placeholderLabel}>Egzersiz gösterimi</Text>
       </View>
     </View>
   );

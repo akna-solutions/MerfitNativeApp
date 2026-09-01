@@ -76,8 +76,8 @@ export function OnboardingContainer() {
         <OnboardingScreen
           step={1}
           totalSteps={TOTAL_STEPS}
-          title="What's your name?"
-          description="We'll use your name to personalize your MERFIT experience."
+          title="Adın nedir?"
+          description="Adını, MERFIT deneyimini kişiselleştirmek için kullanacağız."
           onBack={goBack}
           onContinue={goNext}
           continueDisabled={!data.name.trim()}
@@ -94,8 +94,8 @@ export function OnboardingContainer() {
         <OnboardingScreen
           step={2}
           totalSteps={TOTAL_STEPS}
-          title="What's your gender?"
-          description="This helps us personalize your fitness recommendations."
+          title="Cinsiyetin nedir?"
+          description="Bu, fitness önerilerini kişiselleştirmemize yardımcı olur."
           onBack={goBack}
           onContinue={goNext}
           continueDisabled={!data.gender}
@@ -112,8 +112,8 @@ export function OnboardingContainer() {
         <OnboardingScreen
           step={3}
           totalSteps={TOTAL_STEPS}
-          title="How old are you?"
-          description="Your age helps us personalize your training and nutrition recommendations."
+          title="Kaç yaşındasın?"
+          description="Yaşın, antrenman ve beslenme önerilerini kişiselleştirmemize yardımcı olur."
           onBack={goBack}
           onContinue={goNext}
           continueDisabled={!ageValid}
@@ -130,8 +130,8 @@ export function OnboardingContainer() {
         <OnboardingScreen
           step={4}
           totalSteps={TOTAL_STEPS}
-          title="How tall are you?"
-          description="We'll use your height to help calculate your fitness metrics."
+          title="Boyun kaç?"
+          description="Boyunu, fitness metriklerini hesaplamak için kullanacağız."
           onBack={goBack}
           onContinue={goNext}
           continueDisabled={!heightValid}
@@ -154,8 +154,8 @@ export function OnboardingContainer() {
         <OnboardingScreen
           step={5}
           totalSteps={TOTAL_STEPS}
-          title="What's your current weight?"
-          description="This helps us personalize your goals and track your progress."
+          title="Şu anki kilon nedir?"
+          description="Bu, hedeflerini kişiselleştirmemize ve ilerlemeni takip etmemize yardımcı olur."
           onBack={goBack}
           onContinue={goNext}
           continueDisabled={!data.weight}
@@ -174,8 +174,8 @@ export function OnboardingContainer() {
         <OnboardingScreen
           step={6}
           totalSteps={TOTAL_STEPS}
-          title="What's your main goal?"
-          description="Choose the goal you want MERFIT to focus on."
+          title="Ana hedefin nedir?"
+          description="MERFIT'in odaklanmasını istediğin hedefi seç."
           onBack={goBack}
           onContinue={goNext}
           continueDisabled={!data.goal}
@@ -192,8 +192,8 @@ export function OnboardingContainer() {
         <OnboardingScreen
           step={7}
           totalSteps={TOTAL_STEPS}
-          title="How active are you?"
-          description="Tell us about your current activity level."
+          title="Ne kadar aktifsin?"
+          description="Mevcut aktivite seviyeni bize anlat."
           onBack={goBack}
           onContinue={goNext}
           continueDisabled={!data.activityLevel}
@@ -210,7 +210,7 @@ export function OnboardingContainer() {
         <OnboardingScreen
           step={8}
           totalSteps={TOTAL_STEPS}
-          title="What's your training experience?"
+          title="Antrenman tecrüben nedir?"
           onBack={goBack}
           onContinue={goNext}
           continueDisabled={!data.trainingExperience}
@@ -227,7 +227,7 @@ export function OnboardingContainer() {
         <OnboardingScreen
           step={9}
           totalSteps={TOTAL_STEPS}
-          title="How often do you want to train?"
+          title="Ne sıklıkla antrenman yapmak istiyorsun?"
           onBack={goBack}
           onContinue={goNext}
           continueDisabled={!data.trainingDays}
@@ -244,7 +244,7 @@ export function OnboardingContainer() {
         <OnboardingScreen
           step={10}
           totalSteps={TOTAL_STEPS}
-          title="Where do you train?"
+          title="Nerede antrenman yapıyorsun?"
           onBack={goBack}
           onContinue={goNext}
           continueDisabled={!data.trainingLocation}
@@ -264,11 +264,11 @@ export function OnboardingContainer() {
         <OnboardingScreen
           step={11}
           totalSteps={TOTAL_STEPS}
-          title="Create your MERFIT account"
-          description="Save your profile and start your personalized fitness journey."
+          title="MERFIT hesabını oluştur"
+          description="Profilini kaydet ve kişiselleştirilmiş fitness yolculuğuna başla."
           onBack={goBack}
           onContinue={goNext}
-          continueLabel="Create account"
+          continueLabel="Hesap oluştur"
           continueDisabled={!accountValid}
         >
           <AccountStep

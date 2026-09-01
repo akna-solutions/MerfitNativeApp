@@ -23,12 +23,12 @@ export function RewardDetailModal({ reward, onClose }: Props) {
         {reward ? (
           <View style={styles.dialog}>
             <RewardImage icon={reward.icon} size="large" />
-            <Text style={styles.rankLabel}>Rank #{reward.rank} Reward</Text>
+            <Text style={styles.rankLabel}>#{reward.rank}. Sıra Ödülü</Text>
             <Text style={styles.title}>{reward.title}</Text>
             <Text style={styles.description}>{reward.description}</Text>
 
             <Pressable onPress={onClose} style={styles.closeButton}>
-              <Text style={styles.closeLabel}>Close</Text>
+              <Text style={styles.closeLabel}>Kapat</Text>
             </Pressable>
           </View>
         ) : null}

@@ -9,8 +9,8 @@ export function ProgressHeader({ onSettingsPress }: Props) {
   return (
     <View style={styles.row}>
       <View style={styles.textBlock}>
-        <Text style={styles.title}>Your Progress</Text>
-        <Text style={styles.subtitle}>See how far you've come.</Text>
+        <Text style={styles.title}>İlerlemen</Text>
+        <Text style={styles.subtitle}>Ne kadar yol kat ettiğini gör.</Text>
       </View>
 
       <Pressable

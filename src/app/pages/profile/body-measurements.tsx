@@ -30,10 +30,10 @@ export default function BodyMeasurementsRoute() {
 
   return (
     <ProfileDetailShell
-      title="Body Measurements"
-      footer={<OnboardingButton label="Save Changes" onPress={handleSave} />}
+      title="Vücut Ölçümleri"
+      footer={<OnboardingButton label="Değişiklikleri Kaydet" onPress={handleSave} />}
     >
-      <Text style={styles.label}>Height ({heightUnit})</Text>
+      <Text style={styles.label}>Boy ({heightUnit})</Text>
       <OnboardingInput
         value={height}
         onChangeText={(text) => setHeight(text.replace(/[^0-9.]/g, ""))}
@@ -41,7 +41,7 @@ export default function BodyMeasurementsRoute() {
         style={styles.input}
       />
 
-      <Text style={[styles.label, styles.gapTop]}>Weight ({weightUnit})</Text>
+      <Text style={[styles.label, styles.gapTop]}>Kilo ({weightUnit})</Text>
       <OnboardingInput
         value={weight}
         onChangeText={(text) => setWeight(text.replace(/[^0-9.]/g, ""))}
@@ -50,7 +50,7 @@ export default function BodyMeasurementsRoute() {
       />
 
       <Text style={[styles.label, styles.gapTop]}>
-        Target Weight ({weightUnit})
+        Hedef Kilo ({weightUnit})
       </Text>
       <OnboardingInput
         value={targetWeight}

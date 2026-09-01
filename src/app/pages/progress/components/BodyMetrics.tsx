@@ -12,7 +12,7 @@ type Props = {
 export function BodyMetrics({ metrics, onViewAll }: Props) {
   return (
     <View>
-      <Text style={styles.sectionTitle}>Body Metrics</Text>
+      <Text style={styles.sectionTitle}>Vücut Ölçümleri</Text>
 
       <View style={styles.card}>
         {metrics.map((metric, index) => (
@@ -26,7 +26,7 @@ export function BodyMetrics({ metrics, onViewAll }: Props) {
         ))}
 
         <Pressable onPress={onViewAll} hitSlop={8} style={styles.viewAll}>
-          <Text style={styles.viewAllLabel}>View all metrics</Text>
+          <Text style={styles.viewAllLabel}>Tüm ölçümleri gör</Text>
           <Ionicons
             name="arrow-forward"
             size={13}

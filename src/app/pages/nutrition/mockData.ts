@@ -17,21 +17,21 @@ export const MOCK_NUTRITION_DATA: NutritionData = {
   },
   water: { consumedL: 1.5, targetL: 3 },
   meals: [
-    { id: "1", type: "Breakfast", name: "Oatmeal & Eggs", calories: 420 },
-    { id: "2", type: "Lunch", name: "Chicken & Rice", calories: 650 },
-    { id: "3", type: "Snacks", name: "Greek Yogurt", calories: 450 },
+    { id: "1", type: "Kahvaltı", name: "Yulaf Ezmesi & Yumurta", calories: 420 },
+    { id: "2", type: "Öğle Yemeği", name: "Tavuk & Pirinç", calories: 650 },
+    { id: "3", type: "Atıştırmalık", name: "Yunan Yoğurdu", calories: 450 },
   ],
 };
 
 // Add Meal akışında kullanılacak mock yiyecek listesi - gerçek Food Search
 // ekranı/API'si eklendiğinde bu listenin yerini alacak.
 export const MOCK_FOODS: FoodItem[] = [
-  { id: "chicken-breast", name: "Chicken Breast", calories: 165 },
-  { id: "rice", name: "Rice", calories: 206 },
-  { id: "eggs", name: "Eggs", calories: 155 },
-  { id: "oatmeal", name: "Oatmeal", calories: 158 },
-  { id: "greek-yogurt", name: "Greek Yogurt", calories: 100 },
-  { id: "banana", name: "Banana", calories: 105 },
-  { id: "avocado", name: "Avocado", calories: 234 },
-  { id: "salmon", name: "Salmon", calories: 208 },
+  { id: "chicken-breast", name: "Tavuk Göğsü", calories: 165 },
+  { id: "rice", name: "Pirinç", calories: 206 },
+  { id: "eggs", name: "Yumurta", calories: 155 },
+  { id: "oatmeal", name: "Yulaf Ezmesi", calories: 158 },
+  { id: "greek-yogurt", name: "Yunan Yoğurdu", calories: 100 },
+  { id: "banana", name: "Muz", calories: 105 },
+  { id: "avocado", name: "Avokado", calories: 234 },
+  { id: "salmon", name: "Somon", calories: 208 },
 ];

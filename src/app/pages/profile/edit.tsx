@@ -11,10 +11,10 @@ import { OnboardingOption } from "../onboarding/components/OnboardingOption";
 import { colors } from "./theme";
 
 const GENDER_OPTIONS: Gender[] = [
-  "Male",
-  "Female",
-  "Other",
-  "Prefer not to say",
+  "Erkek",
+  "Kadın",
+  "Diğer",
+  "Belirtmek istemiyorum",
 ];
 
 export default function EditProfileRoute() {
@@ -44,32 +44,32 @@ export default function EditProfileRoute() {
 
   return (
     <ProfileDetailShell
-      title="Edit Profile"
-      footer={<OnboardingButton label="Save Changes" onPress={handleSave} />}
+      title="Profili Düzenle"
+      footer={<OnboardingButton label="Değişiklikleri Kaydet" onPress={handleSave} />}
     >
       <Pressable style={styles.avatarWrapper}>
         {/* TODO: expo-image-picker eklendiğinde kullanıcı galeriden fotoğraf seçebilecek. */}
         <View style={styles.avatar}>
           <Text style={styles.avatarLabel}>{initial}</Text>
         </View>
-        <Text style={styles.avatarHint}>Change Photo</Text>
+        <Text style={styles.avatarHint}>Fotoğrafı Değiştir</Text>
       </Pressable>
 
-      <Field label="First Name">
+      <Field label="Ad">
         <OnboardingInput
           value={firstName}
           onChangeText={setFirstName}
           style={styles.input}
         />
       </Field>
-      <Field label="Last Name">
+      <Field label="Soyad">
         <OnboardingInput
           value={lastName}
           onChangeText={setLastName}
           style={styles.input}
         />
       </Field>
-      <Field label="Username">
+      <Field label="Kullanıcı Adı">
         <OnboardingInput
           value={username}
           onChangeText={setUsername}
@@ -77,7 +77,7 @@ export default function EditProfileRoute() {
           style={styles.input}
         />
       </Field>
-      <Field label="Email">
+      <Field label="E-posta">
         <OnboardingInput
           value={email}
           onChangeText={setEmail}
@@ -86,16 +86,16 @@ export default function EditProfileRoute() {
           style={styles.input}
         />
       </Field>
-      <Field label="Date of Birth">
+      <Field label="Doğum Tarihi">
         <OnboardingInput
           value={dateOfBirth}
           onChangeText={setDateOfBirth}
-          placeholder="YYYY-MM-DD"
+          placeholder="YYYY-AA-GG"
           style={styles.input}
         />
       </Field>
 
-      <Text style={styles.label}>Gender</Text>
+      <Text style={styles.label}>Cinsiyet</Text>
       <View style={styles.genderGap}>
         {GENDER_OPTIONS.map((option) => (
           <OnboardingOption

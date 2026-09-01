@@ -8,7 +8,7 @@ type Props = { items: RecentActivityItem[] };
 export function RecentActivity({ items }: Props) {
   return (
     <View>
-      <Text style={styles.sectionTitle}>Recent Activity</Text>
+      <Text style={styles.sectionTitle}>Son Aktiviteler</Text>
 
       <View style={styles.card}>
         <FlatList
@@ -23,7 +23,7 @@ export function RecentActivity({ items }: Props) {
                 <Text style={styles.title} numberOfLines={1}>
                   {item.title}
                 </Text>
-                <Text style={styles.duration}>{item.durationMin} min</Text>
+                <Text style={styles.duration}>{item.durationMin} dk</Text>
               </View>
               <Text style={styles.date}>{item.dateLabel}</Text>
             </View>

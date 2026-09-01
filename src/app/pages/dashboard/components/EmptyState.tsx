@@ -13,13 +13,13 @@ export function EmptyState({ onStartFirstWorkout }: Props) {
       <View style={styles.badge}>
         <Text style={styles.badgeGlyph}>+</Text>
       </View>
-      <Text style={styles.title}>Your journey starts here.</Text>
+      <Text style={styles.title}>Yolculuğun burada başlıyor.</Text>
       <Text style={styles.description}>
-        Complete your first workout to see your progress.
+        İlerlemeni görmek için ilk antrenmanını tamamla.
       </Text>
       <View style={styles.button}>
         <OnboardingButton
-          label="Start First Workout"
+          label="İlk Antrenmana Başla"
           onPress={onStartFirstWorkout}
         />
       </View>

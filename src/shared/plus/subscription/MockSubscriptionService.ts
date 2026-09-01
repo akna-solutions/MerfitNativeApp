@@ -6,13 +6,13 @@ import {
 } from "./SubscriptionService";
 
 const MOCK_PRODUCTS: Product[] = [
-  { plan: "monthly", price: "9.99", currency: "USD", period: "per month" },
+  { plan: "monthly", price: "9.99", currency: "USD", period: "aylık" },
   {
     plan: "yearly",
     price: "79.99",
     currency: "USD",
-    period: "per year",
-    badge: "SAVE 20%",
+    period: "yıllık",
+    badge: "%20 İNDİRİM",
   },
 ];
 

@@ -5,7 +5,7 @@ import { colors } from "../theme";
 export function ProfileHeader() {
   return (
     <View>
-      <Text style={styles.title}>Profile</Text>
+      <Text style={styles.title}>Profil</Text>
     </View>
   );
 }

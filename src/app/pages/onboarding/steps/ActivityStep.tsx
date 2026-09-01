@@ -5,28 +5,28 @@ import { ActivityLevel } from "../types";
 
 const OPTIONS: { label: string; subtitle: string; value: ActivityLevel }[] = [
   {
-    label: "Mostly sedentary",
-    subtitle: "Little to no exercise",
+    label: "Genellikle hareketsiz",
+    subtitle: "Neredeyse hiç egzersiz yok",
     value: "sedentary",
   },
   {
-    label: "Lightly active",
-    subtitle: "Light exercise 1-2 days/week",
+    label: "Hafif aktif",
+    subtitle: "Haftada 1-2 gün hafif egzersiz",
     value: "light",
   },
   {
-    label: "Moderately active",
-    subtitle: "Moderate exercise 3-4 days/week",
+    label: "Orta düzeyde aktif",
+    subtitle: "Haftada 3-4 gün orta düzeyde egzersiz",
     value: "moderate",
   },
   {
-    label: "Very active",
-    subtitle: "Hard exercise 5-6 days/week",
+    label: "Çok aktif",
+    subtitle: "Haftada 5-6 gün yoğun egzersiz",
     value: "active",
   },
   {
-    label: "Athlete",
-    subtitle: "Intense training almost daily",
+    label: "Sporcu",
+    subtitle: "Neredeyse her gün yoğun antrenman",
     value: "athlete",
   },
 ];

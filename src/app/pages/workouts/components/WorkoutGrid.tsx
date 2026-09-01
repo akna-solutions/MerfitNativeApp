@@ -20,7 +20,7 @@ export function WorkoutGrid({ title, workouts, onSelect, onSeeAll }: Props) {
         <Text style={styles.sectionTitle}>{title}</Text>
         {onSeeAll ? (
           <Pressable onPress={onSeeAll} hitSlop={8}>
-            <Text style={styles.seeAll}>See all</Text>
+            <Text style={styles.seeAll}>Tümünü gör</Text>
           </Pressable>
         ) : null}
       </View>

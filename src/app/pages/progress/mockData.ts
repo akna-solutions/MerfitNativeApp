@@ -7,7 +7,7 @@ export const MOCK_PROGRESS_DATA: ProgressData = {
   hasCompletedFirstWorkout: true,
 
   goalType: "lose_weight",
-  goalLabel: "Lose Weight",
+  goalLabel: "Kilo Ver",
 
   currentWeight: 78.4,
   startingWeight: 82,
@@ -22,33 +22,33 @@ export const MOCK_PROGRESS_DATA: ProgressData = {
   weeklyWorkouts: [true, true, false, true, true, false, false],
 
   weightHistory: [
-    { date: "Jun 01", weight: 82 },
-    { date: "Jun 15", weight: 81.4 },
-    { date: "Jul 01", weight: 80.7 },
-    { date: "Jul 15", weight: 79.8 },
-    { date: "Aug 01", weight: 79 },
-    { date: "Aug 15", weight: 78.4 },
+    { date: "Haz 01", weight: 82 },
+    { date: "Haz 15", weight: 81.4 },
+    { date: "Tem 01", weight: 80.7 },
+    { date: "Tem 15", weight: 79.8 },
+    { date: "Ağu 01", weight: 79 },
+    { date: "Ağu 15", weight: 78.4 },
   ],
 
   bodyMetrics: [
-    { id: "weight", label: "Weight", value: "78.4 kg" },
-    { id: "body-fat", label: "Body Fat", value: "17.8%" },
+    { id: "weight", label: "Kilo", value: "78.4 kg" },
+    { id: "body-fat", label: "Vücut Yağı", value: "%17.8" },
   ],
 
   recentActivity: [
     {
       id: "1",
-      title: "Upper Body Strength",
+      title: "Üst Vücut Kuvveti",
       durationMin: 45,
-      dateLabel: "Today",
+      dateLabel: "Bugün",
     },
     {
       id: "2",
-      title: "Full Body Workout",
+      title: "Tüm Vücut Antrenmanı",
       durationMin: 38,
-      dateLabel: "Yesterday",
+      dateLabel: "Dün",
     },
-    { id: "3", title: "Leg Strength", durationMin: 42, dateLabel: "Aug 12" },
+    { id: "3", title: "Bacak Kuvveti", durationMin: 42, dateLabel: "12 Ağu" },
   ],
 };
 

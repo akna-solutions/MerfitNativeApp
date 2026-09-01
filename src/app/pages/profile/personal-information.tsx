@@ -11,10 +11,10 @@ import { OnboardingOption } from "../onboarding/components/OnboardingOption";
 import { colors } from "./theme";
 
 const GENDER_OPTIONS: Gender[] = [
-  "Male",
-  "Female",
-  "Other",
-  "Prefer not to say",
+  "Erkek",
+  "Kadın",
+  "Diğer",
+  "Belirtmek istemiyorum",
 ];
 
 export default function PersonalInformationRoute() {
@@ -32,17 +32,17 @@ export default function PersonalInformationRoute() {
 
   return (
     <ProfileDetailShell
-      title="Personal Information"
-      footer={<OnboardingButton label="Save Changes" onPress={handleSave} />}
+      title="Kişisel Bilgiler"
+      footer={<OnboardingButton label="Değişiklikleri Kaydet" onPress={handleSave} />}
     >
-      <Text style={styles.label}>Name</Text>
+      <Text style={styles.label}>Ad</Text>
       <OnboardingInput
         value={firstName}
         onChangeText={setFirstName}
         style={styles.input}
       />
 
-      <Text style={[styles.label, styles.gapTop]}>Age</Text>
+      <Text style={[styles.label, styles.gapTop]}>Yaş</Text>
       <OnboardingInput
         value={age}
         onChangeText={(text) => setAge(text.replace(/[^0-9]/g, "").slice(0, 3))}
@@ -50,7 +50,7 @@ export default function PersonalInformationRoute() {
         style={styles.input}
       />
 
-      <Text style={[styles.label, styles.gapTop]}>Gender</Text>
+      <Text style={[styles.label, styles.gapTop]}>Cinsiyet</Text>
       <View>
         {GENDER_OPTIONS.map((option) => (
           <OnboardingOption

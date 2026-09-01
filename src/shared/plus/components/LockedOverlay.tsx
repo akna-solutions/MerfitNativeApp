@@ -20,7 +20,7 @@ export function LockedOverlay({ title, description }: Props) {
       </View>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.description}>{description}</Text>
-      <Text style={styles.cta}>View Plus</Text>
+      <Text style={styles.cta}>Plus'ı Görüntüle</Text>
     </View>
   );
 }

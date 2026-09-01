@@ -46,18 +46,18 @@ export function SuccessScreen({ name, onStart }: Props) {
         </View>
 
         <Text style={styles.title}>
-          You're all set{name ? `, ${name}` : ""}.
+          Hazırsın{name ? `, ${name}` : ""}.
         </Text>
-        <Text style={styles.subtitle}>Your MERFIT journey starts now.</Text>
+        <Text style={styles.subtitle}>MERFIT yolculuğun şimdi başlıyor.</Text>
         <Text style={styles.description}>
-          We'll use your profile to personalize your training experience.
+          Antrenman deneyimini kişiselleştirmek için profilini kullanacağız.
         </Text>
       </Animated.View>
 
       <View style={styles.spacer} />
 
       <View style={styles.footer}>
-        <OnboardingButton label="Start Training" onPress={onStart} />
+        <OnboardingButton label="Antrenmana Başla" onPress={onStart} />
       </View>
     </SafeAreaView>
   );

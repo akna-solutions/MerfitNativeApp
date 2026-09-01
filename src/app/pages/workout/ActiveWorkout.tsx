@@ -303,7 +303,7 @@ export function ActiveWorkout({ workoutId, workoutTitle }: Props) {
           {phase === "exercise" ? (
             <View style={styles.footer}>
               <OnboardingButton
-                label="Complete Set"
+                label="Seti Tamamla"
                 onPress={handleCompleteSet}
               />
             </View>

@@ -11,25 +11,25 @@ export default function PrivacyRoute() {
   };
 
   return (
-    <ProfileDetailShell title="Privacy">
+    <ProfileDetailShell title="Gizlilik">
       <SettingsSection>
         <SettingsToggle
-          title="Show profile on leaderboard"
-          subtitle="Others see your name instead of Anonymous"
+          title="Profili liderlik tablosunda göster"
+          subtitle="Diğerleri Anonim yerine adını görür"
           value={profile.privacy.profileVisibleOnLeaderboard}
           onValueChange={(value) =>
             setPrivacy({ profileVisibleOnLeaderboard: value })
           }
         />
         <SettingsToggle
-          title="Share workout statistics"
+          title="Antrenman istatistiklerini paylaş"
           value={profile.privacy.shareWorkoutStatistics}
           onValueChange={(value) =>
             setPrivacy({ shareWorkoutStatistics: value })
           }
         />
         <SettingsToggle
-          title="Personalized recommendations"
+          title="Kişiselleştirilmiş öneriler"
           value={profile.privacy.personalizedRecommendations}
           onValueChange={(value) =>
             setPrivacy({ personalizedRecommendations: value })

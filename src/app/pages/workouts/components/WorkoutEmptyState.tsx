@@ -10,12 +10,12 @@ type Props = {
 export function WorkoutEmptyState({ onClearFilters }: Props) {
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>No workouts found.</Text>
+      <Text style={styles.title}>Antrenman bulunamadı.</Text>
       <Text style={styles.description}>
-        Try changing your filters or search for another workout.
+        Filtrelerini değiştirmeyi veya başka bir antrenman aramayı dene.
       </Text>
       <View style={styles.button}>
-        <OnboardingButton label="Clear Filters" onPress={onClearFilters} />
+        <OnboardingButton label="Filtreleri Temizle" onPress={onClearFilters} />
       </View>
     </View>
   );

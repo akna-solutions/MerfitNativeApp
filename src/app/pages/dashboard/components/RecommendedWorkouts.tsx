@@ -18,7 +18,7 @@ type Props = {
 export function RecommendedWorkouts({ workouts, onSelect }: Props) {
   return (
     <View style={styles.wrapper}>
-      <Text style={styles.sectionTitle}>Recommended for you</Text>
+      <Text style={styles.sectionTitle}>Senin için önerilenler</Text>
 
       <ScrollView
         horizontal

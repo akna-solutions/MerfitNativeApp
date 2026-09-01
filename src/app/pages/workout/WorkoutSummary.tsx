@@ -37,16 +37,16 @@ export function WorkoutSummary({
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Workout Summary</Text>
+        <Text style={styles.title}>Antrenman Özeti</Text>
         <Text style={styles.workoutTitle}>{title}</Text>
         <Text style={styles.duration}>{durationLabel}</Text>
       </View>
 
       <View style={styles.grid}>
-        <StatCard label="Exercises" value={`${exercises.length}`} />
-        <StatCard label="Sets" value={`${setCount}`} />
-        <StatCard label="Calories" value={`${estimatedCalories} kcal`} />
-        <StatCard label="Volume" value={`${volume.toLocaleString()} kg`} />
+        <StatCard label="Egzersizler" value={`${exercises.length}`} />
+        <StatCard label="Setler" value={`${setCount}`} />
+        <StatCard label="Kalori" value={`${estimatedCalories} kcal`} />
+        <StatCard label="Hacim" value={`${volume.toLocaleString()} kg`} />
       </View>
 
       {personalRecords.length > 0 ? (
@@ -54,11 +54,11 @@ export function WorkoutSummary({
           {personalRecords.map((pr) => (
             <View key={pr.exerciseName} style={styles.prCard}>
               <View style={styles.prBadge}>
-                <Text style={styles.prBadgeLabel}>NEW PR</Text>
+                <Text style={styles.prBadgeLabel}>YENİ REKOR</Text>
               </View>
               <Text style={styles.prExercise}>{pr.exerciseName}</Text>
               <Text style={styles.prValue}>
-                {pr.weight} kg × {pr.reps} reps
+                {pr.weight} kg × {pr.reps} tekrar
               </Text>
             </View>
           ))}
@@ -66,7 +66,7 @@ export function WorkoutSummary({
       ) : null}
 
       <View style={styles.footer}>
-        <OnboardingButton label="Done" onPress={onDone} />
+        <OnboardingButton label="Bitti" onPress={onDone} />
       </View>
     </SafeAreaView>
   );
