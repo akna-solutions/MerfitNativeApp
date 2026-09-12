@@ -1,14 +1,9 @@
-import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Animated, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { PremiumFeature } from "../../../shared/plus/components/PremiumFeature";
-import {
-    BottomNavigation,
-    NavTab,
-} from "../dashboard/components/BottomNavigation";
 import { AddMealModal } from "./components/AddMealModal";
 import { AiNutritionPlanCard } from "./components/AiNutritionPlanCard";
 import { CalorieBreakdown } from "./components/CalorieBreakdown";
@@ -25,8 +20,6 @@ import { colors } from "./theme";
 import { FoodItem, MealEntry, MealType } from "./types";
 
 export function NutritionScreen() {
-  const router = useRouter();
-
   // TODO: Backend/API bağlandığında MOCK_NUTRITION_DATA yerine fetch/query
   // sonucu (aynı NutritionData şekli) kullanılacak. Su ve öğün ekleme gibi
   // interaction'lar şimdilik yalnızca local state'i güncelliyor.
@@ -106,16 +99,6 @@ export function NutritionScreen() {
       },
     ]);
     setAddMealType(null);
-  };
-
-  const handleTabChange = (tab: NavTab) => {
-    if (tab === "nutrition") return;
-    if (tab === "home") {
-      router.push("/pages/dashboard");
-      return;
-    }
-    // TODO: /pages/profile eklendiğinde bu yönlendirme gerçek sayfaya gidecek.
-    router.push(`/pages/${tab}` as never);
   };
 
   const hasLoggedFirstMeal = meals.length > 0;
@@ -209,8 +192,6 @@ export function NutritionScreen() {
           )}
         </ScrollView>
       </SafeAreaView>
-
-      <BottomNavigation active="nutrition" onChange={handleTabChange} />
 
       <AddMealModal
         visible={addMealType !== null}

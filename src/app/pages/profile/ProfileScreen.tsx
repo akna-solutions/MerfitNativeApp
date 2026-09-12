@@ -9,10 +9,6 @@ import { useProfile } from "../../../shared/profile/ProfileContext";
 import { SettingsRow } from "../../../shared/profile/components/SettingsRow";
 import { SettingsSection } from "../../../shared/profile/components/SettingsSection";
 import { GOAL_LABELS } from "../../../shared/profile/types";
-import {
-    BottomNavigation,
-    NavTab,
-} from "../dashboard/components/BottomNavigation";
 import { LogOutButton } from "./components/LogOutButton";
 import { PlusStatusCard } from "./components/PlusStatusCard";
 import { ProfileHeader } from "./components/ProfileHeader";
@@ -60,13 +56,6 @@ export function ProfileScreen() {
       },
     ],
   });
-
-  const handleTabChange = (tab: NavTab) => {
-    if (tab === "profile") return;
-    router.push(
-      tab === "home" ? "/pages/dashboard" : (`/pages/${tab}` as never),
-    );
-  };
 
   const handleConfirmLogout = () => {
     setLogoutModalVisible(false);
@@ -245,8 +234,6 @@ export function ProfileScreen() {
           </View>
         </ScrollView>
       </SafeAreaView>
-
-      <BottomNavigation active="profile" onChange={handleTabChange} />
     </View>
   );
 }

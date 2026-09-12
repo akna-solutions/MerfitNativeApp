@@ -1,12 +1,11 @@
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Animated, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { PremiumFeature } from "../../../shared/plus/components/PremiumFeature";
 import { AiWorkoutCard } from "./components/AiWorkoutCard";
-import { BottomNavigation, NavTab } from "./components/BottomNavigation";
 import { DashboardHeader } from "./components/DashboardHeader";
 import { EmptyState } from "./components/EmptyState";
 import { GoalProgressCard } from "./components/GoalProgressCard";
@@ -20,7 +19,6 @@ import { WorkoutSummary } from "./types";
 
 export function DashboardScreen() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<NavTab>("home");
 
   // TODO: gerçek API bağlandığında MOCK_DASHBOARD_DATA yerine fetch/query
   // sonucu (aynı DashboardData şekli) kullanılacak.
@@ -67,14 +65,6 @@ export function DashboardScreen() {
       },
     ],
   });
-
-  const handleTabChange = (tab: NavTab) => {
-    setActiveTab(tab);
-    if (tab === "home") return;
-    // TODO: /pages/workouts, /pages/progress, /pages/nutrition, /pages/profile
-    // ekranları eklendiğinde bu yönlendirmeler gerçek sayfalara gidecek.
-    router.push(`/pages/${tab}` as never);
-  };
 
   const goToWorkout = (workout: WorkoutSummary) => {
     router.push({
@@ -138,8 +128,6 @@ export function DashboardScreen() {
           )}
         </ScrollView>
       </SafeAreaView>
-
-      <BottomNavigation active={activeTab} onChange={handleTabChange} />
     </View>
   );
 }

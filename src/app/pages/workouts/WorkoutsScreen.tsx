@@ -5,10 +5,6 @@ import { ScrollView, StyleSheet, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { PremiumFeature } from "../../../shared/plus/components/PremiumFeature";
-import {
-    BottomNavigation,
-    NavTab,
-} from "../dashboard/components/BottomNavigation";
 import { AiWorkoutPlanCard } from "./components/AiWorkoutPlanCard";
 import { FeaturedWorkout } from "./components/FeaturedWorkout";
 import { WorkoutCategories } from "./components/WorkoutCategories";
@@ -111,15 +107,6 @@ export function WorkoutsScreen() {
     setSearchQuery("");
   };
 
-  const handleTabChange = (tab: NavTab) => {
-    if (tab === "workouts") return;
-    // TODO: /pages/progress, /pages/nutrition, /pages/profile eklendiğinde
-    // bu yönlendirmeler gerçek sayfalara gidecek.
-    router.push(
-      tab === "home" ? "/pages/dashboard" : (`/pages/${tab}` as never),
-    );
-  };
-
   return (
     <View style={styles.root}>
       <StatusBar style="light" />
@@ -197,8 +184,6 @@ export function WorkoutsScreen() {
           </View>
         </ScrollView>
       </SafeAreaView>
-
-      <BottomNavigation active="workouts" onChange={handleTabChange} />
 
       <WorkoutFilterModal
         visible={filterModalVisible}

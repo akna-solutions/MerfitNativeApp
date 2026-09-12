@@ -5,10 +5,6 @@ import { Animated, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { PremiumFeature } from "../../../shared/plus/components/PremiumFeature";
-import {
-    BottomNavigation,
-    NavTab,
-} from "../dashboard/components/BottomNavigation";
 import { CURRENT_USER_ENTRY, MOCK_CURRENT_USER } from "../leaderboard/mockData";
 import { BodyMetrics } from "./components/BodyMetrics";
 import { CurrentWeightCard } from "./components/CurrentWeightCard";
@@ -82,17 +78,6 @@ export function ProgressScreen() {
       },
     ],
   });
-
-  const handleTabChange = (tab: NavTab) => {
-    if (tab === "progress") return;
-    if (tab === "home") {
-      router.push("/pages/dashboard");
-      return;
-    }
-    // TODO: /pages/nutrition, /pages/profile eklendiğinde bu yönlendirmeler
-    // gerçek sayfalara gidecek.
-    router.push(`/pages/${tab}` as never);
-  };
 
   return (
     <View style={styles.root}>
@@ -216,8 +201,6 @@ export function ProgressScreen() {
           )}
         </ScrollView>
       </SafeAreaView>
-
-      <BottomNavigation active="progress" onChange={handleTabChange} />
     </View>
   );
 }
