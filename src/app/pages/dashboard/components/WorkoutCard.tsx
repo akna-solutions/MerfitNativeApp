@@ -1,11 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import {
-    ImageBackground,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  ImageBackground,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 
 import { colors } from "../theme";
@@ -48,7 +48,7 @@ export function WorkoutCard({ workout, onPress }: Props) {
 }
 
 const styles = StyleSheet.create({
-  wrapper: { marginTop: 28 },
+  wrapper: { marginTop: 28, marginBottom: 12 },
   sectionTitle: {
     color: colors.textPrimary,
     fontSize: 16,
