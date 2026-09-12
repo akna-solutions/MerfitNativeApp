@@ -5,9 +5,9 @@ import { colors } from "./theme";
 
 export default function AboutRoute() {
   return (
-    <ProfileDetailShell title="MERFIT Hakkında">
+    <ProfileDetailShell title="MB FIT Hakkında">
       <View style={styles.center}>
-        <Text style={styles.brand}>MERFIT</Text>
+        <Text style={styles.brand}>MB FIT</Text>
         <Text style={styles.tagline}>
           Daha akıllı antrenman yap.{"\n"}Daha ileri git.
         </Text>

@@ -31,7 +31,7 @@ export function LogOutButton({
           <Pressable style={StyleSheet.absoluteFillObject} onPress={onCancel} />
 
           <View style={styles.dialog}>
-            <Text style={styles.title}>MERFIT'ten çıkış yapılsın mı?</Text>
+            <Text style={styles.title}>MB FIT'ten çıkış yapılsın mı?</Text>
             <Text style={styles.message}>
               Hesabından çıkış yapmak istediğine emin misin?
             </Text>

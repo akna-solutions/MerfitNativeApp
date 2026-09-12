@@ -77,7 +77,7 @@ export function OnboardingContainer() {
           step={1}
           totalSteps={TOTAL_STEPS}
           title="Adın nedir?"
-          description="Adını, MERFIT deneyimini kişiselleştirmek için kullanacağız."
+          description="Adını, MB FIT deneyimini kişiselleştirmek için kullanacağız."
           onBack={goBack}
           onContinue={goNext}
           continueDisabled={!data.name.trim()}
@@ -175,7 +175,7 @@ export function OnboardingContainer() {
           step={6}
           totalSteps={TOTAL_STEPS}
           title="Ana hedefin nedir?"
-          description="MERFIT'in odaklanmasını istediğin hedefi seç."
+          description="MB FIT'in odaklanmasını istediğin hedefi seç."
           onBack={goBack}
           onContinue={goNext}
           continueDisabled={!data.goal}
@@ -264,7 +264,7 @@ export function OnboardingContainer() {
         <OnboardingScreen
           step={11}
           totalSteps={TOTAL_STEPS}
-          title="MERFIT hesabını oluştur"
+          title="MB FIT hesabını oluştur"
           description="Profilini kaydet ve kişiselleştirilmiş fitness yolculuğuna başla."
           onBack={goBack}
           onContinue={goNext}

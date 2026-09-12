@@ -14,7 +14,7 @@ export function ScoreCard({ points, weeklyChange, rank, onPress }: Props) {
   return (
     <Pressable onPress={onPress} style={styles.card}>
       <View style={styles.textBlock}>
-        <Text style={styles.title}>MERFIT Puanın</Text>
+        <Text style={styles.title}>MB FIT Puanın</Text>
         <Text style={styles.points}>{points.toLocaleString()}</Text>
         <Text style={styles.change}>+{weeklyChange} bu hafta</Text>
         <Text style={styles.rank}>🇹🇷 Türkiye'de #{rank}</Text>

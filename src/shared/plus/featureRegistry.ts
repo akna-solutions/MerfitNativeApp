@@ -26,8 +26,8 @@ export const PLUS_FEATURES: Record<PlusFeature, FeatureInfo> = {
     description: "Detaylı performans trendlerinin ve analizlerin kilidini aç.",
   },
   DETAILED_SCORE: {
-    title: "Detaylı MERFIT Skoru",
-    description: "MERFIT skorunun tam olarak nasıl hesaplandığını gör.",
+    title: "Detaylı MB FIT Skoru",
+    description: "MB FIT skorunun tam olarak nasıl hesaplandığını gör.",
   },
   ADVANCED_LEADERBOARD: {
     title: "Gelişmiş Liderlik Tablosu Öngörüleri",
@@ -41,6 +41,6 @@ export const PLUS_BENEFITS: string[] = [
   "Yapay Zeka Antrenman Planları",
   "Yapay Zeka Beslenme Planları",
   "Kişisel Öngörüler",
-  "Detaylı MERFIT Skoru",
+  "Detaylı MB FIT Skoru",
   "Gelişmiş Analizler",
 ];

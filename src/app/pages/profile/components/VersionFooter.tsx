@@ -5,7 +5,7 @@ import { colors } from "../theme";
 export function VersionFooter() {
   return (
     <View style={styles.wrapper}>
-      <Text style={styles.brand}>MERFIT</Text>
+      <Text style={styles.brand}>MB FIT</Text>
       <Text style={styles.version}>Sürüm 1.0.0</Text>
     </View>
   );

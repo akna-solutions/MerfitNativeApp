@@ -14,7 +14,7 @@ export function NutritionInsight({ onViewSuggestions }: Props) {
           size={16}
           color={colors.electricBlue}
         />
-        <Text style={styles.title}>MERFIT AI</Text>
+        <Text style={styles.title}>MB FIT AI</Text>
       </View>
 
       <Text style={styles.message}>

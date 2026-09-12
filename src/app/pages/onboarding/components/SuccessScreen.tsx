@@ -48,7 +48,7 @@ export function SuccessScreen({ name, onStart }: Props) {
         <Text style={styles.title}>
           Hazırsın{name ? `, ${name}` : ""}.
         </Text>
-        <Text style={styles.subtitle}>MERFIT yolculuğun şimdi başlıyor.</Text>
+        <Text style={styles.subtitle}>MB FIT yolculuğun şimdi başlıyor.</Text>
         <Text style={styles.description}>
           Antrenman deneyimini kişiselleştirmek için profilini kullanacağız.
         </Text>
