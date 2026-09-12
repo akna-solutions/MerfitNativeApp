@@ -28,7 +28,7 @@ export function FeaturedWorkout({ workout, onPress }: Props) {
       >
         <LinearGradient
           colors={["rgba(5,5,5,0)", "rgba(5,5,5,0.5)", "rgba(5,5,5,0.94)"]}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
         />
 
         <View style={styles.content}>

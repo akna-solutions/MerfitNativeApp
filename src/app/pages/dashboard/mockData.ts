@@ -10,8 +10,6 @@ export const MOCK_DASHBOARD_DATA: DashboardData = {
     workoutsCompleted: 3,
     workoutsTarget: 5,
     calories: 420,
-    steps: 6240,
-    sleepHours: 7.3,
   },
   todayWorkout: {
     id: "upper-body-strength",

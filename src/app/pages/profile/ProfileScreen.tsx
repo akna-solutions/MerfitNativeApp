@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Animated, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { useAuth } from "../../../shared/auth/AuthContext";
 import { usePlus } from "../../../shared/plus/PlusContext";
 import { useProfile } from "../../../shared/profile/ProfileContext";
 import { SettingsRow } from "../../../shared/profile/components/SettingsRow";
@@ -17,6 +18,7 @@ import { colors } from "./theme";
 
 export function ProfileScreen() {
   const router = useRouter();
+  const { logout } = useAuth();
   const { isPlusUser, openPlusModal } = usePlus();
   const { profile } = useProfile();
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
@@ -59,9 +61,7 @@ export function ProfileScreen() {
 
   const handleConfirmLogout = () => {
     setLogoutModalVisible(false);
-    // TODO: gerçek authentication sistemi bağlandığında mevcut auth
-    // mimarisine göre token/session temizliği burada yapılacak.
-    router.replace("/pages/welcome");
+    logout().finally(() => router.replace("/pages/welcome"));
   };
 
   const handleMembershipRowPress = () => {

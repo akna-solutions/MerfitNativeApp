@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
+    ActivityIndicator,
     FlatList,
     Modal,
     Pressable,
@@ -11,30 +12,98 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { MOCK_FOODS } from "../mockData";
+import { ApiError } from "../../../../services/api/client";
+import { searchFoods } from "../../../../services/api/foods";
+import { logMealItem } from "../../../../services/api/nutrition";
+import { ApiMealType, FoodListItem } from "../../../../services/api/types";
 import { colors } from "../theme";
-import { FoodItem, MealType } from "../types";
+import { MealEntry, MealType } from "../types";
+
+const MEAL_TYPE_TO_API: Record<MealType, ApiMealType> = {
+  "Kahvaltı": "Breakfast",
+  "Öğle Yemeği": "Lunch",
+  "Akşam Yemeği": "Dinner",
+  "Atıştırmalık": "Snack",
+};
+
+/** "yyyy-MM-dd" - backend'in DateOnly formati (yerel saat diliminde). */
+function toDateParam(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
 type Props = {
   visible: boolean;
   mealType: MealType | null;
-  onSelectFood: (food: FoodItem) => void;
+  selectedDate: Date;
+  onLogged: (entry: MealEntry) => void;
   onClose: () => void;
 };
 
 export function AddMealModal({
   visible,
   mealType,
-  onSelectFood,
+  selectedDate,
+  onLogged,
   onClose,
 }: Props) {
   const [query, setQuery] = useState("");
+  const [foods, setFoods] = useState<FoodListItem[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [loggingFoodId, setLoggingFoodId] = useState<number | null>(null);
 
-  const filteredFoods = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return MOCK_FOODS;
-    return MOCK_FOODS.filter((food) => food.name.toLowerCase().includes(q));
-  }, [query]);
+  // Modal her açıldığında aramayı sıfırla.
+  useEffect(() => {
+    if (!visible) return;
+    setQuery("");
+  }, [visible]);
+
+  // Arama metnini debounce ederek backend'e istek atıyoruz.
+  useEffect(() => {
+    if (!visible) return;
+    setIsSearching(true);
+    setErrorMessage(null);
+    const timeout = setTimeout(async () => {
+      try {
+        const result = await searchFoods({ search: query, pageSize: 30 });
+        setFoods(result.items);
+      } catch (error) {
+        setErrorMessage(
+          error instanceof ApiError ? error.message : "Yiyecekler yüklenemedi.",
+        );
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [query, visible]);
+
+  const handleSelectFood = async (food: FoodListItem) => {
+    if (!mealType || loggingFoodId !== null) return;
+    setLoggingFoodId(food.id);
+    try {
+      const entry = await logMealItem({
+        mealType: MEAL_TYPE_TO_API[mealType],
+        foodId: food.id,
+        date: toDateParam(selectedDate),
+      });
+      onLogged({
+        id: String(entry.id),
+        type: entry.type,
+        name: entry.name,
+        calories: entry.calories,
+      });
+    } catch (error) {
+      setErrorMessage(
+        error instanceof ApiError ? error.message : "Öğün eklenemedi. Lütfen tekrar deneyin.",
+      );
+    } finally {
+      setLoggingFoodId(null);
+    }
+  };
 
   return (
     <Modal
@@ -44,7 +113,7 @@ export function AddMealModal({
       onRequestClose={onClose}
     >
       <View style={styles.backdrop}>
-        <Pressable style={StyleSheet.absoluteFillObject} onPress={onClose} />
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
 
         <SafeAreaView style={styles.sheet} edges={["bottom"]}>
           <View style={styles.header}>
@@ -96,21 +165,37 @@ export function AddMealModal({
             <Text style={styles.scanLabel}>Barkod tara</Text>
           </Pressable>
 
-          <FlatList
-            data={filteredFoods}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.list}
-            ItemSeparatorComponent={() => <View style={styles.separator} />}
-            renderItem={({ item }) => (
-              <Pressable
-                style={styles.foodRow}
-                onPress={() => onSelectFood(item)}
-              >
-                <Text style={styles.foodName}>{item.name}</Text>
-                <Text style={styles.foodCalories}>{item.calories} kcal</Text>
-              </Pressable>
-            )}
-          />
+          {errorMessage ? (
+            <Text style={styles.errorText}>{errorMessage}</Text>
+          ) : null}
+
+          {isSearching ? (
+            <ActivityIndicator
+              color={colors.electricBlue}
+              style={styles.loadingIndicator}
+            />
+          ) : (
+            <FlatList
+              data={foods}
+              keyExtractor={(item) => String(item.id)}
+              contentContainerStyle={styles.list}
+              ItemSeparatorComponent={() => <View style={styles.separator} />}
+              renderItem={({ item }) => (
+                <Pressable
+                  style={styles.foodRow}
+                  onPress={() => handleSelectFood(item)}
+                  disabled={loggingFoodId !== null}
+                >
+                  <Text style={styles.foodName}>{item.name}</Text>
+                  {loggingFoodId === item.id ? (
+                    <ActivityIndicator color={colors.electricBlue} size="small" />
+                  ) : (
+                    <Text style={styles.foodCalories}>{item.calories} kcal</Text>
+                  )}
+                </Pressable>
+              )}
+            />
+          )}
         </SafeAreaView>
       </View>
     </Modal>
@@ -168,6 +253,8 @@ const styles = StyleSheet.create({
     marginTop: 14,
   },
   scanLabel: { color: colors.electricBlue, fontSize: 12, fontWeight: "600" },
+  errorText: { color: "#FF6B6B", fontSize: 12, fontWeight: "600", marginTop: 12 },
+  loadingIndicator: { marginTop: 24 },
   list: { paddingTop: 14, paddingBottom: 24 },
   separator: {
     height: StyleSheet.hairlineWidth,

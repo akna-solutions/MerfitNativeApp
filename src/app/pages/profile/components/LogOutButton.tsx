@@ -28,7 +28,7 @@ export function LogOutButton({
         onRequestClose={onCancel}
       >
         <View style={styles.backdrop}>
-          <Pressable style={StyleSheet.absoluteFillObject} onPress={onCancel} />
+          <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} />
 
           <View style={styles.dialog}>
             <Text style={styles.title}>MB FIT'ten çıkış yapılsın mı?</Text>

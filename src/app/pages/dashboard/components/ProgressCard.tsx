@@ -33,18 +33,6 @@ export function ProgressCard({ progress }: Props) {
           <Text style={styles.statValue}>{progress.calories}</Text>
           <Text style={styles.statLabel}>kcal</Text>
         </View>
-        <View style={styles.divider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statValue}>
-            {progress.steps.toLocaleString()}
-          </Text>
-          <Text style={styles.statLabel}>adım</Text>
-        </View>
-        <View style={styles.divider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statValue}>{progress.sleepHours}s</Text>
-          <Text style={styles.statLabel}>uyku</Text>
-        </View>
       </View>
     </View>
   );

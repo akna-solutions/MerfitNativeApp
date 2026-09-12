@@ -1,10 +1,21 @@
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useRef } from "react";
-import { Animated, ScrollView, StyleSheet, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+    ActivityIndicator,
+    Animated,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { PremiumFeature } from "../../../shared/plus/components/PremiumFeature";
+import { ApiError } from "../../../services/api/client";
+import { getDashboard } from "../../../services/api/dashboard";
+import { DashboardResponse } from "../../../services/api/types";
 import { AiWorkoutCard } from "./components/AiWorkoutCard";
 import { DashboardHeader } from "./components/DashboardHeader";
 import { EmptyState } from "./components/EmptyState";
@@ -13,16 +24,68 @@ import { ProgressCard } from "./components/ProgressCard";
 import { QuickStats } from "./components/QuickStats";
 import { RecommendedWorkouts } from "./components/RecommendedWorkouts";
 import { WorkoutCard } from "./components/WorkoutCard";
-import { MOCK_DASHBOARD_DATA } from "./mockData";
 import { colors } from "./theme";
-import { WorkoutSummary } from "./types";
+import { DashboardData, WorkoutSummary } from "./types";
+
+/** Backend'in CustomerDashboardResponse'unu (services/api/types.ts) ekranin bekledigi DashboardData sekline cevirir. */
+function mapToDashboardData(response: DashboardResponse): DashboardData {
+  const mapWorkout = (workout: DashboardResponse["todayWorkout"]): WorkoutSummary | null =>
+    workout
+      ? {
+          id: String(workout.id),
+          title: workout.title,
+          duration: workout.duration,
+          meta: workout.meta,
+          difficulty: workout.difficulty,
+          imageUrl: workout.imageUrl ?? "",
+        }
+      : null;
+
+  return {
+    userName: response.userName,
+    hasCompletedFirstWorkout: response.hasCompletedFirstWorkout,
+    todayProgress: response.todayProgress,
+    todayWorkout: mapWorkout(response.todayWorkout),
+    quickStats: response.quickStats,
+    goalProgress: response.goalProgress,
+    recommended: response.recommended
+      .map(mapWorkout)
+      .filter((w): w is WorkoutSummary => w !== null),
+  };
+}
 
 export function DashboardScreen() {
   const router = useRouter();
 
-  // TODO: gerçek API bağlandığında MOCK_DASHBOARD_DATA yerine fetch/query
-  // sonucu (aynı DashboardData şekli) kullanılacak.
-  const data = MOCK_DASHBOARD_DATA;
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const loadDashboard = useCallback(async (signal?: AbortSignal) => {
+    setErrorMessage(null);
+    try {
+      const response = await getDashboard(signal);
+      setData(mapToDashboardData(response));
+    } catch (error) {
+      if (error instanceof ApiError && error.isUnauthorized) {
+        router.replace("/pages/login");
+        return;
+      }
+      setErrorMessage(
+        error instanceof ApiError
+          ? error.message
+          : "Dashboard yüklenemedi. Lütfen tekrar deneyin.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, [router]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    loadDashboard(controller.signal);
+    return () => controller.abort();
+  }, [loadDashboard]);
 
   const headerAnim = useRef(new Animated.Value(0)).current;
   const progressAnim = useRef(new Animated.Value(0)).current;
@@ -30,6 +93,7 @@ export function DashboardScreen() {
   const statsAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    if (!data) return;
     Animated.stagger(110, [
       Animated.timing(headerAnim, {
         toValue: 1,
@@ -52,7 +116,7 @@ export function DashboardScreen() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, [headerAnim, progressAnim, workoutAnim, statsAnim]);
+  }, [data, headerAnim, progressAnim, workoutAnim, statsAnim]);
 
   const fadeUp = (anim: Animated.Value, distance = 14) => ({
     opacity: anim,
@@ -72,6 +136,35 @@ export function DashboardScreen() {
       params: { id: workout.id, title: workout.title },
     } as never);
   };
+
+  if (isLoading) {
+    return (
+      <View style={[styles.root, styles.centered]}>
+        <StatusBar style="light" />
+        <ActivityIndicator color={colors.electricBlue} size="large" />
+      </View>
+    );
+  }
+
+  if (errorMessage || !data) {
+    return (
+      <View style={[styles.root, styles.centered]}>
+        <StatusBar style="light" />
+        <Text style={styles.errorText}>
+          {errorMessage ?? "Dashboard yüklenemedi."}
+        </Text>
+        <Pressable
+          style={styles.retryButton}
+          onPress={() => {
+            setIsLoading(true);
+            loadDashboard();
+          }}
+        >
+          <Text style={styles.retryLabel}>Tekrar dene</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.root}>
@@ -103,7 +196,9 @@ export function DashboardScreen() {
 
               <Animated.View style={[styles.padded, fadeUp(statsAnim)]}>
                 <QuickStats stats={data.quickStats} />
-                <GoalProgressCard goal={data.goalProgress} />
+                {data.goalProgress ? (
+                  <GoalProgressCard goal={data.goalProgress} />
+                ) : null}
               </Animated.View>
 
               <View style={[styles.padded, styles.gapTop]}>
@@ -135,6 +230,15 @@ export function DashboardScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
+  centered: { alignItems: "center", justifyContent: "center", gap: 16, paddingHorizontal: 32 },
+  errorText: { color: colors.textMuted, fontSize: 14, textAlign: "center" },
+  retryButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: colors.electricBlue,
+  },
+  retryLabel: { color: "#FFFFFF", fontSize: 14, fontWeight: "700" },
   scrollContent: { paddingTop: 16, paddingBottom: 156 },
   padded: { paddingHorizontal: 24 },
   gapTop: { marginTop: 28 },

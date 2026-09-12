@@ -18,7 +18,7 @@ export function RewardDetailModal({ reward, onClose }: Props) {
       onRequestClose={onClose}
     >
       <View style={styles.backdrop}>
-        <Pressable style={StyleSheet.absoluteFillObject} onPress={onClose} />
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
 
         {reward ? (
           <View style={styles.dialog}>

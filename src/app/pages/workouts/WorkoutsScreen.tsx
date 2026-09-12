@@ -1,10 +1,13 @@
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { PremiumFeature } from "../../../shared/plus/components/PremiumFeature";
+import { ApiError } from "../../../services/api/client";
+import { WorkoutListItem } from "../../../services/api/types";
+import { getWorkouts } from "../../../services/api/workouts";
 import { AiWorkoutPlanCard } from "./components/AiWorkoutPlanCard";
 import { FeaturedWorkout } from "./components/FeaturedWorkout";
 import { WorkoutCategories } from "./components/WorkoutCategories";
@@ -14,7 +17,6 @@ import { WorkoutGrid } from "./components/WorkoutGrid";
 import { WorkoutHeader } from "./components/WorkoutHeader";
 import { WorkoutSearch } from "./components/WorkoutSearch";
 import { WorkoutSkeleton } from "./components/WorkoutSkeleton";
-import { getPersonalizedWorkouts, MOCK_WORKOUTS } from "./mockData";
 import { colors } from "./theme";
 import {
     Category,
@@ -24,37 +26,74 @@ import {
     WorkoutFilters,
 } from "./types";
 
+/** Backend'in WorkoutListItem'ini (services/api/types.ts) ekranin bekledigi Workout sekline cevirir. */
+function mapApiWorkout(item: WorkoutListItem): Workout {
+  return {
+    id: String(item.id),
+    title: item.title,
+    tagline: item.tagline ?? undefined,
+    duration: item.durationMin,
+    difficulty: item.difficulty as Workout["difficulty"],
+    category: item.category,
+    muscleGroup: item.muscleGroup ?? "",
+    equipment: item.equipment,
+    imageUrl: item.imageUrl ?? "",
+    featured: item.featured,
+  };
+}
+
 export function WorkoutsScreen() {
   const router = useRouter();
   const searchRef = useRef<TextInput>(null);
 
-  // TODO: Backend/API bağlandığında MOCK_WORKOUTS yerine fetch/query sonucu
-  // (aynı Workout[] şekli) kullanılacak.
+  const [allWorkouts, setAllWorkouts] = useState<Workout[]>([]);
+  const [personalized, setPersonalized] = useState<Workout[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<"Tümü" | Category>("Tümü");
   const [filters, setFilters] = useState<WorkoutFilters>(EMPTY_FILTERS);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
 
+  const loadWorkouts = useCallback(async () => {
+    setErrorMessage(null);
+    try {
+      const [catalog, recommended] = await Promise.all([
+        // Katalog kucuk oldugu icin (mevcut UI zaten hepsini client-side filtreliyor)
+        // tek sayfada mumkun oldugunca genis (max 100) cekiyoruz.
+        getWorkouts({ pageSize: 100 }),
+        getWorkouts({ personalized: true, pageSize: 6 }),
+      ]);
+      setAllWorkouts(catalog.items.map(mapApiWorkout));
+      setPersonalized(recommended.items.map(mapApiWorkout));
+    } catch (error) {
+      if (error instanceof ApiError && error.isUnauthorized) {
+        router.replace("/pages/login");
+        return;
+      }
+      setErrorMessage(
+        error instanceof ApiError
+          ? error.message
+          : "Antrenmanlar yüklenemedi. Lütfen tekrar deneyin.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [router]);
+
   useEffect(() => {
-    const timeout = setTimeout(() => setLoading(false), 500);
-    return () => clearTimeout(timeout);
-  }, []);
+    loadWorkouts();
+  }, [loadWorkouts]);
 
   const featured = useMemo(
-    () => MOCK_WORKOUTS.find((workout) => workout.featured) ?? MOCK_WORKOUTS[0],
-    [],
-  );
-
-  const personalized = useMemo(
-    () => getPersonalizedWorkouts(MOCK_WORKOUTS),
-    [],
+    () => allWorkouts.find((workout) => workout.featured) ?? allWorkouts[0],
+    [allWorkouts],
   );
 
   const filteredWorkouts = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
 
-    return MOCK_WORKOUTS.filter((workout) => {
+    return allWorkouts.filter((workout) => {
       if (activeCategory !== "Tümü" && workout.category !== activeCategory) {
         return false;
       }
@@ -90,9 +129,9 @@ export function WorkoutsScreen() {
       }
       return true;
     });
-  }, [searchQuery, activeCategory, filters]);
+  }, [allWorkouts, searchQuery, activeCategory, filters]);
 
-  const showEmptyState = !loading && filteredWorkouts.length === 0;
+  const showEmptyState = !loading && !errorMessage && filteredWorkouts.length === 0;
 
   const goToWorkoutDetail = (workout: Workout) => {
     router.push({
@@ -145,6 +184,19 @@ export function WorkoutsScreen() {
           <View style={[styles.padded, styles.sectionGap]}>
             {loading ? (
               <WorkoutSkeleton />
+            ) : errorMessage ? (
+              <View style={styles.errorBox}>
+                <Text style={styles.errorText}>{errorMessage}</Text>
+                <Text
+                  style={styles.retryLabel}
+                  onPress={() => {
+                    setLoading(true);
+                    loadWorkouts();
+                  }}
+                >
+                  Tekrar dene
+                </Text>
+              </View>
             ) : showEmptyState ? (
               <WorkoutEmptyState onClearFilters={clearAllFilters} />
             ) : (
@@ -206,4 +258,7 @@ const styles = StyleSheet.create({
   searchGap: { marginTop: 20 },
   categoriesGap: { marginTop: 18 },
   sectionGap: { marginTop: 28 },
+  errorBox: { alignItems: "center", gap: 12, paddingVertical: 40 },
+  errorText: { color: colors.textMuted, fontSize: 13, textAlign: "center" },
+  retryLabel: { color: colors.electricBlue, fontSize: 13, fontWeight: "700" },
 });

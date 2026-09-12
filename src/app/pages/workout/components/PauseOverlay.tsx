@@ -35,7 +35,7 @@ export function PauseOverlay({ onResume, onExit }: Props) {
 
 const styles = StyleSheet.create({
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(5,5,5,0.92)",
   },
   content: { flex: 1, justifyContent: "space-between", paddingHorizontal: 24 },

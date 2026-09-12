@@ -1,22 +1,14 @@
 export type Difficulty = "Başlangıç" | "Orta" | "İleri";
 
-export type Category =
-  | "Kuvvet"
-  | "Kardiyo"
-  | "HIIT"
-  | "Hareketlilik"
-  | "Core"
-  | "Üst Vücut"
-  | "Alt Vücut";
+// Category/MuscleGroup/Equipment artik backend'deki WorkoutCategory/MuscleGroup/Equipment
+// tablolarindan (serbest metin) geldigi icin sabit union yerine string olarak tanimlandi.
+// UI tarafindaki sabit secenek listeleri (bkz. WorkoutCategories, WorkoutFilterModal)
+// gercek veri backend'deki isimlerle birebir eslesecek sekilde kalmali.
+export type Category = string;
 
-export type MuscleGroup = "Tüm Vücut" | "Üst Vücut" | "Alt Vücut" | "Core";
+export type MuscleGroup = string;
 
-export type Equipment =
-  | "Ekipman yok"
-  | "Dambıl"
-  | "Halter"
-  | "Makineler"
-  | "Direnç bandı";
+export type Equipment = string;
 
 export type Workout = {
   id: string;

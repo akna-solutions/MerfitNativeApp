@@ -11,8 +11,6 @@ export type TodayProgress = {
   workoutsCompleted: number;
   workoutsTarget: number;
   calories: number;
-  steps: number;
-  sleepHours: number;
 };
 
 export type QuickStat = {
@@ -37,6 +35,6 @@ export type DashboardData = {
   todayProgress: TodayProgress;
   todayWorkout: WorkoutSummary | null;
   quickStats: QuickStat[];
-  goalProgress: GoalProgress;
+  goalProgress: GoalProgress | null;
   recommended: WorkoutSummary[];
 };

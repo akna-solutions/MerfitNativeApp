@@ -29,7 +29,7 @@ export function RewardImage({ icon, size = "medium" }: Props) {
     <View style={[styles.wrapper, { height: dimension }]}>
       <LinearGradient
         colors={["rgba(0,102,255,0.16)", "rgba(0,168,255,0.02)"]}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
       />
       <Ionicons
         name={ICONS[icon]}

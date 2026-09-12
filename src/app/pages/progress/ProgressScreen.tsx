@@ -1,11 +1,13 @@
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Animated, ScrollView, StyleSheet, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ActivityIndicator, Animated, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { PremiumFeature } from "../../../shared/plus/components/PremiumFeature";
-import { CURRENT_USER_ENTRY, MOCK_CURRENT_USER } from "../leaderboard/mockData";
+import { ApiError } from "../../../services/api/client";
+import { getProgress } from "../../../services/api/progress";
+import { ProgressResponse } from "../../../services/api/types";
 import { BodyMetrics } from "./components/BodyMetrics";
 import { CurrentWeightCard } from "./components/CurrentWeightCard";
 import { GoalProgress } from "./components/GoalProgress";
@@ -20,22 +22,75 @@ import { ScoreCard } from "./components/ScoreCard";
 import { TimeRangeSelector } from "./components/TimeRangeSelector";
 import { WeeklyActivity } from "./components/WeeklyActivity";
 import { WeightChart } from "./components/WeightChart";
-import { getWeightHistoryForRange, MOCK_PROGRESS_DATA } from "./mockData";
 import { colors } from "./theme";
-import { TimeRange } from "./types";
+import { ProgressData, TimeRange } from "./types";
+
+function mapToProgressData(response: ProgressResponse): ProgressData {
+  return {
+    hasCompletedFirstWorkout: response.hasCompletedFirstWorkout,
+    goalType: response.goalType,
+    goalLabel: response.goalLabel,
+    goalPercent: response.goalPercent ?? undefined,
+    workoutsCompleted: response.workoutsCompleted ?? undefined,
+    workoutsGoal: response.workoutsGoal ?? undefined,
+    currentWeight: response.currentWeight,
+    startingWeight: response.startingWeight,
+    targetWeight: response.targetWeight,
+    monthlyChange: response.monthlyChange,
+    workouts: response.workouts,
+    calories: response.calories,
+    streak: response.streak,
+    trainingMinutes: response.trainingMinutes,
+    weeklyWorkouts: response.weeklyWorkouts,
+    weightHistory: response.weightHistory,
+    bodyMetrics: response.bodyMetrics,
+    recentActivity: response.recentActivity.map((item) => ({
+      id: String(item.id),
+      title: item.title,
+      durationMin: item.durationMin,
+      dateLabel: item.dateLabel,
+    })),
+  };
+}
 
 export function ProgressScreen() {
   const router = useRouter();
   const [timeRange, setTimeRange] = useState<TimeRange>("3months");
 
-  // TODO: gerçek API bağlandığında MOCK_PROGRESS_DATA yerine fetch/query
-  // sonucu (aynı ProgressData şekli) kullanılacak.
-  const data = MOCK_PROGRESS_DATA;
+  const [data, setData] = useState<ProgressData | null>(null);
+  const [score, setScore] = useState<ProgressResponse["score"]>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const chartData = useMemo(
-    () => getWeightHistoryForRange(data.weightHistory, timeRange),
-    [data.weightHistory, timeRange],
-  );
+  const loadProgress = useCallback(async (range: TimeRange, signal?: AbortSignal) => {
+    setErrorMessage(null);
+    try {
+      const response = await getProgress(range, signal);
+      setData(mapToProgressData(response));
+      setScore(response.score);
+    } catch (error) {
+      if (error instanceof ApiError && error.isUnauthorized) {
+        router.replace("/pages/login");
+        return;
+      }
+      setErrorMessage(
+        error instanceof ApiError
+          ? error.message
+          : "İlerleme verisi yüklenemedi. Lütfen tekrar deneyin.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, [router]);
+
+  useEffect(() => {
+    setIsLoading(true);
+    const controller = new AbortController();
+    loadProgress(timeRange, controller.signal);
+    return () => controller.abort();
+  }, [timeRange, loadProgress]);
+
+  const chartData = useMemo(() => data?.weightHistory ?? [], [data]);
 
   const headerAnim = useRef(new Animated.Value(0)).current;
   const weightCardAnim = useRef(new Animated.Value(0)).current;
@@ -43,6 +98,7 @@ export function ProgressScreen() {
   const chartAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    if (!data) return;
     Animated.stagger(110, [
       Animated.timing(headerAnim, {
         toValue: 1,
@@ -65,7 +121,7 @@ export function ProgressScreen() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, [headerAnim, weightCardAnim, statsAnim, chartAnim]);
+  }, [data, headerAnim, weightCardAnim, statsAnim, chartAnim]);
 
   const fadeUp = (anim: Animated.Value, distance = 14) => ({
     opacity: anim,
@@ -78,6 +134,33 @@ export function ProgressScreen() {
       },
     ],
   });
+
+  if (isLoading) {
+    return (
+      <View style={[styles.root, styles.centered]}>
+        <StatusBar style="light" />
+        <ActivityIndicator color={colors.electricBlue} size="large" />
+      </View>
+    );
+  }
+
+  if (errorMessage || !data) {
+    return (
+      <View style={[styles.root, styles.centered]}>
+        <StatusBar style="light" />
+        <Text style={styles.errorText}>{errorMessage ?? "İlerleme verisi yüklenemedi."}</Text>
+        <Pressable
+          style={styles.retryButton}
+          onPress={() => {
+            setIsLoading(true);
+            loadProgress(timeRange);
+          }}
+        >
+          <Text style={styles.retryLabel}>Tekrar dene</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.root}>
@@ -94,20 +177,22 @@ export function ProgressScreen() {
 
           {data.hasCompletedFirstWorkout ? (
             <>
-              <Animated.View
-                style={[
-                  styles.padded,
-                  styles.sectionGap,
-                  fadeUp(weightCardAnim),
-                ]}
-              >
-                <ScoreCard
-                  points={MOCK_CURRENT_USER.points}
-                  weeklyChange={MOCK_CURRENT_USER.weeklyChange}
-                  rank={CURRENT_USER_ENTRY.rank}
-                  onPress={() => router.push("/pages/leaderboard")}
-                />
-              </Animated.View>
+              {score ? (
+                <Animated.View
+                  style={[
+                    styles.padded,
+                    styles.sectionGap,
+                    fadeUp(weightCardAnim),
+                  ]}
+                >
+                  <ScoreCard
+                    points={score.points}
+                    weeklyChange={score.weeklyChange}
+                    rank={score.rank ?? 0}
+                    onPress={() => router.push("/pages/leaderboard")}
+                  />
+                </Animated.View>
+              ) : null}
 
               <Animated.View
                 style={[
@@ -169,14 +254,16 @@ export function ProgressScreen() {
                 </PremiumFeature>
               </View>
 
-              <View style={[styles.padded, styles.sectionGap]}>
-                <BodyMetrics
-                  metrics={data.bodyMetrics}
-                  onViewAll={() => {
-                    // TODO: tüm body metrics ekranı eklendiğinde yönlendir.
-                  }}
-                />
-              </View>
+              {data.bodyMetrics.length > 0 ? (
+                <View style={[styles.padded, styles.sectionGap]}>
+                  <BodyMetrics
+                    metrics={data.bodyMetrics}
+                    onViewAll={() => {
+                      // TODO: tüm body metrics ekranı eklendiğinde yönlendir.
+                    }}
+                  />
+                </View>
+              ) : null}
 
               <View style={[styles.padded, styles.sectionGap]}>
                 <WeeklyActivity days={data.weeklyWorkouts} />
@@ -208,6 +295,15 @@ export function ProgressScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
+  centered: { alignItems: "center", justifyContent: "center", gap: 16, paddingHorizontal: 32 },
+  errorText: { color: colors.textMuted, fontSize: 14, textAlign: "center" },
+  retryButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: colors.electricBlue,
+  },
+  retryLabel: { color: "#FFFFFF", fontSize: 14, fontWeight: "700" },
   scrollContent: { paddingTop: 16, paddingBottom: 156 },
   padded: { paddingHorizontal: 24 },
   sectionGap: { marginTop: 28 },

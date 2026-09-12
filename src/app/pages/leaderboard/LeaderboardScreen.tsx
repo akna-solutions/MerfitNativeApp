@@ -1,11 +1,14 @@
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { PremiumFeature } from "../../../shared/plus/components/PremiumFeature";
 import { useProfile } from "../../../shared/profile/ProfileContext";
+import { ApiError } from "../../../services/api/client";
+import { getLeaderboard } from "../../../services/api/leaderboard";
+import { LeaderboardResponse } from "../../../services/api/types";
 import { Achievements } from "./components/Achievements";
 import { AdvancedLeaderboardInsights } from "./components/AdvancedLeaderboardInsights";
 import { LeaderboardEmptyState } from "./components/LeaderboardEmptyState";
@@ -18,18 +21,6 @@ import { PeriodFilter } from "./components/PeriodFilter";
 import { RewardsSection } from "./components/RewardsSection";
 import { ScoreBreakdown } from "./components/ScoreBreakdown";
 import { ScoreChart } from "./components/ScoreChart";
-import {
-    ACHIEVEMENTS,
-    CURRENT_USER_ENTRY,
-    MOCK_CURRENT_USER,
-    NEARBY_USERS,
-    REWARDS,
-    REWARDS_RESET_AT,
-    SCORE_BREAKDOWN,
-    SCORE_HISTORY,
-    TOP_10_TURKIYE,
-    TOP_PERCENT,
-} from "./mockData";
 import { colors } from "./theme";
 import { PeriodFilter as PeriodFilterType } from "./types";
 
@@ -37,29 +28,64 @@ export function LeaderboardScreen() {
   const router = useRouter();
   const { profile } = useProfile();
   const [period, setPeriod] = useState<PeriodFilterType>("month");
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<LeaderboardResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const anonymized = !profile.privacy.profileVisibleOnLeaderboard;
 
-  // TODO: Backend/API bağlandığında period değiştikçe gerçek veri
-  // çekilecek. Şimdilik mock veri period'dan bağımsız sabit.
+  const loadLeaderboard = useCallback(async (p: PeriodFilterType, signal?: AbortSignal) => {
+    setErrorMessage(null);
+    try {
+      const response = await getLeaderboard(p, signal);
+      setData(response);
+    } catch (error) {
+      if (error instanceof ApiError && error.isUnauthorized) {
+        router.replace("/pages/login");
+        return;
+      }
+      setErrorMessage(
+        error instanceof ApiError
+          ? error.message
+          : "Liderlik tablosu yüklenemedi. Lütfen tekrar deneyin.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, [router]);
+
   useEffect(() => {
-    const timeout = setTimeout(() => setLoading(false), 450);
-    return () => clearTimeout(timeout);
-  }, []);
+    setIsLoading(true);
+    const controller = new AbortController();
+    loadLeaderboard(period, controller.signal);
+    return () => controller.abort();
+  }, [period, loadLeaderboard]);
 
-  const hasScoreData = MOCK_CURRENT_USER.points > 0;
-  const tenthPlacePoints =
-    TOP_10_TURKIYE[TOP_10_TURKIYE.length - 1]?.points ?? 0;
-  const pointsToRewardZone = Math.max(
-    0,
-    tenthPlacePoints - CURRENT_USER_ENTRY.points,
-  );
+  if (errorMessage) {
+    return (
+      <View style={[styles.root, styles.centered]}>
+        <StatusBar style="light" />
+        <Text style={styles.errorText}>{errorMessage}</Text>
+        <Pressable
+          style={styles.retryButton}
+          onPress={() => {
+            setIsLoading(true);
+            loadLeaderboard(period);
+          }}
+        >
+          <Text style={styles.retryLabel}>Tekrar dene</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
-  const currentIndex = NEARBY_USERS.findIndex((entry) => entry.isCurrentUser);
-  const nextUser = currentIndex > 0 ? NEARBY_USERS[currentIndex - 1] : null;
-  const pointsToNextRank = nextUser
-    ? nextUser.points - CURRENT_USER_ENTRY.points
+  const tenthPlacePoints = data?.topEntries[data.topEntries.length - 1]?.points ?? 0;
+  const pointsToRewardZone = data
+    ? Math.max(0, tenthPlacePoints - data.currentUser.points)
     : 0;
+
+  const currentIndex = data?.nearbyEntries.findIndex((entry) => entry.isCurrentUser) ?? -1;
+  const nextUser = data && currentIndex > 0 ? data.nearbyEntries[currentIndex - 1] : null;
+  const pointsToNextRank = nextUser ? nextUser.points - data!.currentUser.points : 0;
 
   return (
     <View style={styles.root}>
@@ -71,22 +97,24 @@ export function LeaderboardScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.padded}>
-            <LeaderboardHeader
-              onBack={() => router.back()}
-              currentRank={CURRENT_USER_ENTRY.rank}
-              points={MOCK_CURRENT_USER.points}
-              topPercent={TOP_PERCENT}
-              league={MOCK_CURRENT_USER.league}
-              bestRank={MOCK_CURRENT_USER.bestRank}
-              bestRankMonthLabel={MOCK_CURRENT_USER.bestRankMonthLabel}
-            />
+            {data ? (
+              <LeaderboardHeader
+                onBack={() => router.back()}
+                currentRank={data.currentUser.bestRank}
+                points={data.currentUser.points}
+                topPercent={data.topPercent}
+                league={data.currentUser.league}
+                bestRank={data.currentUser.bestRank}
+                bestRankMonthLabel={data.currentUser.bestRankMonthLabel}
+              />
+            ) : null}
           </View>
 
-          {loading ? (
+          {isLoading || !data ? (
             <View style={styles.padded}>
               <LeaderboardSkeleton />
             </View>
-          ) : !hasScoreData ? (
+          ) : !data.hasScoreData ? (
             <View style={styles.padded}>
               <LeaderboardEmptyState
                 onStartWorkout={() => router.push("/pages/workouts")}
@@ -94,14 +122,16 @@ export function LeaderboardScreen() {
             </View>
           ) : (
             <>
-              <View style={[styles.padded, styles.sectionGap]}>
-                <RewardsSection
-                  rewards={REWARDS}
-                  resetAt={REWARDS_RESET_AT}
-                  currentRank={CURRENT_USER_ENTRY.rank}
-                  pointsToRewardZone={pointsToRewardZone}
-                />
-              </View>
+              {data.rewardsResetAt ? (
+                <View style={[styles.padded, styles.sectionGap]}>
+                  <RewardsSection
+                    rewards={data.rewards}
+                    resetAt={new Date(data.rewardsResetAt)}
+                    currentRank={data.currentUser.bestRank}
+                    pointsToRewardZone={pointsToRewardZone}
+                  />
+                </View>
+              ) : null}
 
               <View style={[styles.padded, styles.sectionGap]}>
                 <PeriodFilter value={period} onChange={setPeriod} />
@@ -109,13 +139,13 @@ export function LeaderboardScreen() {
 
               <View style={[styles.padded, styles.sectionGap]}>
                 <LeaderboardList
-                  entries={TOP_10_TURKIYE}
+                  entries={data.topEntries}
                   anonymized={anonymized}
                 />
               </View>
 
               <View style={[styles.padded, styles.sectionGap]}>
-                <NearbyUsers entries={NEARBY_USERS} anonymized={anonymized} />
+                <NearbyUsers entries={data.nearbyEntries} anonymized={anonymized} />
               </View>
 
               <View style={[styles.padded, styles.sectionGap]}>
@@ -124,24 +154,28 @@ export function LeaderboardScreen() {
                 </PremiumFeature>
               </View>
 
-              <View style={[styles.padded, styles.sectionGap]}>
-                <PremiumFeature feature="DETAILED_SCORE">
-                  <ScoreBreakdown items={SCORE_BREAKDOWN} />
-                </PremiumFeature>
-              </View>
+              {data.scoreBreakdown.length > 0 ? (
+                <View style={[styles.padded, styles.sectionGap]}>
+                  <PremiumFeature feature="DETAILED_SCORE">
+                    <ScoreBreakdown items={data.scoreBreakdown} />
+                  </PremiumFeature>
+                </View>
+              ) : null}
+
+              {data.scoreHistory.length > 0 ? (
+                <View style={[styles.padded, styles.sectionGap]}>
+                  <PremiumFeature feature="DETAILED_SCORE">
+                    <ScoreChart
+                      points={data.currentUser.points}
+                      weeklyChange={data.currentUser.weeklyChange}
+                      history={data.scoreHistory}
+                    />
+                  </PremiumFeature>
+                </View>
+              ) : null}
 
               <View style={[styles.padded, styles.sectionGap]}>
-                <PremiumFeature feature="DETAILED_SCORE">
-                  <ScoreChart
-                    points={MOCK_CURRENT_USER.points}
-                    weeklyChange={MOCK_CURRENT_USER.weeklyChange}
-                    history={SCORE_HISTORY}
-                  />
-                </PremiumFeature>
-              </View>
-
-              <View style={[styles.padded, styles.sectionGap]}>
-                <Achievements achievements={ACHIEVEMENTS} />
+                <Achievements achievements={data.achievements} />
               </View>
 
               {nextUser ? (
@@ -163,6 +197,15 @@ export function LeaderboardScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
+  centered: { alignItems: "center", justifyContent: "center", gap: 16, paddingHorizontal: 32 },
+  errorText: { color: colors.textMuted, fontSize: 14, textAlign: "center" },
+  retryButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: colors.electricBlue,
+  },
+  retryLabel: { color: "#FFFFFF", fontSize: 14, fontWeight: "700" },
   scrollContent: { paddingTop: 16, paddingBottom: 40 },
   padded: { paddingHorizontal: 24 },
   sectionGap: { marginTop: 28 },

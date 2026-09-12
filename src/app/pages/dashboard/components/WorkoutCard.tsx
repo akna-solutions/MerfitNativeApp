@@ -28,7 +28,7 @@ export function WorkoutCard({ workout, onPress }: Props) {
       >
         <LinearGradient
           colors={["rgba(5,5,5,0)", "rgba(5,5,5,0.55)", "rgba(5,5,5,0.92)"]}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
         />
 
         <View style={styles.content}>

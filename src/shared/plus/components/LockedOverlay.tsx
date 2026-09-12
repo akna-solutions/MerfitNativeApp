@@ -27,7 +27,7 @@ export function LockedOverlay({ title, description }: Props) {
 
 const styles = StyleSheet.create({
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0,0,0,0.68)",
     alignItems: "center",
     justifyContent: "center",

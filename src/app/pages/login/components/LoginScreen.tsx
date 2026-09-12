@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
 import {
+    ActivityIndicator,
     KeyboardAvoidingView,
     Platform,
     Pressable,
@@ -12,23 +13,46 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { useAuth } from "../../../../shared/auth/AuthContext";
+import { ApiError, isApiError, NetworkError } from "../../../../services/api/client";
 import { OnboardingButton } from "../../onboarding/components/OnboardingButton";
 import { OnboardingInput } from "../../onboarding/components/OnboardingInput";
 import { colors } from ".././theme";
 
 export function LoginScreen() {
   const router = useRouter();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
   const passwordValid = password.length >= 6;
-  const canSubmit = emailValid && passwordValid;
+  const canSubmit = emailValid && passwordValid && !isSubmitting;
 
-  const handleLogin = () => {
-    // TODO: mevcut authentication sistemi bağlandığında burada gerçek
-    // login isteği atılacak.
-    router.replace("/pages/dashboard");
+  const handleLogin = async () => {
+    if (!canSubmit) return;
+
+    setErrorMessage(null);
+    setIsSubmitting(true);
+    try {
+      await login({ emailOrUsername: email.trim(), password });
+      router.replace("/pages/dashboard");
+    } catch (error) {
+      console.error("Login hatası:", error);
+      if (isApiError(error)) {
+        setErrorMessage(error.message);
+      } else if (error instanceof NetworkError) {
+        setErrorMessage("Sunucuya ulaşılamadı. İnternet bağlantınızı veya backend adresini kontrol edin.");
+      } else if (error instanceof Error) {
+        setErrorMessage(error.message);
+      } else {
+        setErrorMessage("Giriş yapılamadı. Lütfen tekrar deneyin.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleGoogleLogin = () => {
@@ -88,6 +112,10 @@ export function LoginScreen() {
               <Text style={styles.forgotLabel}>Şifreni mi unuttun?</Text>
             </Pressable>
 
+            {errorMessage ? (
+              <Text style={styles.errorText}>{errorMessage}</Text>
+            ) : null}
+
             <View style={styles.dividerRow}>
               <View style={styles.dividerLine} />
               <Text style={styles.dividerLabel}>veya</Text>
@@ -101,11 +129,17 @@ export function LoginScreen() {
         </ScrollView>
 
         <View style={styles.footer}>
-          <OnboardingButton
-            label="Giriş yap"
-            onPress={handleLogin}
-            disabled={!canSubmit}
-          />
+          {isSubmitting ? (
+            <View style={styles.loadingButton}>
+              <ActivityIndicator color="#FFFFFF" />
+            </View>
+          ) : (
+            <OnboardingButton
+              label="Giriş yap"
+              onPress={handleLogin}
+              disabled={!canSubmit}
+            />
+          )}
           <Pressable
             onPress={() => router.push("/pages/onboarding")}
             hitSlop={8}
@@ -124,6 +158,19 @@ export function LoginScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+  loadingButton: {
+    height: 56,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.buttonElectricBlue,
+  },
+  errorText: {
+    color: "#FF6B6B",
+    fontSize: 13,
+    fontWeight: "600",
+    marginTop: 12,
+  },
   flex: { flex: 1 },
   header: { paddingHorizontal: 24, paddingTop: 4 },
   backButton: {

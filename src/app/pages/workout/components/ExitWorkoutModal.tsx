@@ -21,7 +21,7 @@ export function ExitWorkoutModal({
       onRequestClose={onContinue}
     >
       <View style={styles.backdrop}>
-        <Pressable style={StyleSheet.absoluteFillObject} onPress={onContinue} />
+        <Pressable style={StyleSheet.absoluteFill} onPress={onContinue} />
 
         <View style={styles.dialog}>
           <Text style={styles.title}>Antrenmandan çıkılsın mı?</Text>

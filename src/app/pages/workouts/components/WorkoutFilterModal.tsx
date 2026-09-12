@@ -79,7 +79,7 @@ export function WorkoutFilterModal({
       onRequestClose={onClose}
     >
       <View style={styles.backdrop}>
-        <Pressable style={StyleSheet.absoluteFillObject} onPress={onClose} />
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
 
         <SafeAreaView style={styles.sheet} edges={["bottom"]}>
           <View style={styles.header}>

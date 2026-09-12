@@ -25,7 +25,11 @@ export type ScoreHistoryPoint = { label: string; points: number };
 
 export type ScoreBreakdownItem = { id: string; label: string; points: number };
 
-export type AchievementIcon = "streak" | "workouts" | "pr" | "weekly";
+// Icon degerleri artik backend'deki Achievement.Icon / Reward.RewardType (serbest metin)
+// alanlarindan geldigi icin sabit union yerine string olarak tanimlandi. UI tarafindaki
+// ICONS eslemesi (bkz. Achievements.tsx, RewardCard.tsx) gercek veri backend'deki
+// degerlerle birebir eslesecek sekilde kalmali; bilinmeyen bir deger gelirse fallback kullanilir.
+export type AchievementIcon = string;
 
 export type Achievement = {
   id: string;
@@ -35,15 +39,7 @@ export type Achievement = {
   earned: boolean;
 };
 
-export type RewardIcon =
-  | "watch"
-  | "premium"
-  | "bag"
-  | "shoes"
-  | "training"
-  | "shaker"
-  | "apparel"
-  | "membership";
+export type RewardIcon = string;
 
 export type Reward = {
   rank: number;

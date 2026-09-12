@@ -38,7 +38,7 @@ export function ExerciseVideo({ video, imageUrl }: Props) {
       <Image source={{ uri: imageUrl }} style={styles.media} />
       <LinearGradient
         colors={["rgba(5,5,5,0)", "rgba(5,5,5,0.45)"]}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
       />
       <View style={styles.placeholderBadge}>
         <Ionicons

@@ -1,9 +1,12 @@
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Animated, ScrollView, StyleSheet, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ActivityIndicator, Animated, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { PremiumFeature } from "../../../shared/plus/components/PremiumFeature";
+import { ApiError } from "../../../services/api/client";
+import { getDailyNutrition, logWater } from "../../../services/api/nutrition";
+import { NutritionResponse } from "../../../services/api/types";
 import { AddMealModal } from "./components/AddMealModal";
 import { AiNutritionPlanCard } from "./components/AiNutritionPlanCard";
 import { CalorieBreakdown } from "./components/CalorieBreakdown";
@@ -15,24 +18,66 @@ import { NutritionEmptyState } from "./components/NutritionEmptyState";
 import { NutritionHeader } from "./components/NutritionHeader";
 import { NutritionInsight } from "./components/NutritionInsight";
 import { WaterTracker } from "./components/WaterTracker";
-import { MOCK_NUTRITION_DATA } from "./mockData";
 import { colors } from "./theme";
-import { FoodItem, MealEntry, MealType } from "./types";
+import { MealEntry, MealType, NutritionData } from "./types";
+
+/** "yyyy-MM-dd" - backend'in DateOnly query param formati (yerel saat diliminde). */
+function toDateParam(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function mapToNutritionData(response: NutritionResponse): NutritionData {
+  return {
+    hasLoggedFirstMeal: response.hasLoggedFirstMeal,
+    dailyCalories: response.dailyCalories,
+    macros: response.macros,
+    water: response.water,
+    meals: response.meals.map((meal) => ({
+      id: String(meal.id),
+      type: meal.type,
+      name: meal.name,
+      calories: meal.calories,
+    })),
+  };
+}
 
 export function NutritionScreen() {
-  // TODO: Backend/API bağlandığında MOCK_NUTRITION_DATA yerine fetch/query
-  // sonucu (aynı NutritionData şekli) kullanılacak. Su ve öğün ekleme gibi
-  // interaction'lar şimdilik yalnızca local state'i güncelliyor.
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [meals, setMeals] = useState<MealEntry[]>(MOCK_NUTRITION_DATA.meals);
-  const [waterConsumedL, setWaterConsumedL] = useState(
-    MOCK_NUTRITION_DATA.water.consumedL,
-  );
+  const [data, setData] = useState<NutritionData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [addMealType, setAddMealType] = useState<MealType | null>(null);
+  const [isAddingWater, setIsAddingWater] = useState(false);
+
+  const loadNutrition = useCallback(async (date: Date, signal?: AbortSignal) => {
+    setErrorMessage(null);
+    try {
+      const response = await getDailyNutrition(toDateParam(date), signal);
+      setData(mapToNutritionData(response));
+    } catch (error) {
+      setErrorMessage(
+        error instanceof ApiError
+          ? error.message
+          : "Beslenme verisi yüklenemedi. Lütfen tekrar deneyin.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    setIsLoading(true);
+    const controller = new AbortController();
+    loadNutrition(selectedDate, controller.signal);
+    return () => controller.abort();
+  }, [selectedDate, loadNutrition]);
 
   const consumedCalories = useMemo(
-    () => meals.reduce((sum, meal) => sum + meal.calories, 0),
-    [meals],
+    () => data?.meals.reduce((sum, meal) => sum + meal.calories, 0) ?? 0,
+    [data],
   );
 
   const headerAnim = useRef(new Animated.Value(0)).current;
@@ -40,6 +85,7 @@ export function NutritionScreen() {
   const macrosAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    if (!data) return;
     Animated.stagger(110, [
       Animated.timing(headerAnim, {
         toValue: 1,
@@ -57,7 +103,7 @@ export function NutritionScreen() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, [headerAnim, calorieCardAnim, macrosAnim]);
+  }, [data, headerAnim, calorieCardAnim, macrosAnim]);
 
   const fadeUp = (anim: Animated.Value, distance = 14) => ({
     opacity: anim,
@@ -77,31 +123,54 @@ export function NutritionScreen() {
       next.setDate(prev.getDate() + direction);
       return next;
     });
-    // TODO: gün değiştiğinde ilgili tarihe ait gerçek veri backend'den
-    // çekilecek. Şimdilik mock veri sabit kalıyor.
   };
 
-  const handleAddWater = () => {
-    setWaterConsumedL((prev) =>
-      Math.min(MOCK_NUTRITION_DATA.water.targetL, +(prev + 0.25).toFixed(2)),
-    );
+  const handleAddWater = async () => {
+    if (!data || isAddingWater) return;
+    setIsAddingWater(true);
+    try {
+      const water = await logWater({ amountMl: 250, date: toDateParam(selectedDate) });
+      setData((prev) => (prev ? { ...prev, water } : prev));
+    } catch {
+      // Sessizce yut - kullanıcı butona tekrar basabilir.
+    } finally {
+      setIsAddingWater(false);
+    }
   };
 
-  const handleSelectFood = (food: FoodItem) => {
-    if (!addMealType) return;
-    setMeals((prev) => [
-      ...prev,
-      {
-        id: `${food.id}-${Date.now()}`,
-        type: addMealType,
-        name: food.name,
-        calories: food.calories,
-      },
-    ]);
+  const handleMealLogged = (entry: MealEntry) => {
+    setData((prev) => (prev ? { ...prev, meals: [...prev.meals, entry] } : prev));
     setAddMealType(null);
   };
 
-  const hasLoggedFirstMeal = meals.length > 0;
+  const hasLoggedFirstMeal = (data?.meals.length ?? 0) > 0;
+
+  if (isLoading) {
+    return (
+      <View style={[styles.root, styles.centered]}>
+        <StatusBar style="light" />
+        <ActivityIndicator color={colors.electricBlue} size="large" />
+      </View>
+    );
+  }
+
+  if (errorMessage || !data) {
+    return (
+      <View style={[styles.root, styles.centered]}>
+        <StatusBar style="light" />
+        <Text style={styles.errorText}>{errorMessage ?? "Beslenme verisi yüklenemedi."}</Text>
+        <Pressable
+          style={styles.retryButton}
+          onPress={() => {
+            setIsLoading(true);
+            loadNutrition(selectedDate);
+          }}
+        >
+          <Text style={styles.retryLabel}>Tekrar dene</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.root}>
@@ -131,14 +200,14 @@ export function NutritionScreen() {
               >
                 <CalorieCard
                   consumedCalories={consumedCalories}
-                  dailyCalories={MOCK_NUTRITION_DATA.dailyCalories}
+                  dailyCalories={data.dailyCalories}
                 />
               </Animated.View>
 
               <Animated.View
                 style={[styles.padded, styles.sectionGap, fadeUp(macrosAnim)]}
               >
-                <MacroOverview macros={MOCK_NUTRITION_DATA.macros} />
+                <MacroOverview macros={data.macros} />
               </Animated.View>
 
               <View style={[styles.padded, styles.sectionGap]}>
@@ -149,7 +218,7 @@ export function NutritionScreen() {
 
               <View style={[styles.padded, styles.sectionGap]}>
                 <MealsSection
-                  meals={meals}
+                  meals={data.meals}
                   onAddMeal={setAddMealType}
                   onSelectMeal={() => {
                     // TODO: meal detay ekranı eklendiğinde buradan yönlendir.
@@ -159,14 +228,14 @@ export function NutritionScreen() {
 
               <View style={[styles.padded, styles.sectionGap]}>
                 <WaterTracker
-                  consumedL={waterConsumedL}
-                  targetL={MOCK_NUTRITION_DATA.water.targetL}
+                  consumedL={data.water.consumedL}
+                  targetL={data.water.targetL}
                   onAdd={handleAddWater}
                 />
               </View>
 
               <View style={[styles.padded, styles.sectionGap]}>
-                <CalorieBreakdown meals={meals} />
+                <CalorieBreakdown meals={data.meals} />
               </View>
 
               <View style={[styles.padded, styles.sectionGap]}>
@@ -196,7 +265,8 @@ export function NutritionScreen() {
       <AddMealModal
         visible={addMealType !== null}
         mealType={addMealType}
-        onSelectFood={handleSelectFood}
+        selectedDate={selectedDate}
+        onLogged={handleMealLogged}
         onClose={() => setAddMealType(null)}
       />
     </View>
@@ -206,6 +276,15 @@ export function NutritionScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
+  centered: { alignItems: "center", justifyContent: "center", gap: 16, paddingHorizontal: 32 },
+  errorText: { color: colors.textMuted, fontSize: 14, textAlign: "center" },
+  retryButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: colors.electricBlue,
+  },
+  retryLabel: { color: "#FFFFFF", fontSize: 14, fontWeight: "700" },
   scrollContent: { paddingTop: 16, paddingBottom: 156 },
   padded: { paddingHorizontal: 24 },
   sectionGap: { marginTop: 24 },

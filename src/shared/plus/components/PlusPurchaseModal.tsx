@@ -79,7 +79,7 @@ export function PlusPurchaseModal({
     >
       <View style={styles.backdrop}>
         <Pressable
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
           onPress={state === "processing" ? undefined : onClose}
         />
 
