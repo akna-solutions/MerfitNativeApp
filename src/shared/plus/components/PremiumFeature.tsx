@@ -1,47 +1,15 @@
 import { ReactNode } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
-
-import { usePlus } from "../PlusContext";
-import { PLUS_FEATURES } from "../featureRegistry";
-import { PlusFeature } from "../types";
-import { LockedOverlay } from "./LockedOverlay";
 
 type Props = {
-  feature: PlusFeature;
+  feature: string;
   children: ReactNode;
   borderRadius?: number;
 };
 
 /**
- * isPlusUser ? children : dimmed children + locked overlay (Pressable, Plus modal'ı açar).
- * Tüm ekranlardaki premium içerik bu tek component'ten geçer.
+ * Premium kilidi kaldırıldı - artık tüm özellikler herkese açık.
+ * Component, çağıran ekranları değiştirmemek için passthrough olarak bırakıldı.
  */
-export function PremiumFeature({
-  feature,
-  children,
-  borderRadius = 20,
-}: Props) {
-  const { isPlusUser, openPlusModal } = usePlus();
-
-  if (isPlusUser) {
-    return <>{children}</>;
-  }
-
-  const info = PLUS_FEATURES[feature];
-
-  return (
-    <Pressable onPress={() => openPlusModal(feature)}>
-      <View style={[styles.wrapper, { borderRadius }]}>
-        <View pointerEvents="none" style={styles.dimmed}>
-          {children}
-        </View>
-        <LockedOverlay title={info.title} description={info.description} />
-      </View>
-    </Pressable>
-  );
+export function PremiumFeature({ children }: Props) {
+  return <>{children}</>;
 }
-
-const styles = StyleSheet.create({
-  wrapper: { overflow: "hidden", minHeight: 190 },
-  dimmed: { opacity: 0.35 },
-});
