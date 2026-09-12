@@ -98,7 +98,7 @@ export function PlusPurchaseModal({
               <View style={styles.successBadge}>
                 <Ionicons name="checkmark" size={26} color="#FFFFFF" />
               </View>
-              <Text style={styles.centerTitle}>MERFIT Plus'a hoş geldin.</Text>
+              <Text style={styles.centerTitle}>MB FIT Plus'a hoş geldin.</Text>
               <Text style={styles.centerSubtitle}>
                 Premium özelliklerinin kilidi artık açık.
               </Text>
@@ -126,7 +126,7 @@ export function PlusPurchaseModal({
               showsVerticalScrollIndicator={false}
               style={styles.scroll}
             >
-              <Text style={styles.brand}>MERFIT+</Text>
+              <Text style={styles.brand}>MB FIT+</Text>
               <Text style={styles.title}>
                 {info
                   ? `${info.title} kilidini aç`

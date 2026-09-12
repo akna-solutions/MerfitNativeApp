@@ -145,7 +145,7 @@ export function ProfileScreen() {
             <SettingsSection title="Üyelik">
               <SettingsRow
                 icon="sparkles-outline"
-                title="MERFIT Plus"
+                title="MB FIT Plus"
                 subtitle={isPlusUser ? "Aktif" : "Gelişmiş özelliklerin kilidini aç"}
                 onPress={handleMembershipRowPress}
               />
@@ -205,7 +205,7 @@ export function ProfileScreen() {
               />
               <SettingsRow
                 icon="information-circle-outline"
-                title="MERFIT Hakkında"
+                title="MB FIT Hakkında"
                 onPress={() => router.push("/pages/profile/about" as never)}
               />
               <SettingsRow

@@ -20,7 +20,7 @@ export function PlusStatusCard({ isPlusUser, onPress }: Props) {
 
       <View style={styles.textBlock}>
         <View style={styles.titleRow}>
-          <Text style={styles.title}>MERFIT Plus</Text>
+          <Text style={styles.title}>MB FIT Plus</Text>
           {isPlusUser ? (
             <View style={styles.activeBadge}>
               <Text style={styles.activeBadgeLabel}>AKTİF</Text>

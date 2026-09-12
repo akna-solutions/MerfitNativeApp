@@ -138,8 +138,8 @@ export const REWARDS: Reward[] = [
   },
   {
     rank: 2,
-    title: "MERFIT Premium — 6 Ay",
-    description: "MERFIT Premium'a tam erişim.",
+    title: "MB FIT Premium — 6 Ay",
+    description: "MB FIT Premium'a tam erişim.",
     icon: "premium",
   },
   {
@@ -162,8 +162,8 @@ export const REWARDS: Reward[] = [
   },
   {
     rank: 6,
-    title: "MERFIT Premium — 3 Ay",
-    description: "MERFIT Premium'a tam erişim.",
+    title: "MB FIT Premium — 3 Ay",
+    description: "MB FIT Premium'a tam erişim.",
     icon: "premium",
   },
   {
@@ -175,7 +175,7 @@ export const REWARDS: Reward[] = [
   {
     rank: 8,
     title: "Spor Giyim Kuponu",
-    description: "MERFIT antrenman kıyafetleri için.",
+    description: "MB FIT antrenman kıyafetleri için.",
     icon: "apparel",
   },
   {
@@ -186,8 +186,8 @@ export const REWARDS: Reward[] = [
   },
   {
     rank: 10,
-    title: "MERFIT Premium — 1 Ay",
-    description: "MERFIT Premium'a tam erişim.",
+    title: "MB FIT Premium — 1 Ay",
+    description: "MB FIT Premium'a tam erişim.",
     icon: "premium",
   },
 ];

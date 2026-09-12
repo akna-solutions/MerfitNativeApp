@@ -1,3 +1,3 @@
-// Leaderboard/Ranking ekranı da MERFIT'in aynı tasarım sisteminin devamı.
+// Leaderboard/Ranking ekranı da MB FIT'in aynı tasarım sisteminin devamı.
 export { colors } from "../onboarding/theme";
 

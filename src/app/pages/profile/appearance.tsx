@@ -17,7 +17,7 @@ export default function AppearanceRoute() {
   return (
     <ProfileDetailShell
       title="Görünüm"
-      subtitle="MERFIT şu anda yalnızca Koyu modu destekliyor."
+      subtitle="MB FIT şu anda yalnızca Koyu modu destekliyor."
     >
       {OPTIONS.map((option) => {
         const selected = profile.appearance === option.value;

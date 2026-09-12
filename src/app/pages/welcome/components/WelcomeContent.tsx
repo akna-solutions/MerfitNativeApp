@@ -5,8 +5,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { WelcomeButton } from "./WelcomeButton";
 import { colors } from "../theme";
 
-// MERFIT logosu asset olarak eklendiğinde (örn. assets/images/merfit-logo.png)
-// aşağıdaki <Text> wordmark'ı <Image source={require("@/assets/images/merfit-logo.png")} /> ile değiştir.
+// MB FIT logosu asset olarak eklendiğinde (örn. assets/images/mbfit-logo.png)
+// aşağıdaki <Text> wordmark'ı <Image source={require("@/assets/images/mbfit-logo.png")} /> ile değiştir.
 
 type Props = {
   onGetStarted: () => void;
@@ -53,7 +53,7 @@ export function WelcomeContent({ onGetStarted, onLogin }: Props) {
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <Animated.View style={[styles.logoBlock, rise(logoAnim, -10)]}>
-        <Text style={styles.logoText}>MERFIT</Text>
+        <Text style={styles.logoText}>MB FIT</Text>
         <Text style={styles.slogan}>DAHA AKILLI ANTRENMAN. DAHA İYİ YAŞAM.</Text>
       </Animated.View>
 

@@ -61,7 +61,7 @@ export function LoginScreen() {
         >
           <Text style={styles.title}>Tekrar hoş geldin.</Text>
           <Text style={styles.subtitle}>
-            MERFIT yolculuğuna devam etmek için giriş yap.
+            MB FIT yolculuğuna devam etmek için giriş yap.
           </Text>
 
           <View style={styles.form}>

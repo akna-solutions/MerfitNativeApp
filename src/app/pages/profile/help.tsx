@@ -9,35 +9,35 @@ import { colors } from "./theme";
 
 const FAQ_ITEMS: { question: string; answer: string }[] = [
   {
-    question: "MERFIT Puanı nasıl hesaplanır?",
+    question: "MB FIT Puanı nasıl hesaplanır?",
     answer:
-      "MERFIT Puanın; antrenman düzenliliği, tamamlama, ilerleme, beslenme ve seri (streak) verilerinden hesaplanır. Ayrıntıları Sıralama ekranında görebilirsin.",
+      "MB FIT Puanın; antrenman düzenliliği, tamamlama, ilerleme, beslenme ve seri (streak) verilerinden hesaplanır. Ayrıntıları Sıralama ekranında görebilirsin.",
   },
   {
-    question: "MERFIT Plus nedir?",
+    question: "MB FIT Plus nedir?",
     answer:
-      "MERFIT Plus; gelişmiş analizler, yapay zeka destekli antrenman ve beslenme planları, kişisel analizler ve detaylı puan dökümünün kilidini açar.",
+      "MB FIT Plus; gelişmiş analizler, yapay zeka destekli antrenman ve beslenme planları, kişisel analizler ve detaylı puan dökümünün kilidini açar.",
   },
   {
     question: "Antrenmanlar nasıl takip edilir?",
     answer:
-      "Aktif Antrenman sırasında her set için ağırlık ve tekrar sayını gir - MERFIT setlerini, hacmini ve ilerlemeni otomatik olarak takip eder.",
+      "Aktif Antrenman sırasında her set için ağırlık ve tekrar sayını gir - MB FIT setlerini, hacmini ve ilerlemeni otomatik olarak takip eder.",
   },
   {
     question: "Plus üyeliğimi nasıl iptal edebilirim?",
     answer:
-      "MERFIT Plus üyeliğini görüntülemek ve istediğin zaman iptal etmek için Profil → Aboneliği Yönet bölümüne git.",
+      "MB FIT Plus üyeliğini görüntülemek ve istediğin zaman iptal etmek için Profil → Aboneliği Yönet bölümüne git.",
   },
   {
     question: "Sıralama (liderlik tablosu) nasıl çalışır?",
     answer:
-      "MERFIT Puanına göre Türkiye'deki diğer MERFIT kullanıcılarıyla sıralanırsın. Profilini Gizlilik ayarlarından liderlik tablosunda gizleyebilirsin.",
+      "MB FIT Puanına göre Türkiye'deki diğer MB FIT kullanıcılarıyla sıralanırsın. Profilini Gizlilik ayarlarından liderlik tablosunda gizleyebilirsin.",
   },
 ];
 
 function sendMail(subject: string) {
   Linking.openURL(
-    `mailto:support@merfit.app?subject=${encodeURIComponent(subject)}`,
+    `mailto:support@mbfit.app?subject=${encodeURIComponent(subject)}`,
   ).catch(() => {});
 }
 
@@ -82,17 +82,17 @@ export default function HelpRoute() {
           <SettingsRow
             icon="mail-outline"
             title="Destekle İletişime Geç"
-            onPress={() => sendMail("MERFIT Destek Talebi")}
+            onPress={() => sendMail("MB FIT Destek Talebi")}
           />
           <SettingsRow
             icon="warning-outline"
             title="Sorun Bildir"
-            onPress={() => sendMail("MERFIT Sorun Bildirimi")}
+            onPress={() => sendMail("MB FIT Sorun Bildirimi")}
           />
           <SettingsRow
             icon="chatbubble-ellipses-outline"
             title="Geri Bildirim Gönder"
-            onPress={() => sendMail("MERFIT Geri Bildirim")}
+            onPress={() => sendMail("MB FIT Geri Bildirim")}
             isLast
           />
         </SettingsSection>

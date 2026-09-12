@@ -10,7 +10,7 @@ export function LeaderboardEmptyState({ onStartWorkout }: Props) {
     <View style={styles.card}>
       <Text style={styles.title}>Sıralama tablosu hazırlanıyor.</Text>
       <Text style={styles.description}>
-        MERFIT Puanı kazanmaya başlamak için ilk antrenmanını tamamla.
+        MB FIT Puanı kazanmaya başlamak için ilk antrenmanını tamamla.
       </Text>
       <View style={styles.button}>
         <OnboardingButton label="Antrenmana Başla" onPress={onStartWorkout} />

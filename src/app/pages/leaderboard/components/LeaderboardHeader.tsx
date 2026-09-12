@@ -29,7 +29,7 @@ export function LeaderboardHeader({
           <Ionicons name="chevron-back" size={18} color={colors.textPrimary} />
         </Pressable>
         <View style={styles.titleBlock}>
-          <Text style={styles.title}>MERFIT Sıralaması</Text>
+          <Text style={styles.title}>MB FIT Sıralaması</Text>
           <Text style={styles.subtitle}>Türkiye genelinde sıralamanı gör.</Text>
         </View>
         <View style={styles.backButtonGhost} />
@@ -43,7 +43,7 @@ export function LeaderboardHeader({
         <View style={styles.statsRow}>
           <View style={styles.stat}>
             <Text style={styles.statValue}>{points.toLocaleString()}</Text>
-            <Text style={styles.statLabel}>MERFIT Puanı</Text>
+            <Text style={styles.statLabel}>MB FIT Puanı</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.stat}>
