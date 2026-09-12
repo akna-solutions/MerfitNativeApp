@@ -17,6 +17,42 @@ export type LoginRequest = {
   password: string;
 };
 
+/**
+ * POST /api/auth/register - MerfitCustomerApi.Business.Dtos.Auth.RegisterRequest ile birebir eslesir.
+ * Alanlar OnboardingData'daki (bkz. app/pages/onboarding/types.ts) adimlarla dogrudan doldurulur.
+ */
+export type RegisterRequest = {
+  name: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  gender?: "male" | "female" | null;
+  age?: number | null;
+  heightUnit: "cm" | "ft_in";
+  heightCm?: number | null;
+  heightFeet?: number | null;
+  heightInches?: number | null;
+  weightUnit: "kg" | "lb";
+  weight?: number | null;
+  goal?: string | null;
+  activityLevel?: string | null;
+  trainingExperience?: string | null;
+  trainingDays?: number | null;
+  trainingLocation?: string | null;
+  /** Backend'de Equipment tablosunun sayisal Id'lerini bekler; su an istemcide slug->id
+   * eslemesi yapacak bir uc nokta olmadigindan bos gonderiliyor (bkz. AccountStep sonrasi TODO). */
+  equipmentIds?: number[] | null;
+};
+
+// ---- Equipment ----
+/** GET /api/equipment - onboarding'deki EquipmentStep slug'larini (dumbbells, barbell, ...)
+ * backend'in sayisal Equipment.Id'lerine eslemek icin kullanilir. */
+export type EquipmentListItem = {
+  id: number;
+  name: string;
+  slug: string;
+};
+
 // ---- Dashboard ----
 export type DashboardTodayProgress = {
   workoutsCompleted: number;
@@ -113,7 +149,12 @@ export type WorkoutListQuery = {
 };
 
 // ---- Workout Sessions ----
-export type WorkoutSessionStatus = "Started" | "Paused" | "Completed" | "Cancelled" | "Abandoned";
+export type WorkoutSessionStatus =
+  | "Started"
+  | "Paused"
+  | "Completed"
+  | "Cancelled"
+  | "Abandoned";
 
 export type WorkoutSetLogEntry = {
   setNumber: number;
@@ -200,7 +241,11 @@ export type WaterSummary = {
   targetL: number;
 };
 
-export type MealEntryType = "Kahvaltı" | "Öğle Yemeği" | "Akşam Yemeği" | "Atıştırmalık";
+export type MealEntryType =
+  | "Kahvaltı"
+  | "Öğle Yemeği"
+  | "Akşam Yemeği"
+  | "Atıştırmalık";
 
 export type MealEntry = {
   id: number;
@@ -325,7 +370,11 @@ export type LeaderboardEntryItem = {
   isCurrentUser: boolean;
 };
 
-export type LeaderboardScoreBreakdownItem = { id: string; label: string; points: number };
+export type LeaderboardScoreBreakdownItem = {
+  id: string;
+  label: string;
+  points: number;
+};
 export type LeaderboardScoreHistoryPoint = { label: string; points: number };
 
 export type LeaderboardAchievement = {

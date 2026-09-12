@@ -1,16 +1,16 @@
 import {
-    createContext,
-    ReactNode,
-    useCallback,
-    useContext,
-    useEffect,
-    useMemo,
-    useState,
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
 } from "react";
 
 import * as authApi from "../../services/api/auth";
 import { getStoredTokens } from "../../services/api/tokenStorage";
-import { LoginRequest } from "../../services/api/types";
+import { LoginRequest, RegisterRequest } from "../../services/api/types";
 
 type AuthStatus = "loading" | "signedIn" | "signedOut";
 
@@ -18,6 +18,7 @@ type AuthContextValue = {
   status: AuthStatus;
   userName: string | null;
   login: (request: LoginRequest) => Promise<void>;
+  register: (request: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
   /** 401 gibi durumlarda (bkz. services/api/client.ts) token'lar client tarafinda temizlendiginde cagirilir. */
   forceSignOut: () => void;
@@ -51,6 +52,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus("signedIn");
   }, []);
 
+  const register = useCallback(async (request: RegisterRequest) => {
+    const result = await authApi.register(request);
+    setUserName(result.name || result.email);
+    setStatus("signedIn");
+  }, []);
+
   const logout = useCallback(async () => {
     await authApi.logout();
     setUserName(null);
@@ -63,8 +70,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ status, userName, login, logout, forceSignOut }),
-    [status, userName, login, logout, forceSignOut],
+    () => ({ status, userName, login, register, logout, forceSignOut }),
+    [status, userName, login, register, logout, forceSignOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,13 +1,13 @@
 import { ReactNode, useEffect, useRef } from "react";
 import {
-    Animated,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Animated,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -26,6 +26,7 @@ type Props = {
   onSkip?: () => void;
   continueDisabled?: boolean;
   continueLabel?: string;
+  continueLoading?: boolean;
 };
 
 export function OnboardingScreen({
@@ -39,6 +40,7 @@ export function OnboardingScreen({
   onSkip,
   continueDisabled,
   continueLabel = "Devam et",
+  continueLoading,
 }: Props) {
   const fade = useRef(new Animated.Value(0)).current;
 
@@ -104,6 +106,7 @@ export function OnboardingScreen({
             label={continueLabel}
             onPress={onContinue}
             disabled={continueDisabled}
+            isLoading={continueLoading}
           />
           {onSkip ? (
             <OnboardingButton

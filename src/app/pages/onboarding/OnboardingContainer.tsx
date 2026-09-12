@@ -1,6 +1,17 @@
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
+import {
+  ApiError,
+  isApiError,
+  NetworkError,
+} from "../../../services/api/client";
+import { getEquipmentList } from "../../../services/api/equipment";
+import {
+  EquipmentListItem,
+  RegisterRequest,
+} from "../../../services/api/types";
+import { useAuth } from "../../../shared/auth/AuthContext";
 import { OnboardingScreen } from "./components/OnboardingScreen";
 import { SuccessScreen } from "./components/SuccessScreen";
 import { AccountStep } from "./steps/AccountStep";
@@ -18,11 +29,89 @@ import { initialOnboardingData, OnboardingData } from "./types";
 
 const TOTAL_STEPS = 11;
 
+/**
+ * EquipmentStep'te secilen slug'lari (orn. "dumbbells") GET /api/equipment'ten gelen
+ * slug->id listesiyle eslestirir. "none" (ekipman yok) yerel bir secenektir, backend'de
+ * karsiligi olmadigindan gonderilmez. Henuz listeye eslenmeyen (orn. servis cekilemediyse)
+ * ogeler sessizce atlanir - EquipmentIds backend'de opsiyonel oldugundan register'i bloklamaz.
+ */
+function mapEquipmentSlugsToIds(
+  slugs: OnboardingData["equipment"],
+  equipmentList: EquipmentListItem[],
+): number[] {
+  if (equipmentList.length === 0) return [];
+
+  const idBySlug = new Map(equipmentList.map((item) => [item.slug, item.id]));
+  return slugs
+    .filter((slug) => slug !== "none")
+    .map((slug) => idBySlug.get(slug))
+    .filter((id): id is number => id !== undefined);
+}
+
+/**
+ * OnboardingData (RN state) -> RegisterRequest (backend DTO). Sayisal alanlar backend'de
+ * decimal/int oldugundan bos string'ler yerine null gonderiyoruz.
+ */
+function toRegisterRequest(
+  data: OnboardingData,
+  equipmentList: EquipmentListItem[],
+): RegisterRequest {
+  const age = parseInt(data.age, 10);
+  const heightCm = data.height ? parseFloat(data.height) : null;
+  const heightFeet = data.heightFeet ? parseInt(data.heightFeet, 10) : null;
+  const heightInches = data.heightInches
+    ? parseInt(data.heightInches, 10)
+    : null;
+  const weight = data.weight ? parseFloat(data.weight) : null;
+
+  return {
+    name: data.name.trim(),
+    email: data.email.trim(),
+    password: data.password,
+    confirmPassword: data.confirmPassword,
+    gender: data.gender,
+    age: Number.isNaN(age) ? null : age,
+    heightUnit: data.heightUnit,
+    heightCm: data.heightUnit === "cm" ? heightCm : null,
+    heightFeet: data.heightUnit === "ft_in" ? heightFeet : null,
+    heightInches: data.heightUnit === "ft_in" ? heightInches : null,
+    weightUnit: data.weightUnit,
+    weight,
+    goal: data.goal,
+    activityLevel: data.activityLevel,
+    trainingExperience: data.trainingExperience,
+    trainingDays: data.trainingDays,
+    trainingLocation: data.trainingLocation,
+    equipmentIds: mapEquipmentSlugsToIds(data.equipment, equipmentList),
+  };
+}
+
 export function OnboardingContainer() {
   const router = useRouter();
+  const { register } = useAuth();
   const [step, setStep] = useState(1);
   const [showSuccess, setShowSuccess] = useState(false);
   const [data, setData] = useState<OnboardingData>(initialOnboardingData);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [equipmentList, setEquipmentList] = useState<EquipmentListItem[]>([]);
+
+  // Ekipman listesini akisin basinda, arka planda cekiyoruz; boylece kullanici EquipmentStep'e
+  // (adim 10) geldiginde ve daha onemlisi "Hesap oluştur"a bastiginda liste zaten hazir olur.
+  // Cekme basarisiz olursa sessizce yutuyoruz - equipmentIds bos gider, register yine de calisir.
+  useEffect(() => {
+    let isMounted = true;
+    getEquipmentList()
+      .then((list) => {
+        if (isMounted) setEquipmentList(list);
+      })
+      .catch((error) => {
+        console.warn("Ekipman listesi alinamadi:", error);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const update = <K extends keyof OnboardingData>(
     key: K,
@@ -42,13 +131,39 @@ export function OnboardingContainer() {
       router.back();
       return;
     }
+    setSubmitError(null);
     setStep(step - 1);
   };
 
-  const handleCreateAccount = () => {
-    // TODO: gerçek authentication / backend entegrasyonu bağlandığında
-    // burada data (OnboardingData) profili API'ye gönderilecek.
-    setShowSuccess(true);
+  const handleCreateAccount = async () => {
+    if (isSubmitting) return;
+
+    setSubmitError(null);
+    setIsSubmitting(true);
+    try {
+      await register(toRegisterRequest(data, equipmentList));
+      setShowSuccess(true);
+    } catch (error) {
+      console.error("Kayıt hatası:", error);
+      if (isApiError(error)) {
+        const apiError = error as ApiError;
+        setSubmitError(
+          apiError.fieldErrors.length > 0
+            ? apiError.fieldErrors[0]
+            : apiError.message,
+        );
+      } else if (error instanceof NetworkError) {
+        setSubmitError(
+          "Sunucuya ulaşılamadı. İnternet bağlantınızı veya backend adresini kontrol edin.",
+        );
+      } else if (error instanceof Error) {
+        setSubmitError(error.message);
+      } else {
+        setSubmitError("Hesap oluşturulamadı. Lütfen tekrar deneyin.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleStartTraining = () => {
@@ -269,7 +384,8 @@ export function OnboardingContainer() {
           onBack={goBack}
           onContinue={goNext}
           continueLabel="Hesap oluştur"
-          continueDisabled={!accountValid}
+          continueDisabled={!accountValid || isSubmitting}
+          continueLoading={isSubmitting}
         >
           <AccountStep
             email={data.email}
@@ -284,6 +400,7 @@ export function OnboardingContainer() {
               // TODO: mevcut authentication sistemi bağlandığında Google OAuth akışını burada tetikle.
             }}
             onLoginPress={() => router.push("/pages/login")}
+            errorMessage={submitError}
           />
         </OnboardingScreen>
       );

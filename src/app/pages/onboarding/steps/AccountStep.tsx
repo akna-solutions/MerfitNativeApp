@@ -12,6 +12,7 @@ type Props = {
   onConfirmPasswordChange: (value: string) => void;
   onGooglePress: () => void;
   onLoginPress: () => void;
+  errorMessage?: string | null;
 };
 
 export function AccountStep({
@@ -23,6 +24,7 @@ export function AccountStep({
   onConfirmPasswordChange,
   onGooglePress,
   onLoginPress,
+  errorMessage,
 }: Props) {
   return (
     <View>
@@ -54,6 +56,10 @@ export function AccountStep({
         style={styles.fieldFont}
       />
 
+      {errorMessage ? (
+        <Text style={styles.errorText}>{errorMessage}</Text>
+      ) : null}
+
       <View style={styles.dividerRow}>
         <View style={styles.dividerLine} />
         <Text style={styles.dividerLabel}>veya</Text>
@@ -66,7 +72,8 @@ export function AccountStep({
 
       <Pressable onPress={onLoginPress} hitSlop={8} style={styles.loginRow}>
         <Text style={styles.loginText}>
-          Zaten bir hesabın var mı? <Text style={styles.loginLink}>Giriş yap</Text>
+          Zaten bir hesabın var mı?{" "}
+          <Text style={styles.loginLink}>Giriş yap</Text>
         </Text>
       </Pressable>
     </View>
@@ -76,6 +83,12 @@ export function AccountStep({
 const styles = StyleSheet.create({
   fieldFont: { fontSize: 16, fontWeight: "600" },
   gap: { height: 12 },
+  errorText: {
+    color: "#FF6B6B",
+    fontSize: 13,
+    fontWeight: "600",
+    marginTop: 14,
+  },
   dividerRow: {
     flexDirection: "row",
     alignItems: "center",

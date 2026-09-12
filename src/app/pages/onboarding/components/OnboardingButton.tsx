@@ -1,5 +1,11 @@
 import { useRef } from "react";
-import { Animated, Pressable, StyleSheet, Text } from "react-native";
+import {
+  ActivityIndicator,
+  Animated,
+  Pressable,
+  StyleSheet,
+  Text,
+} from "react-native";
 
 import { colors } from "../theme";
 
@@ -8,6 +14,8 @@ type Props = {
   onPress: () => void;
   disabled?: boolean;
   variant?: "primary" | "text";
+  /** true iken buton devre disi kalir ve etiket yerine bir spinner gosterilir (orn. API istegi devam ediyorken). */
+  isLoading?: boolean;
 };
 
 export function OnboardingButton({
@@ -15,11 +23,13 @@ export function OnboardingButton({
   onPress,
   disabled,
   variant = "primary",
+  isLoading = false,
 }: Props) {
   const scale = useRef(new Animated.Value(1)).current;
+  const isDisabled = disabled || isLoading;
 
   const press = (toValue: number) => {
-    if (disabled) return;
+    if (isDisabled) return;
     Animated.spring(scale, {
       toValue,
       useNativeDriver: true,
@@ -30,7 +40,7 @@ export function OnboardingButton({
 
   if (variant === "text") {
     return (
-      <Pressable onPress={onPress} disabled={disabled} hitSlop={8}>
+      <Pressable onPress={onPress} disabled={isDisabled} hitSlop={8}>
         <Text style={styles.textLabel}>{label}</Text>
       </Pressable>
     );
@@ -38,7 +48,7 @@ export function OnboardingButton({
 
   return (
     <Pressable
-      onPress={disabled ? undefined : onPress}
+      onPress={isDisabled ? undefined : onPress}
       onPressIn={() => press(0.97)}
       onPressOut={() => press(1)}
       hitSlop={8}
@@ -46,15 +56,22 @@ export function OnboardingButton({
       <Animated.View
         style={[
           styles.primary,
-          disabled && styles.primaryDisabled,
+          isDisabled && styles.primaryDisabled,
           { transform: [{ scale }] },
         ]}
       >
-        <Text
-          style={[styles.primaryLabel, disabled && styles.primaryLabelDisabled]}
-        >
-          {label}
-        </Text>
+        {isLoading ? (
+          <ActivityIndicator color="#FFFFFF" />
+        ) : (
+          <Text
+            style={[
+              styles.primaryLabel,
+              disabled && styles.primaryLabelDisabled,
+            ]}
+          >
+            {label}
+          </Text>
+        )}
       </Animated.View>
     </Pressable>
   );
