@@ -13,16 +13,20 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { PremiumFeature } from "../../../shared/plus/components/PremiumFeature";
+import { usePersonalizationStatus } from "../../../shared/personalization/usePersonalizationStatus";
 import { ApiError } from "../../../services/api/client";
 import { getDashboard } from "../../../services/api/dashboard";
-import { DashboardResponse } from "../../../services/api/types";
+import { getTodayPlan } from "../../../services/api/myPlan";
+import { DashboardResponse, MyTodayWorkoutPlanResponse } from "../../../services/api/types";
 import { AiWorkoutCard } from "./components/AiWorkoutCard";
 import { DashboardHeader } from "./components/DashboardHeader";
 import { EmptyState } from "./components/EmptyState";
 import { GoalProgressCard } from "./components/GoalProgressCard";
+import { PersonalizationPendingState } from "./components/PersonalizationPendingState";
 import { ProgressCard } from "./components/ProgressCard";
 import { QuickStats } from "./components/QuickStats";
 import { RecommendedWorkouts } from "./components/RecommendedWorkouts";
+import { TodayPersonalWorkoutCard } from "./components/TodayPersonalWorkoutCard";
 import { WorkoutCard } from "./components/WorkoutCard";
 import { colors } from "./theme";
 import { DashboardData, WorkoutSummary } from "./types";
@@ -60,6 +64,10 @@ export function DashboardScreen() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [todayPlan, setTodayPlan] = useState<MyTodayWorkoutPlanResponse | null>(null);
+
+  const personalization = usePersonalizationStatus(true);
+  const previousPersonalizationStatus = useRef(personalization.status);
 
   const loadDashboard = useCallback(async (signal?: AbortSignal) => {
     setErrorMessage(null);
@@ -81,11 +89,37 @@ export function DashboardScreen() {
     }
   }, [router]);
 
+  const loadTodayPlan = useCallback(async (signal?: AbortSignal) => {
+    try {
+      const response = await getTodayPlan(signal);
+      setTodayPlan(response);
+    } catch {
+      // Kisisel plan henuz hazir olmayabilir (orn. PersonalizationJob Pending) - sessizce yut,
+      // dashboard genel oneriler ile calismaya devam eder.
+    }
+  }, []);
+
   useEffect(() => {
     const controller = new AbortController();
     loadDashboard(controller.signal);
+    loadTodayPlan(controller.signal);
     return () => controller.abort();
-  }, [loadDashboard]);
+  }, [loadDashboard, loadTodayPlan]);
+
+  // PersonalizationJob Pending/Processing -> Completed'e gectiginde, artik gercek kisisel
+  // plan hazir demektir: dashboard'u ve bugunun planini yeniden cek.
+  useEffect(() => {
+    const wasPending = previousPersonalizationStatus.current === "Pending"
+      || previousPersonalizationStatus.current === "Processing";
+    const isNowCompleted = personalization.status === "Completed";
+
+    if (wasPending && isNowCompleted) {
+      loadDashboard();
+      loadTodayPlan();
+    }
+
+    previousPersonalizationStatus.current = personalization.status;
+  }, [personalization.status, loadDashboard, loadTodayPlan]);
 
   const headerAnim = useRef(new Animated.Value(0)).current;
   const progressAnim = useRef(new Animated.Value(0)).current;
@@ -137,6 +171,18 @@ export function DashboardScreen() {
     } as never);
   };
 
+  const goToPersonalWorkout = () => {
+    if (!todayPlan?.day) return;
+    router.push({
+      pathname: "/pages/workout/active/[id]",
+      params: {
+        id: String(todayPlan.day.workout.id),
+        title: todayPlan.day.workout.title,
+        workoutPlanDayId: todayPlan.workoutPlanDayId ? String(todayPlan.workoutPlanDayId) : undefined,
+      },
+    } as never);
+  };
+
   if (isLoading) {
     return (
       <View style={[styles.root, styles.centered]}>
@@ -179,16 +225,34 @@ export function DashboardScreen() {
             <DashboardHeader name={data.userName} />
           </Animated.View>
 
+          {personalization.isPending || personalization.isFailed ? (
+            <Animated.View style={[styles.padded, fadeUp(workoutAnim)]}>
+              <PersonalizationPendingState
+                isTimedOut={personalization.isTimedOut}
+                isFailed={personalization.isFailed}
+                onRetry={personalization.refetch}
+              />
+            </Animated.View>
+          ) : null}
+
+          {todayPlan?.hasWorkoutToday && todayPlan.day ? (
+            <Animated.View style={[styles.padded, styles.gapTop, fadeUp(workoutAnim)]}>
+              <TodayPersonalWorkoutCard day={todayPlan.day} onPress={goToPersonalWorkout} />
+            </Animated.View>
+          ) : null}
+
           {data.hasCompletedFirstWorkout && data.todayWorkout ? (
             <>
-              <Animated.View style={[styles.padded, fadeUp(workoutAnim)]}>
-                <WorkoutCard
-                  workout={data.todayWorkout}
-                  onPress={() =>
-                    goToWorkout(data.todayWorkout as WorkoutSummary)
-                  }
-                />
-              </Animated.View>
+              {!todayPlan?.hasWorkoutToday ? (
+                <Animated.View style={[styles.padded, fadeUp(workoutAnim)]}>
+                  <WorkoutCard
+                    workout={data.todayWorkout}
+                    onPress={() =>
+                      goToWorkout(data.todayWorkout as WorkoutSummary)
+                    }
+                  />
+                </Animated.View>
+              ) : null}
 
               <Animated.View style={[styles.padded, fadeUp(progressAnim)]}>
                 <ProgressCard progress={data.todayProgress} />
@@ -212,7 +276,7 @@ export function DashboardScreen() {
                 onSelect={goToWorkout}
               />
             </>
-          ) : (
+          ) : !todayPlan?.hasWorkoutToday && !personalization.isPending ? (
             <Animated.View style={[styles.padded, fadeUp(workoutAnim)]}>
               <EmptyState
                 onStartFirstWorkout={() =>
@@ -220,7 +284,7 @@ export function DashboardScreen() {
                 }
               />
             </Animated.View>
-          )}
+          ) : null}
         </ScrollView>
       </SafeAreaView>
     </View>

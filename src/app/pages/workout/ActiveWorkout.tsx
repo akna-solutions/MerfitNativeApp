@@ -39,6 +39,9 @@ import { WorkoutSummary } from "./WorkoutSummary";
 type Props = {
   workoutId: string;
   workoutTitle?: string;
+  /** Kisisel plandan ("Bugünün Antrenmanı") baslatildiysa dolu gelir; hedef set/tekrar
+   * degerlerinin genel katalog yerine kisisel WorkoutPlanExercise'dan okunmasini saglar. */
+  workoutPlanDayId?: string;
 };
 
 type PersonalRecord = { exerciseName: string; weight: number; reps: number };
@@ -80,7 +83,7 @@ function mapApiSession(api: ApiWorkoutSession): {
   };
 }
 
-export function ActiveWorkout({ workoutId, workoutTitle }: Props) {
+export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Props) {
   const router = useRouter();
 
   const [sessionId, setSessionId] = useState<number | null>(null);
@@ -110,7 +113,8 @@ export function ActiveWorkout({ workoutId, workoutTitle }: Props) {
     (async () => {
       try {
         const numericWorkoutId = Number(workoutId);
-        const apiSession = await startWorkoutSession(numericWorkoutId);
+        const numericPlanDayId = workoutPlanDayId ? Number(workoutPlanDayId) : undefined;
+        const apiSession = await startWorkoutSession(numericWorkoutId, numericPlanDayId);
         if (!isMounted) return;
 
         const { session: mapped } = mapApiSession(apiSession);
@@ -139,7 +143,7 @@ export function ActiveWorkout({ workoutId, workoutTitle }: Props) {
     return () => {
       isMounted = false;
     };
-  }, [workoutId, router]);
+  }, [workoutId, workoutPlanDayId, router]);
 
   const currentExercise = session?.exercises[exerciseIndex];
   const currentProgress = currentExercise ? progress[currentExercise.id] : undefined;

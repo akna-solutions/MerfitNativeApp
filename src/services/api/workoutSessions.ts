@@ -7,11 +7,15 @@ import {
   WorkoutSessionSummary,
 } from "./types";
 
-/** POST /api/workout-sessions - secilen antrenman icin yeni bir oturum baslatir. */
-export async function startWorkoutSession(workoutId: number): Promise<WorkoutSession> {
+/** POST /api/workout-sessions - secilen antrenman icin yeni bir oturum baslatir. workoutPlanDayId
+ * verilirse (kisisel plandan baslatildiysa) hedef set/tekrar degerleri kisisel plandan okunur. */
+export async function startWorkoutSession(
+  workoutId: number,
+  workoutPlanDayId?: number,
+): Promise<WorkoutSession> {
   return apiRequest<WorkoutSession>("/api/workout-sessions", {
     method: "POST",
-    body: { workoutId },
+    body: workoutPlanDayId ? { workoutId, workoutPlanDayId } : { workoutId },
   });
 }
 

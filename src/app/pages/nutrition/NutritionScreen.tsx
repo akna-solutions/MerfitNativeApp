@@ -17,6 +17,7 @@ import { MealsSection } from "./components/MealsSection";
 import { NutritionEmptyState } from "./components/NutritionEmptyState";
 import { NutritionHeader } from "./components/NutritionHeader";
 import { NutritionInsight } from "./components/NutritionInsight";
+import { TodayNutritionPlanCard } from "./components/TodayNutritionPlanCard";
 import { WaterTracker } from "./components/WaterTracker";
 import { colors } from "./theme";
 import { MealEntry, MealType, NutritionData } from "./types";
@@ -187,6 +188,10 @@ export function NutritionScreen() {
 
           <View style={styles.sectionGap}>
             <DateSelector date={selectedDate} onChangeDay={handleChangeDay} />
+          </View>
+
+          <View style={[styles.padded, styles.sectionGap]}>
+            <TodayNutritionPlanCard />
           </View>
 
           {hasLoggedFirstMeal ? (

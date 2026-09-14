@@ -10,6 +10,13 @@ export type AuthResponse = {
   accessToken: string;
   refreshToken: string;
   accessTokenExpiresAt: string;
+  /**
+   * Kayit sirasinda olusturulan PersonalizationJob'un durumu ("Pending" | "Processing" |
+   * "Completed" | "Failed"). Yalnizca register() yanitinda dolu gelir; login() yanitinda
+   * backend bu alani doldurmaz (undefined/null olabilir). Dashboard'un "programin hazirlaniyor"
+   * bos durumunu gosterip gostermeyecegine karar vermek icin kullanilir.
+   */
+  personalizationStatus?: string | null;
 };
 
 export type LoginRequest = {
@@ -90,6 +97,113 @@ export type DashboardResponse = {
   quickStats: DashboardQuickStat[];
   goalProgress: DashboardGoalProgress | null;
   recommended: DashboardWorkoutSummary[];
+};
+
+// ---- Personalization (Faz 2) ----
+/**
+ * GET /api/personalization/status - MerfitCustomerApi.Business.Dtos.Customer.Personalization.PersonalizationStatusDto
+ * ile birebir eslesir. Kayit sonrasi arka planda calisan kisisellestirme isinin durumunu tasir.
+ */
+export type PersonalizationStatus = "Pending" | "Processing" | "Completed" | "Failed";
+
+export type PersonalizationStatusResponse = {
+  hasJob: boolean;
+  status: PersonalizationStatus | null;
+  attemptCount: number;
+  startedAt: string | null;
+  completedAt: string | null;
+  errorMessage: string | null;
+};
+
+// ---- My Plan (kisisel antrenman programi - Faz 2) ----
+export type MyPlanWorkout = {
+  id: number;
+  title: string;
+  durationMin: number;
+  imageUrl: string | null;
+};
+
+export type MyPlanExercise = {
+  exerciseId: number;
+  name: string;
+  order: number;
+  sets: number;
+  reps: number | null;
+  restSeconds: number | null;
+  durationSeconds: number | null;
+};
+
+export type MyPlanDay = {
+  dayOfWeek: string;
+  workout: MyPlanWorkout;
+  exercises: MyPlanExercise[];
+};
+
+/** GET /api/my-plan */
+export type MyWorkoutPlanResponse = {
+  id: number;
+  name: string;
+  goal: string | null;
+  startDate: string;
+  endDate: string | null;
+  isActive: boolean;
+  summary: string | null;
+  days: MyPlanDay[];
+} | null;
+
+/** GET /api/my-plan/today */
+export type MyTodayWorkoutPlanResponse = {
+  hasWorkoutToday: boolean;
+  hasActivePlan: boolean;
+  day: MyPlanDay | null;
+  workoutPlanDayId: number | null;
+};
+
+// ---- My Nutrition Plan (kisisel beslenme programi - Faz 2) ----
+export type MyNutritionPlanMealItem = {
+  foodId: number;
+  foodName: string;
+  quantity: number;
+  servingUnit: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+};
+
+export type MyNutritionPlanMeal = {
+  mealType: "Breakfast" | "Lunch" | "Dinner" | "Snack";
+  name: string;
+  plannedTime: string | null;
+  notes: string | null;
+  items: MyNutritionPlanMealItem[];
+  totalCalories: number;
+  totalProtein: number;
+  totalCarbs: number;
+  totalFat: number;
+};
+
+export type MyNutritionPlanDay = {
+  dayOfWeek: string;
+  meals: MyNutritionPlanMeal[];
+};
+
+/** GET /api/my-nutrition-plan */
+export type MyNutritionPlanResponse = {
+  id: number;
+  name: string;
+  startDate: string;
+  endDate: string | null;
+  isActive: boolean;
+  summary: string | null;
+  days: MyNutritionPlanDay[];
+} | null;
+
+/** GET /api/my-nutrition-plan/today */
+export type MyTodayNutritionPlanResponse = {
+  hasPlanToday: boolean;
+  hasActivePlan: boolean;
+  day: MyNutritionPlanDay | null;
 };
 
 // ---- Workouts ----
