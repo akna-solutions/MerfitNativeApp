@@ -23,11 +23,12 @@ import { FrequencyStep } from "./steps/FrequencyStep";
 import { GenderStep } from "./steps/GenderStep";
 import { GoalStep } from "./steps/GoalStep";
 import { HeightStep } from "./steps/HeightStep";
+import { LastNameStep } from "./steps/LastNameStep";
 import { NameStep } from "./steps/NameStep";
 import { WeightStep } from "./steps/WeightStep";
 import { initialOnboardingData, OnboardingData } from "./types";
 
-const TOTAL_STEPS = 11;
+const TOTAL_STEPS = 12;
 
 /**
  * EquipmentStep'te secilen slug'lari (orn. "dumbbells") GET /api/equipment'ten gelen
@@ -85,7 +86,8 @@ function toRegisterRequest(
   const weight = data.weight ? parseFloat(data.weight) : null;
 
   return {
-    name: data.name.trim(),
+    firstName: data.name.trim(),
+    lastName: data.lastName.trim(),
     username: data.username.trim(),
     email: data.email.trim(),
     password: data.password,
@@ -207,7 +209,12 @@ export function OnboardingContainer() {
   };
 
   if (showSuccess) {
-    return <SuccessScreen name={data.name} onStart={handleStartTraining} />;
+    return (
+      <SuccessScreen
+        name={`${data.name} ${data.lastName}`.trim()}
+        onStart={handleStartTraining}
+      />
+    );
   }
 
   const age = parseInt(data.age, 10);
@@ -247,6 +254,24 @@ export function OnboardingContainer() {
         <OnboardingScreen
           step={2}
           totalSteps={TOTAL_STEPS}
+          title="Soyadın nedir?"
+          description="Soyadını, profilini tamamlamak için kullanacağız."
+          onBack={goBack}
+          onContinue={goNext}
+          continueDisabled={!data.lastName.trim()}
+        >
+          <LastNameStep
+            value={data.lastName}
+            onChange={(value) => update("lastName", value)}
+          />
+        </OnboardingScreen>
+      );
+
+    case 3:
+      return (
+        <OnboardingScreen
+          step={3}
+          totalSteps={TOTAL_STEPS}
           title="Cinsiyetin nedir?"
           description="Bu, fitness önerilerini kişiselleştirmemize yardımcı olur."
           onBack={goBack}
@@ -260,10 +285,10 @@ export function OnboardingContainer() {
         </OnboardingScreen>
       );
 
-    case 3:
+    case 4:
       return (
         <OnboardingScreen
-          step={3}
+          step={4}
           totalSteps={TOTAL_STEPS}
           title="Kaç yaşındasın?"
           description="Yaşın, antrenman ve beslenme önerilerini kişiselleştirmemize yardımcı olur."
@@ -278,10 +303,10 @@ export function OnboardingContainer() {
         </OnboardingScreen>
       );
 
-    case 4:
+    case 5:
       return (
         <OnboardingScreen
-          step={4}
+          step={5}
           totalSteps={TOTAL_STEPS}
           title="Boyun kaç?"
           description="Boyunu, fitness metriklerini hesaplamak için kullanacağız."
@@ -302,10 +327,10 @@ export function OnboardingContainer() {
         </OnboardingScreen>
       );
 
-    case 5:
+    case 6:
       return (
         <OnboardingScreen
-          step={5}
+          step={6}
           totalSteps={TOTAL_STEPS}
           title="Şu anki kilon nedir?"
           description="Bu, hedeflerini kişiselleştirmemize ve ilerlemeni takip etmemize yardımcı olur."
@@ -322,10 +347,10 @@ export function OnboardingContainer() {
         </OnboardingScreen>
       );
 
-    case 6:
+    case 7:
       return (
         <OnboardingScreen
-          step={6}
+          step={7}
           totalSteps={TOTAL_STEPS}
           title="Ana hedefin nedir?"
           description="MB FIT'in odaklanmasını istediğin hedefi seç."
@@ -340,10 +365,10 @@ export function OnboardingContainer() {
         </OnboardingScreen>
       );
 
-    case 7:
+    case 8:
       return (
         <OnboardingScreen
-          step={7}
+          step={8}
           totalSteps={TOTAL_STEPS}
           title="Ne kadar aktifsin?"
           description="Mevcut aktivite seviyeni bize anlat."
@@ -358,10 +383,10 @@ export function OnboardingContainer() {
         </OnboardingScreen>
       );
 
-    case 8:
+    case 9:
       return (
         <OnboardingScreen
-          step={8}
+          step={9}
           totalSteps={TOTAL_STEPS}
           title="Antrenman tecrüben nedir?"
           onBack={goBack}
@@ -375,10 +400,10 @@ export function OnboardingContainer() {
         </OnboardingScreen>
       );
 
-    case 9:
+    case 10:
       return (
         <OnboardingScreen
-          step={9}
+          step={10}
           totalSteps={TOTAL_STEPS}
           title="Ne sıklıkla antrenman yapmak istiyorsun?"
           onBack={goBack}
@@ -392,10 +417,10 @@ export function OnboardingContainer() {
         </OnboardingScreen>
       );
 
-    case 10:
+    case 11:
       return (
         <OnboardingScreen
-          step={10}
+          step={11}
           totalSteps={TOTAL_STEPS}
           title="Nerede antrenman yapıyorsun?"
           onBack={goBack}
@@ -411,11 +436,11 @@ export function OnboardingContainer() {
         </OnboardingScreen>
       );
 
-    case 11:
+    case 12:
     default:
       return (
         <OnboardingScreen
-          step={11}
+          step={12}
           totalSteps={TOTAL_STEPS}
           title="MB FIT hesabını oluştur"
           description="Profilini kaydet ve kişiselleştirilmiş fitness yolculuğuna başla."

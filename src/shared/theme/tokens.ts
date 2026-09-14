@@ -17,6 +17,15 @@ export type ThemeTokens = {
   primary: string;
   primaryPressed: string;
   accent: string;
+  /**
+   * Yikici (destructive) eylemler icin semantic renk seti (orn. "Çıkış Yap", hesap silme).
+   * Uygulama genelinde hata durumlarinda zaten kullanilan #FF6B6B (bkz. LoginScreen/AccountStep
+   * errorText, PersonalizationPendingState badge) ile gorsel olarak tutarli tutulur.
+   */
+  danger: string;
+  dangerPressed: string;
+  dangerBackground: string;
+  dangerBorder: string;
   icon: string;
   iconActive: string;
   inputBackground: string;
@@ -35,6 +44,10 @@ export const darkColors: ThemeTokens = {
   primary: "#3E7BFA",
   primaryPressed: "#1d51c0",
   accent: "#8B5CF6",
+  danger: "#FF6B6B",
+  dangerPressed: "#E14F4F",
+  dangerBackground: "rgba(255,107,107,0.12)",
+  dangerBorder: "rgba(255,107,107,0.35)",
   icon: "#8A8F98",
   iconActive: "#00A8FF",
   inputBackground: "rgba(255,255,255,0.06)",
@@ -53,6 +66,10 @@ export const lightColors: ThemeTokens = {
   primary: "#1d51c0",
   primaryPressed: "#153e94",
   accent: "#8B5CF6",
+  danger: "#DC2626",
+  dangerPressed: "#B91C1C",
+  dangerBackground: "rgba(220,38,38,0.08)",
+  dangerBorder: "rgba(220,38,38,0.35)",
   icon: "#6B7280",
   iconActive: "#1d51c0",
   inputBackground: "rgba(11,13,18,0.04)",

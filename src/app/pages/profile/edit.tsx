@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { ProfileDetailShell } from "../../../shared/profile/components/ProfileDetailShell";
@@ -19,7 +19,7 @@ const GENDER_OPTIONS: Gender[] = [
 
 export default function EditProfileRoute() {
   const router = useRouter();
-  const { profile, updateProfile } = useProfile();
+  const { profile, updateProfile, isLoading } = useProfile();
   const { colors } = useTheme();
 
   const [firstName, setFirstName] = useState(profile.firstName);
@@ -28,6 +28,23 @@ export default function EditProfileRoute() {
   const [email, setEmail] = useState(profile.email);
   const [dateOfBirth, setDateOfBirth] = useState(profile.dateOfBirth);
   const [gender, setGender] = useState<Gender>(profile.gender);
+
+  // Bu ekran, gercek profil GET /api/profile'dan donmeden ONCE (orn. kullanici cok hizli
+  // navigasyon yaparsa) mount olabilir; o an useState(...) yukaridaki alanlari henuz bos olan
+  // INITIAL_PROFILE_DATA ile doldurur. Fetch tamamlanip `profile` guncellendiginde (isLoading
+  // false'a dustugunde) formu GERCEK degerlerle senkronize ediyoruz - aksi halde kullanici hicbir
+  // seyi degistirmeden "Kaydet"e basarsa bos/varsayilan degerler (orn. username: "") sessizce
+  // veritabanina yazilirdi (bkz. Faz raporu - profil guncelleme veri kaybi bug'i).
+  useEffect(() => {
+    if (isLoading) return;
+    setFirstName(profile.firstName);
+    setLastName(profile.lastName);
+    setUsername(profile.username);
+    setEmail(profile.email);
+    setDateOfBirth(profile.dateOfBirth);
+    setGender(profile.gender);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading]);
 
   const initial = firstName.trim().charAt(0).toUpperCase() || "M";
 

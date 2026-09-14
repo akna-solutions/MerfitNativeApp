@@ -20,9 +20,9 @@ export function LogOutButton({
     <>
       <Pressable
         onPress={onRequestOpen}
-        style={[styles.button, { backgroundColor: colors.card, borderColor: colors.border }]}
+        style={[styles.button, { backgroundColor: colors.dangerBackground, borderColor: colors.dangerBorder }]}
       >
-        <Text style={[styles.label, { color: colors.text }]}>Çıkış Yap</Text>
+        <Text style={[styles.label, { color: colors.danger }]}>Çıkış Yap</Text>
       </Pressable>
 
       <Modal
@@ -49,7 +49,7 @@ export function LogOutButton({
               </Pressable>
               <Pressable
                 onPress={onConfirm}
-                style={[styles.confirmButton, { backgroundColor: colors.primaryPressed }]}
+                style={[styles.confirmButton, { backgroundColor: colors.danger }]}
               >
                 <Text style={styles.confirmLabel}>Çıkış Yap</Text>
               </Pressable>
