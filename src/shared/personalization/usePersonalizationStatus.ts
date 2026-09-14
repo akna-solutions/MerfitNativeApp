@@ -13,6 +13,12 @@ type UsePersonalizationStatusResult = {
   isFailed: boolean;
   /** Poll siniri asildiysa (backend hala Pending/Processing donuyor olsa bile) true olur. */
   isTimedOut: boolean;
+  /**
+   * Yalnizca isFailed=true iken dolu olabilir. Backend'deki gercek basarisizlik sebebini
+   * (orn. ekipman uyusmazligi ile katalogda hic aktif antrenman olmamasi ayni sey degildir -
+   * bkz. WorkoutPlanGenerator.cs) tasir; ekranda genel bir mesajin yerine/yaninda kullanilabilir.
+   */
+  errorMessage: string | null;
   /** Kullanicinin manuel "tekrar dene" butonuna basmasi icin. */
   refetch: () => void;
 };
@@ -27,6 +33,7 @@ type UsePersonalizationStatusResult = {
  */
 export function usePersonalizationStatus(enabled: boolean): UsePersonalizationStatusResult {
   const [status, setStatus] = useState<PersonalizationStatus | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isTimedOut, setIsTimedOut] = useState(false);
   const [refetchTick, setRefetchTick] = useState(0);
 
@@ -68,6 +75,7 @@ export function usePersonalizationStatus(enabled: boolean): UsePersonalizationSt
         if (!isMountedRef.current) return;
 
         setStatus(response.status);
+        setErrorMessage(response.errorMessage ?? null);
 
         const stillWaiting = response.status === "Pending" || response.status === "Processing";
         if (!stillWaiting) {
@@ -110,11 +118,13 @@ export function usePersonalizationStatus(enabled: boolean): UsePersonalizationSt
   const refetch = useCallback(() => {
     clearScheduledPoll();
     setIsTimedOut(false);
+    setErrorMessage(null);
     setRefetchTick((tick) => tick + 1);
   }, [clearScheduledPoll]);
 
   return {
     status,
+    errorMessage,
     isPending: status === "Pending" || status === "Processing",
     isFailed: status === "Failed",
     isTimedOut,

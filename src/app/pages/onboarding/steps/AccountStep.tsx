@@ -4,6 +4,8 @@ import { OnboardingInput } from "../components/OnboardingInput";
 import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
+  username: string;
+  onUsernameChange: (value: string) => void;
   email: string;
   onEmailChange: (value: string) => void;
   password: string;
@@ -15,7 +17,12 @@ type Props = {
   errorMessage?: string | null;
 };
 
+/** Backend'deki RegisterRequest.Username validasyonuyla (RegularExpression) birebir ayni kural. */
+const USERNAME_CHARS_REGEX = /^[a-zA-Z0-9_]*$/;
+
 export function AccountStep({
+  username,
+  onUsernameChange,
   email,
   onEmailChange,
   password,
@@ -29,6 +36,19 @@ export function AccountStep({
   const { colors } = useTheme();
   return (
     <View>
+      <OnboardingInput
+        value={username}
+        onChangeText={(value) => {
+          if (USERNAME_CHARS_REGEX.test(value)) {
+            onUsernameChange(value);
+          }
+        }}
+        placeholder="Kullanıcı adı"
+        autoCapitalize="none"
+        autoCorrect={false}
+        style={styles.fieldFont}
+      />
+      <View style={styles.gap} />
       <OnboardingInput
         value={email}
         onChangeText={onEmailChange}

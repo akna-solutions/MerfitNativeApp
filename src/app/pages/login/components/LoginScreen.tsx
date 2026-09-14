@@ -22,14 +22,17 @@ export function LoginScreen() {
   const router = useRouter();
   const { login } = useAuth();
   const { colors } = useTheme();
-  const [email, setEmail] = useState("");
+  const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  // Backend hem e-posta hem kullanici adi ile girisi destekler (bkz.
+  // AuthService.FindUserByEmailOrUsernameAsync); bu yuzden burada e-posta formati zorunlu
+  // tutulmaz, yalnizca alanin dolu olmasi yeterlidir.
+  const identifierValid = emailOrUsername.trim().length > 0;
   const passwordValid = password.length >= 6;
-  const canSubmit = emailValid && passwordValid && !isSubmitting;
+  const canSubmit = identifierValid && passwordValid && !isSubmitting;
 
   const handleLogin = async () => {
     if (!canSubmit) return;
@@ -37,7 +40,7 @@ export function LoginScreen() {
     setErrorMessage(null);
     setIsSubmitting(true);
     try {
-      await login({ emailOrUsername: email.trim(), password });
+      await login({ emailOrUsername: emailOrUsername.trim(), password });
       router.replace("/pages/dashboard");
     } catch (error) {
       console.error("Login hatası:", error);
@@ -89,10 +92,9 @@ export function LoginScreen() {
 
           <View style={styles.form}>
             <OnboardingInput
-              value={email}
-              onChangeText={setEmail}
-              placeholder="E-posta"
-              keyboardType="email-address"
+              value={emailOrUsername}
+              onChangeText={setEmailOrUsername}
+              placeholder="E-posta veya kullanıcı adı"
               autoCapitalize="none"
               autoCorrect={false}
               style={styles.fieldFont}

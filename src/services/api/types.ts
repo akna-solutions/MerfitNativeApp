@@ -7,6 +7,12 @@ export type AuthResponse = {
   userId: number;
   email: string;
   name: string;
+  /**
+   * Register'da kullanicinin AccountStep'te sectigi deger, Login'de veritabanindaki gercek
+   * deger (backend UserProfile.Username). "@" ONEKI ICERMEZ - UI'da gosterilirken eklenmelidir
+   * (bkz. ProfileScreen.tsx: `@${profile.username}`).
+   */
+  username: string;
   accessToken: string;
   refreshToken: string;
   accessTokenExpiresAt: string;
@@ -30,6 +36,11 @@ export type LoginRequest = {
  */
 export type RegisterRequest = {
   name: string;
+  /**
+   * Kullanicinin AccountStep'te kendi belirledigi kullanici adi. Backend UserProfile.Username'e
+   * dogrudan yazilir (harf/rakam/alt cizgi, 3-30 karakter - bkz. RegisterRequest.cs validasyonu).
+   */
+  username: string;
   email: string;
   password: string;
   confirmPassword: string;
@@ -46,8 +57,9 @@ export type RegisterRequest = {
   trainingExperience?: string | null;
   trainingDays?: number | null;
   trainingLocation?: string | null;
-  /** Backend'de Equipment tablosunun sayisal Id'lerini bekler; su an istemcide slug->id
-   * eslemesi yapacak bir uc nokta olmadigindan bos gonderiliyor (bkz. AccountStep sonrasi TODO). */
+  /** Backend'de Equipment tablosunun sayisal Id'lerini bekler; EquipmentStep'te secilen
+   * slug'lar GET /api/equipment listesiyle eslestirilip buraya doldurulur (bkz.
+   * OnboardingContainer.tsx::mapEquipmentSlugsToIds). */
   equipmentIds?: number[] | null;
 };
 
