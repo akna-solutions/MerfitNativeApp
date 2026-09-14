@@ -8,7 +8,7 @@ import {
     View,
 } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { Workout } from "../types";
 
 type Props = {
@@ -17,13 +17,14 @@ type Props = {
 };
 
 export function FeaturedWorkout({ workout, onPress }: Props) {
+  const { colors } = useTheme();
   return (
     <View>
-      <Text style={styles.sectionTitle}>Öne Çıkan</Text>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>Öne Çıkan</Text>
 
       <ImageBackground
         source={{ uri: workout.imageUrl }}
-        style={styles.card}
+        style={[styles.card, { borderColor: colors.border }]}
         imageStyle={styles.image}
       >
         <LinearGradient
@@ -40,7 +41,7 @@ export function FeaturedWorkout({ workout, onPress }: Props) {
             {workout.duration} dk • {workout.difficulty}
           </Text>
 
-          <Pressable onPress={onPress} style={styles.cta}>
+          <Pressable onPress={onPress} style={[styles.cta, { backgroundColor: colors.primaryPressed }]}>
             <Text style={styles.ctaLabel}>Antrenmana Başla</Text>
             <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
           </Pressable>
@@ -52,7 +53,6 @@ export function FeaturedWorkout({ workout, onPress }: Props) {
 
 const styles = StyleSheet.create({
   sectionTitle: {
-    color: colors.textPrimary,
     fontSize: 16,
     fontWeight: "700",
     marginBottom: 12,
@@ -63,7 +63,6 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     justifyContent: "flex-end",
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
   image: { borderRadius: 24 },
   content: { padding: 20 },
@@ -78,7 +77,6 @@ const styles = StyleSheet.create({
     height: 44,
     paddingHorizontal: 20,
     borderRadius: 12,
-    backgroundColor: colors.buttonElectricBlue,
     gap: 8,
   },
   ctaLabel: { color: "#FFFFFF", fontSize: 13, fontWeight: "700" },

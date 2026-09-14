@@ -1,12 +1,14 @@
 import { StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 export function VersionFooter() {
+  const { colors } = useTheme();
+
   return (
     <View style={styles.wrapper}>
-      <Text style={styles.brand}>MB FIT</Text>
-      <Text style={styles.version}>Sürüm 1.0.0</Text>
+      <Text style={[styles.brand, { color: colors.textSecondary }]}>MB FIT</Text>
+      <Text style={[styles.version, { color: colors.textSecondary }]}>Sürüm 1.0.0</Text>
     </View>
   );
 }
@@ -14,13 +16,11 @@ export function VersionFooter() {
 const styles = StyleSheet.create({
   wrapper: { alignItems: "center", marginTop: 8 },
   brand: {
-    color: colors.textMuted,
     fontSize: 10,
     fontWeight: "700",
     letterSpacing: 1.5,
   },
   version: {
-    color: colors.textMuted,
     fontSize: 10,
     marginTop: 3,
     opacity: 0.7,

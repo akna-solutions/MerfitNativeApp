@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, Switch, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../theme/ThemeContext";
 
 type Props = {
   icon?: keyof typeof Ionicons.glyphMap;
@@ -20,26 +20,29 @@ export function SettingsToggle({
   onValueChange,
   isLast,
 }: Props) {
+  const { colors } = useTheme();
   return (
-    <View style={[styles.row, isLast && styles.rowLast]}>
+    <View style={[styles.row, { borderBottomColor: colors.border }, isLast && styles.rowLast]}>
       {icon ? (
-        <View style={styles.iconWrap}>
-          <Ionicons name={icon} size={16} color={colors.textMuted} />
+        <View style={[styles.iconWrap, { backgroundColor: colors.inputBackground }]}>
+          <Ionicons name={icon} size={16} color={colors.textSecondary} />
         </View>
       ) : null}
       <View style={styles.textBlock}>
-        <Text style={styles.title}>{title}</Text>
-        {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+        <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
+        {subtitle ? (
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{subtitle}</Text>
+        ) : null}
       </View>
       <Switch
         value={value}
         onValueChange={onValueChange}
         trackColor={{
-          false: "rgba(255,255,255,0.12)",
-          true: colors.buttonElectricBlue,
+          false: colors.inputBackground,
+          true: colors.primaryPressed,
         }}
         thumbColor="#FFFFFF"
-        ios_backgroundColor="rgba(255,255,255,0.12)"
+        ios_backgroundColor={colors.inputBackground}
       />
     </View>
   );
@@ -52,7 +55,6 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
   },
   rowLast: { borderBottomWidth: 0 },
   iconWrap: {
@@ -61,9 +63,8 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.06)",
   },
   textBlock: { flex: 1 },
-  title: { color: colors.textPrimary, fontSize: 13, fontWeight: "600" },
-  subtitle: { color: colors.textMuted, fontSize: 11, marginTop: 2 },
+  title: { fontSize: 13, fontWeight: "600" },
+  subtitle: { fontSize: 11, marginTop: 2 },
 });

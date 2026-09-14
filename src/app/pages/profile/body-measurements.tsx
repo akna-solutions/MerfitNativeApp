@@ -6,11 +6,12 @@ import { ProfileDetailShell } from "../../../shared/profile/components/ProfileDe
 import { useProfile } from "../../../shared/profile/ProfileContext";
 import { OnboardingButton } from "../onboarding/components/OnboardingButton";
 import { OnboardingInput } from "../onboarding/components/OnboardingInput";
-import { colors } from "./theme";
+import { useTheme } from "../../../shared/theme/ThemeContext";
 
 export default function BodyMeasurementsRoute() {
   const router = useRouter();
   const { profile, updateProfile } = useProfile();
+  const { colors } = useTheme();
 
   const [height, setHeight] = useState(`${profile.height}`);
   const [weight, setWeight] = useState(`${profile.weight}`);
@@ -33,7 +34,7 @@ export default function BodyMeasurementsRoute() {
       title="Vücut Ölçümleri"
       footer={<OnboardingButton label="Değişiklikleri Kaydet" onPress={handleSave} />}
     >
-      <Text style={styles.label}>Boy ({heightUnit})</Text>
+      <Text style={[styles.label, { color: colors.textSecondary }]}>Boy ({heightUnit})</Text>
       <OnboardingInput
         value={height}
         onChangeText={(text) => setHeight(text.replace(/[^0-9.]/g, ""))}
@@ -41,7 +42,7 @@ export default function BodyMeasurementsRoute() {
         style={styles.input}
       />
 
-      <Text style={[styles.label, styles.gapTop]}>Kilo ({weightUnit})</Text>
+      <Text style={[styles.label, styles.gapTop, { color: colors.textSecondary }]}>Kilo ({weightUnit})</Text>
       <OnboardingInput
         value={weight}
         onChangeText={(text) => setWeight(text.replace(/[^0-9.]/g, ""))}
@@ -49,7 +50,7 @@ export default function BodyMeasurementsRoute() {
         style={styles.input}
       />
 
-      <Text style={[styles.label, styles.gapTop]}>
+      <Text style={[styles.label, styles.gapTop, { color: colors.textSecondary }]}>
         Hedef Kilo ({weightUnit})
       </Text>
       <OnboardingInput
@@ -64,7 +65,6 @@ export default function BodyMeasurementsRoute() {
 
 const styles = StyleSheet.create({
   label: {
-    color: colors.textMuted,
     fontSize: 11,
     fontWeight: "600",
     marginBottom: 8,

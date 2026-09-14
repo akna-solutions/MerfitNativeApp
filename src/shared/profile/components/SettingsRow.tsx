@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../theme/ThemeContext";
 
 type Props = {
   icon: keyof typeof Ionicons.glyphMap;
@@ -22,21 +22,25 @@ export function SettingsRow({
   isLast,
   iconColor,
 }: Props) {
+  const { colors } = useTheme();
   return (
-    <Pressable onPress={onPress} style={[styles.row, isLast && styles.rowLast]}>
-      <View style={styles.iconWrap}>
-        <Ionicons name={icon} size={16} color={iconColor ?? colors.textMuted} />
+    <Pressable
+      onPress={onPress}
+      style={[styles.row, { borderBottomColor: colors.border }, isLast && styles.rowLast]}
+    >
+      <View style={[styles.iconWrap, { backgroundColor: colors.inputBackground }]}>
+        <Ionicons name={icon} size={16} color={iconColor ?? colors.textSecondary} />
       </View>
       <View style={styles.textBlock}>
-        <Text style={styles.title}>{title}</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
         {subtitle ? (
-          <Text style={styles.subtitle} numberOfLines={1}>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]} numberOfLines={1}>
             {subtitle}
           </Text>
         ) : null}
       </View>
-      {value ? <Text style={styles.value}>{value}</Text> : null}
-      <Ionicons name="chevron-forward" size={15} color={colors.textMuted} />
+      {value ? <Text style={[styles.value, { color: colors.textSecondary }]}>{value}</Text> : null}
+      <Ionicons name="chevron-forward" size={15} color={colors.textSecondary} />
     </Pressable>
   );
 }
@@ -48,7 +52,6 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
   },
   rowLast: { borderBottomWidth: 0 },
   iconWrap: {
@@ -57,10 +60,9 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.06)",
   },
   textBlock: { flex: 1 },
-  title: { color: colors.textPrimary, fontSize: 13, fontWeight: "600" },
-  subtitle: { color: colors.textMuted, fontSize: 11, marginTop: 2 },
-  value: { color: colors.textMuted, fontSize: 12, fontWeight: "600" },
+  title: { fontSize: 13, fontWeight: "600" },
+  subtitle: { fontSize: 11, marginTop: 2 },
+  value: { fontSize: 12, fontWeight: "600" },
 });

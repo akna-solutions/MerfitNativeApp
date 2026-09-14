@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { WorkoutSummary } from "../types";
 
 type Props = {
@@ -17,13 +17,14 @@ type Props = {
 };
 
 export function WorkoutCard({ workout, onPress }: Props) {
+  const { colors } = useTheme();
   return (
     <View style={styles.wrapper}>
-      <Text style={styles.sectionTitle}>Bugünkü Antrenman</Text>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>Bugünkü Antrenman</Text>
 
       <ImageBackground
         source={{ uri: workout.imageUrl }}
-        style={styles.card}
+        style={[styles.card, { borderColor: colors.border }]}
         imageStyle={styles.image}
       >
         <LinearGradient
@@ -37,7 +38,7 @@ export function WorkoutCard({ workout, onPress }: Props) {
             {workout.duration} • {workout.meta}
           </Text>
 
-          <Pressable onPress={onPress} style={styles.cta}>
+          <Pressable onPress={onPress} style={[styles.cta, { backgroundColor: colors.primaryPressed }]}>
             <Text style={styles.ctaLabel}>Antrenmana Başla</Text>
             <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
           </Pressable>
@@ -50,7 +51,6 @@ export function WorkoutCard({ workout, onPress }: Props) {
 const styles = StyleSheet.create({
   wrapper: { marginTop: 28, marginBottom: 12 },
   sectionTitle: {
-    color: colors.textPrimary,
     fontSize: 16,
     fontWeight: "700",
     marginBottom: 12,
@@ -61,7 +61,6 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     justifyContent: "flex-end",
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
   image: { borderRadius: 22 },
   content: { padding: 18 },
@@ -75,7 +74,6 @@ const styles = StyleSheet.create({
     height: 42,
     paddingHorizontal: 18,
     borderRadius: 12,
-    backgroundColor: colors.buttonElectricBlue,
     gap: 8,
   },
   ctaLabel: { color: "#FFFFFF", fontSize: 13, fontWeight: "700" },

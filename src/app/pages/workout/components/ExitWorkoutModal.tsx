@@ -1,6 +1,6 @@
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
   visible: boolean;
@@ -13,6 +13,7 @@ export function ExitWorkoutModal({
   onContinue,
   onSaveAndExit,
 }: Props) {
+  const { colors } = useTheme();
   return (
     <Modal
       visible={visible}
@@ -23,18 +24,18 @@ export function ExitWorkoutModal({
       <View style={styles.backdrop}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onContinue} />
 
-        <View style={styles.dialog}>
-          <Text style={styles.title}>Antrenmandan çıkılsın mı?</Text>
-          <Text style={styles.message}>
+        <View style={[styles.dialog, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <Text style={[styles.title, { color: colors.text }]}>Antrenmandan çıkılsın mı?</Text>
+          <Text style={[styles.message, { color: colors.textSecondary }]}>
             Mevcut ilerlemen kaydedilecek.
           </Text>
 
           <View style={styles.actions}>
-            <Pressable onPress={onContinue} style={styles.continueButton}>
+            <Pressable onPress={onContinue} style={[styles.continueButton, { backgroundColor: colors.primaryPressed }]}>
               <Text style={styles.continueLabel}>Antrenmana Devam Et</Text>
             </Pressable>
-            <Pressable onPress={onSaveAndExit} style={styles.exitButton}>
-              <Text style={styles.exitLabel}>Kaydet ve Çık</Text>
+            <Pressable onPress={onSaveAndExit} style={[styles.exitButton, { backgroundColor: colors.inputBackground }]}>
+              <Text style={[styles.exitLabel, { color: colors.text }]}>Kaydet ve Çık</Text>
             </Pressable>
           </View>
         </View>
@@ -55,13 +56,10 @@ const styles = StyleSheet.create({
     width: "100%",
     borderRadius: 22,
     padding: 22,
-    backgroundColor: "#15181E",
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
-  title: { color: colors.textPrimary, fontSize: 16, fontWeight: "700" },
+  title: { fontSize: 16, fontWeight: "700" },
   message: {
-    color: colors.textMuted,
     fontSize: 13,
     marginTop: 8,
     lineHeight: 19,
@@ -72,7 +70,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.buttonElectricBlue,
   },
   continueLabel: { color: "#FFFFFF", fontSize: 13, fontWeight: "700" },
   exitButton: {
@@ -80,7 +77,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.06)",
   },
-  exitLabel: { color: colors.textPrimary, fontSize: 13, fontWeight: "700" },
+  exitLabel: { fontSize: 13, fontWeight: "700" },
 });

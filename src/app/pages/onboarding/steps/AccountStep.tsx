@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { OnboardingInput } from "../components/OnboardingInput";
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
   email: string;
@@ -26,6 +26,7 @@ export function AccountStep({
   onLoginPress,
   errorMessage,
 }: Props) {
+  const { colors } = useTheme();
   return (
     <View>
       <OnboardingInput
@@ -61,19 +62,22 @@ export function AccountStep({
       ) : null}
 
       <View style={styles.dividerRow}>
-        <View style={styles.dividerLine} />
-        <Text style={styles.dividerLabel}>veya</Text>
-        <View style={styles.dividerLine} />
+        <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+        <Text style={[styles.dividerLabel, { color: colors.textSecondary }]}>veya</Text>
+        <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
       </View>
 
-      <Pressable onPress={onGooglePress} style={styles.googleButton}>
-        <Text style={styles.googleLabel}>Google ile devam et</Text>
+      <Pressable
+        onPress={onGooglePress}
+        style={[styles.googleButton, { borderColor: colors.border, backgroundColor: colors.inputBackground }]}
+      >
+        <Text style={[styles.googleLabel, { color: colors.text }]}>Google ile devam et</Text>
       </Pressable>
 
       <Pressable onPress={onLoginPress} hitSlop={8} style={styles.loginRow}>
-        <Text style={styles.loginText}>
+        <Text style={[styles.loginText, { color: colors.textSecondary }]}>
           Zaten bir hesabın var mı?{" "}
-          <Text style={styles.loginLink}>Giriş yap</Text>
+          <Text style={[styles.loginLink, { color: colors.primary }]}>Giriş yap</Text>
         </Text>
       </Pressable>
     </View>
@@ -97,10 +101,8 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.border,
   },
   dividerLabel: {
-    color: colors.textMuted,
     fontSize: 12,
     marginHorizontal: 12,
   },
@@ -108,13 +110,11 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 14,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    backgroundColor: "rgba(255,255,255,0.06)",
     alignItems: "center",
     justifyContent: "center",
   },
-  googleLabel: { color: colors.textPrimary, fontSize: 14, fontWeight: "600" },
+  googleLabel: { fontSize: 14, fontWeight: "600" },
   loginRow: { marginTop: 22, alignItems: "center" },
-  loginText: { color: colors.textMuted, fontSize: 13 },
-  loginLink: { color: colors.electricBlue, fontWeight: "700" },
+  loginText: { fontSize: 13 },
+  loginLink: { fontWeight: "700" },
 });

@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 export type NavTab = "home" | "workouts" | "progress" | "nutrition" | "profile";
 
@@ -33,6 +33,7 @@ type Props = {
 
 export function BottomNavigation({ active, onChange }: Props) {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
 
   // Her tab için ayrı bir scale değeri - basılan/aktif olan ikon hafifçe
   // "pulse" yapar. Navigation'ın kendisi sürekli hareket etmiyor,
@@ -64,7 +65,7 @@ export function BottomNavigation({ active, onChange }: Props) {
       pointerEvents="box-none"
       style={[styles.wrapper, { bottom: insets.bottom + 14 }]}
     >
-      <View style={styles.capsule}>
+      <View style={[styles.capsule, { backgroundColor: colors.surface, borderColor: colors.border }]}>
         {TABS.map((tab) => {
           const isActive = tab.id === active;
           return (
@@ -83,11 +84,11 @@ export function BottomNavigation({ active, onChange }: Props) {
                 <Ionicons
                   name={tab.icon}
                   size={21}
-                  color={isActive ? colors.navActive : colors.navInactive}
+                  color={isActive ? colors.iconActive : colors.icon}
                 />
               </Animated.View>
               {isActive ? (
-                <Text style={styles.label} numberOfLines={1}>
+                <Text style={[styles.label, { color: colors.iconActive }]} numberOfLines={1}>
                   {tab.label}
                 </Text>
               ) : null}
@@ -112,9 +113,7 @@ const styles = StyleSheet.create({
     height: 68,
     borderRadius: 34,
     paddingHorizontal: 6,
-    backgroundColor: colors.navBackground,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(255,255,255,0.08)",
     ...Platform.select({
       ios: {
         shadowColor: "#000000",
@@ -133,7 +132,6 @@ const styles = StyleSheet.create({
   },
   iconWrap: { alignItems: "center", justifyContent: "center" },
   label: {
-    color: colors.navActive,
     fontSize: 10,
     fontWeight: "700",
     letterSpacing: 0.2,

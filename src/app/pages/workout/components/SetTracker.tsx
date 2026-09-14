@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
   totalSets: number;
@@ -10,6 +10,7 @@ type Props = {
 };
 
 export function SetTracker({ totalSets, currentSet, completedCount }: Props) {
+  const { colors } = useTheme();
   return (
     <View style={styles.row}>
       {Array.from({ length: totalSets }).map((_, index) => {
@@ -22,15 +23,24 @@ export function SetTracker({ totalSets, currentSet, completedCount }: Props) {
             key={setNumber}
             style={[
               styles.dot,
-              isDone && styles.dotDone,
-              isCurrent && styles.dotCurrent,
+              { backgroundColor: colors.inputBackground },
+              isDone && { backgroundColor: colors.primary },
+              isCurrent && {
+                backgroundColor: "transparent",
+                borderWidth: 1.5,
+                borderColor: colors.primary,
+              },
             ]}
           >
             {isDone ? (
               <Ionicons name="checkmark" size={12} color="#FFFFFF" />
             ) : (
               <Text
-                style={[styles.dotLabel, isCurrent && styles.dotLabelCurrent]}
+                style={[
+                  styles.dotLabel,
+                  { color: colors.textSecondary },
+                  isCurrent && { color: colors.primary },
+                ]}
               >
                 {setNumber}
               </Text>
@@ -55,14 +65,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.06)",
   },
-  dotDone: { backgroundColor: colors.electricBlue },
-  dotCurrent: {
-    backgroundColor: "transparent",
-    borderWidth: 1.5,
-    borderColor: colors.electricBlue,
-  },
-  dotLabel: { color: colors.textMuted, fontSize: 12, fontWeight: "700" },
-  dotLabelCurrent: { color: colors.electricBlue },
+  dotLabel: { fontSize: 12, fontWeight: "700" },
 });

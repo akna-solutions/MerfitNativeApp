@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
   firstName: string;
@@ -16,6 +16,7 @@ export function ProfileIdentity({
   onEditPress,
   onAvatarPress,
 }: Props) {
+  const { colors } = useTheme();
   const initial = firstName.trim().charAt(0).toUpperCase() || "M";
 
   return (
@@ -23,19 +24,27 @@ export function ProfileIdentity({
       <Pressable onPress={onAvatarPress} style={styles.avatarWrapper}>
         {/* TODO: expo-image-picker eklendiğinde kullanıcı galeriden fotoğraf
             seçebilecek; şimdilik initial harfli placeholder avatar. */}
-        <View style={styles.avatar}>
+        <View style={[styles.avatar, { backgroundColor: colors.primaryPressed }]}>
           <Text style={styles.avatarLabel}>{initial}</Text>
         </View>
-        <View style={styles.editBadge}>
+        <View
+          style={[
+            styles.editBadge,
+            { backgroundColor: colors.primaryPressed, borderColor: colors.background },
+          ]}
+        >
           <Ionicons name="camera" size={12} color="#FFFFFF" />
         </View>
       </Pressable>
 
-      <Text style={styles.name}>{firstName}</Text>
-      <Text style={styles.username}>{username}</Text>
+      <Text style={[styles.name, { color: colors.text }]}>{firstName}</Text>
+      <Text style={[styles.username, { color: colors.textSecondary }]}>{username}</Text>
 
-      <Pressable onPress={onEditPress} style={styles.editButton}>
-        <Text style={styles.editLabel}>Profili Düzenle</Text>
+      <Pressable
+        onPress={onEditPress}
+        style={[styles.editButton, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
+      >
+        <Text style={[styles.editLabel, { color: colors.text }]}>Profili Düzenle</Text>
       </Pressable>
     </View>
   );
@@ -52,7 +61,6 @@ const styles = StyleSheet.create({
     borderRadius: AVATAR_SIZE / 2,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.buttonElectricBlue,
     borderWidth: 2,
     borderColor: "rgba(0,168,255,0.35)",
   },
@@ -66,17 +74,14 @@ const styles = StyleSheet.create({
     borderRadius: 13,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.buttonElectricBlue,
     borderWidth: 2,
-    borderColor: colors.background,
   },
   name: {
-    color: colors.textPrimary,
     fontSize: 19,
     fontWeight: "700",
     marginTop: 14,
   },
-  username: { color: colors.textMuted, fontSize: 13, marginTop: 2 },
+  username: { fontSize: 13, marginTop: 2 },
   editButton: {
     marginTop: 16,
     height: 38,
@@ -84,9 +89,7 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.06)",
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
-  editLabel: { color: colors.textPrimary, fontSize: 12, fontWeight: "600" },
+  editLabel: { fontSize: 12, fontWeight: "600" },
 });

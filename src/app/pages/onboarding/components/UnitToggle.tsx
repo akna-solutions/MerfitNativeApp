@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Option<T extends string> = { label: string; value: T };
 
@@ -15,17 +15,18 @@ export function UnitToggle<T extends string>({
   value,
   onChange,
 }: Props<T>) {
+  const { colors } = useTheme();
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border }]}>
       {options.map((option) => {
         const active = option.value === value;
         return (
           <Pressable
             key={option.value}
             onPress={() => onChange(option.value)}
-            style={[styles.pill, active && styles.pillActive]}
+            style={[styles.pill, active && { backgroundColor: colors.primaryPressed }]}
           >
-            <Text style={[styles.label, active && styles.labelActive]}>
+            <Text style={[styles.label, { color: active ? colors.text : colors.textSecondary }]}>
               {option.label}
             </Text>
           </Pressable>
@@ -38,15 +39,11 @@ export function UnitToggle<T extends string>({
 const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
-    backgroundColor: colors.cardBackground,
     borderRadius: 12,
     padding: 4,
     marginBottom: 20,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
   pill: { flex: 1, paddingVertical: 10, borderRadius: 9, alignItems: "center" },
-  pillActive: { backgroundColor: colors.buttonElectricBlue },
-  label: { color: colors.textMuted, fontSize: 13, fontWeight: "600" },
-  labelActive: { color: colors.textPrimary },
+  label: { fontSize: 13, fontWeight: "600" },
 });

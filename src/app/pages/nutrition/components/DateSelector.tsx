@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
   date: Date;
@@ -17,6 +17,7 @@ function isSameDay(a: Date, b: Date) {
 }
 
 export function DateSelector({ date, onChangeDay }: Props) {
+  const { colors } = useTheme();
   const today = new Date();
   const isToday = isSameDay(date, today);
   const label = isToday
@@ -30,23 +31,23 @@ export function DateSelector({ date, onChangeDay }: Props) {
       <Pressable
         onPress={() => onChangeDay(-1)}
         hitSlop={10}
-        style={styles.arrow}
+        style={[styles.arrow, { backgroundColor: colors.inputBackground }]}
       >
-        <Ionicons name="chevron-back" size={16} color={colors.textMuted} />
+        <Ionicons name="chevron-back" size={16} color={colors.textSecondary} />
       </Pressable>
 
-      <Text style={[styles.label, isToday && styles.labelActive]}>{label}</Text>
+      <Text style={[styles.label, { color: colors.textSecondary }, isToday && { color: colors.primary }]}>{label}</Text>
 
       <Pressable
         onPress={() => !isToday && onChangeDay(1)}
         hitSlop={10}
-        style={styles.arrow}
+        style={[styles.arrow, { backgroundColor: colors.inputBackground }]}
         disabled={isToday}
       >
         <Ionicons
           name="chevron-forward"
           size={16}
-          color={isToday ? "rgba(255,255,255,0.15)" : colors.textMuted}
+          color={isToday ? colors.border : colors.textSecondary}
         />
       </Pressable>
     </View>
@@ -66,15 +67,12 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.06)",
   },
   label: {
-    color: colors.textMuted,
     fontSize: 12,
     fontWeight: "700",
     letterSpacing: 0.6,
     minWidth: 90,
     textAlign: "center",
   },
-  labelActive: { color: colors.electricBlue },
 });

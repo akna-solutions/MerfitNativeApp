@@ -3,7 +3,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
 import { getTodayNutritionPlan } from "../../../../services/api/myNutritionPlan";
 import { MyNutritionPlanDay } from "../../../../services/api/types";
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 /**
  * "Bugünün Beslenme Planı" bolumu - NutritionPlanGenerator tarafindan onceden uretilip
@@ -12,6 +12,7 @@ import { colors } from "../theme";
  * tamamen bagimsizdir - iki kavram bilinçli olarak ayri tutulur (bkz. backend Faz 2 raporu).
  */
 export function TodayNutritionPlanCard() {
+  const { colors } = useTheme();
   const [day, setDay] = useState<MyNutritionPlanDay | null>(null);
   const [hasActivePlan, setHasActivePlan] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
@@ -41,8 +42,8 @@ export function TodayNutritionPlanCard() {
 
   if (isLoading) {
     return (
-      <View style={[styles.card, styles.centered]}>
-        <ActivityIndicator color={colors.electricBlue} size="small" />
+      <View style={[styles.card, styles.centered, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <ActivityIndicator color={colors.primary} size="small" />
       </View>
     );
   }
@@ -54,15 +55,15 @@ export function TodayNutritionPlanCard() {
   }
 
   return (
-    <View style={styles.card}>
-      <Text style={styles.title}>Bugünün Beslenme Planı</Text>
+    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <Text style={[styles.title, { color: colors.text }]}>Bugünün Beslenme Planı</Text>
       {day.meals.map((meal) => (
         <View key={meal.mealType} style={styles.mealRow}>
           <View style={styles.mealHeader}>
-            <Text style={styles.mealName}>{meal.name}</Text>
-            <Text style={styles.mealCalories}>{meal.totalCalories} kcal</Text>
+            <Text style={[styles.mealName, { color: colors.text }]}>{meal.name}</Text>
+            <Text style={[styles.mealCalories, { color: colors.primary }]}>{meal.totalCalories} kcal</Text>
           </View>
-          <Text style={styles.mealItems} numberOfLines={1}>
+          <Text style={[styles.mealItems, { color: colors.textSecondary }]} numberOfLines={1}>
             {meal.items.map((item) => item.foodName).join(", ")}
           </Text>
         </View>
@@ -75,15 +76,13 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 20,
     padding: 20,
-    backgroundColor: colors.cardBackground,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
   centered: { alignItems: "center", justifyContent: "center", minHeight: 80 },
-  title: { color: colors.textPrimary, fontSize: 16, fontWeight: "700", marginBottom: 12 },
+  title: { fontSize: 16, fontWeight: "700", marginBottom: 12 },
   mealRow: { marginTop: 10 },
   mealHeader: { flexDirection: "row", justifyContent: "space-between" },
-  mealName: { color: colors.textPrimary, fontSize: 14, fontWeight: "600" },
-  mealCalories: { color: colors.electricBlue, fontSize: 13, fontWeight: "700" },
-  mealItems: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
+  mealName: { fontSize: 14, fontWeight: "600" },
+  mealCalories: { fontSize: 13, fontWeight: "700" },
+  mealItems: { fontSize: 12, marginTop: 2 },
 });

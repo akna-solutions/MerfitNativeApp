@@ -15,7 +15,7 @@ import Svg, {
     Stop,
 } from "react-native-svg";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { WeightPoint } from "../types";
 
 type Props = {
@@ -28,6 +28,7 @@ const BOTTOM_PADDING = 18;
 const HIT_SIZE = 28;
 
 export function WeightChart({ data }: Props) {
+  const { colors } = useTheme();
   const [width, setWidth] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
@@ -65,9 +66,9 @@ export function WeightChart({ data }: Props) {
 
   return (
     <View>
-      <Text style={styles.sectionTitle}>Kilo İlerlemesi</Text>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>Kilo İlerlemesi</Text>
 
-      <View style={styles.card}>
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <View style={styles.chartArea} onLayout={onLayout}>
           {width > 0 ? (
             <Svg width={width} height={CHART_HEIGHT}>
@@ -75,12 +76,12 @@ export function WeightChart({ data }: Props) {
                 <LinearGradient id="weightFill" x1="0" y1="0" x2="0" y2="1">
                   <Stop
                     offset="0"
-                    stopColor={colors.electricBlue}
+                    stopColor={colors.primary}
                     stopOpacity={0.22}
                   />
                   <Stop
                     offset="1"
-                    stopColor={colors.electricBlue}
+                    stopColor={colors.primary}
                     stopOpacity={0}
                   />
                 </LinearGradient>
@@ -91,7 +92,7 @@ export function WeightChart({ data }: Props) {
               {points.length > 1 ? (
                 <Path
                   d={linePath}
-                  stroke={colors.electricBlue}
+                  stroke={colors.primary}
                   strokeWidth={2.5}
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -106,7 +107,7 @@ export function WeightChart({ data }: Props) {
                     y1={selected.y}
                     x2={selected.x}
                     y2={CHART_HEIGHT}
-                    stroke={colors.electricBlue}
+                    stroke={colors.primary}
                     strokeWidth={1}
                     strokeOpacity={0.25}
                   />
@@ -115,7 +116,7 @@ export function WeightChart({ data }: Props) {
                     cy={selected.y}
                     r={4.5}
                     fill={colors.background}
-                    stroke={colors.electricBlue}
+                    stroke={colors.primary}
                     strokeWidth={2}
                   />
                 </>
@@ -143,6 +144,7 @@ export function WeightChart({ data }: Props) {
               pointerEvents="none"
               style={[
                 styles.tooltip,
+                { backgroundColor: colors.surface, borderColor: colors.border },
                 {
                   left: Math.min(
                     Math.max(selected.x - 40, 0),
@@ -152,15 +154,15 @@ export function WeightChart({ data }: Props) {
                 },
               ]}
             >
-              <Text style={styles.tooltipValue}>{selected.weight} kg</Text>
-              <Text style={styles.tooltipDate}>{selected.date}</Text>
+              <Text style={[styles.tooltipValue, { color: colors.text }]}>{selected.weight} kg</Text>
+              <Text style={[styles.tooltipDate, { color: colors.textSecondary }]}>{selected.date}</Text>
             </View>
           ) : null}
         </View>
 
         <View style={styles.labelsRow}>
           {labelIndices.map((index) => (
-            <Text key={index} style={styles.axisLabel}>
+            <Text key={index} style={[styles.axisLabel, { color: colors.textSecondary }]}>
               {points[index]?.date.slice(0, 3)}
             </Text>
           ))}
@@ -172,7 +174,6 @@ export function WeightChart({ data }: Props) {
 
 const styles = StyleSheet.create({
   sectionTitle: {
-    color: colors.textPrimary,
     fontSize: 16,
     fontWeight: "700",
     marginBottom: 12,
@@ -180,9 +181,7 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 20,
     padding: 18,
-    backgroundColor: colors.cardBackground,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
   chartArea: { height: CHART_HEIGHT, width: "100%" },
   hitArea: { position: "absolute", width: HIT_SIZE, height: HIT_SIZE },
@@ -192,16 +191,14 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 10,
     alignItems: "center",
-    backgroundColor: "#15181E",
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
-  tooltipValue: { color: colors.textPrimary, fontSize: 12, fontWeight: "700" },
-  tooltipDate: { color: colors.textMuted, fontSize: 10, marginTop: 1 },
+  tooltipValue: { fontSize: 12, fontWeight: "700" },
+  tooltipDate: { fontSize: 10, marginTop: 1 },
   labelsRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 8,
   },
-  axisLabel: { color: colors.textMuted, fontSize: 10, fontWeight: "600" },
+  axisLabel: { fontSize: 10, fontWeight: "600" },
 });

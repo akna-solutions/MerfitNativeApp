@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { Achievement, AchievementIcon } from "../types";
 
 const ICONS: Record<AchievementIcon, keyof typeof Ionicons.glyphMap> = {
@@ -14,34 +14,40 @@ const ICONS: Record<AchievementIcon, keyof typeof Ionicons.glyphMap> = {
 type Props = { achievements: Achievement[] };
 
 export function Achievements({ achievements }: Props) {
+  const { colors } = useTheme();
   return (
     <View>
-      <Text style={styles.sectionTitle}>Başarılar</Text>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>Başarılar</Text>
 
       <View style={styles.grid}>
         {achievements.map((achievement) => (
           <View
             key={achievement.id}
-            style={[styles.card, !achievement.earned && styles.cardLocked]}
+            style={[
+              styles.card,
+              { backgroundColor: colors.card, borderColor: colors.border },
+              !achievement.earned && styles.cardLocked,
+            ]}
           >
             <View
               style={[
                 styles.iconWrap,
-                achievement.earned && styles.iconWrapEarned,
+                { backgroundColor: colors.inputBackground },
+                achievement.earned && { backgroundColor: colors.cardActive },
               ]}
             >
               <Ionicons
                 name={ICONS[achievement.icon]}
                 size={16}
                 color={
-                  achievement.earned ? colors.electricBlue : colors.textMuted
+                  achievement.earned ? colors.primary : colors.textSecondary
                 }
               />
             </View>
-            <Text style={styles.title} numberOfLines={1}>
+            <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
               {achievement.title}
             </Text>
-            <Text style={styles.description} numberOfLines={1}>
+            <Text style={[styles.description, { color: colors.textSecondary }]} numberOfLines={1}>
               {achievement.description}
             </Text>
           </View>
@@ -53,7 +59,6 @@ export function Achievements({ achievements }: Props) {
 
 const styles = StyleSheet.create({
   sectionTitle: {
-    color: colors.textPrimary,
     fontSize: 16,
     fontWeight: "700",
     marginBottom: 12,
@@ -63,9 +68,7 @@ const styles = StyleSheet.create({
     width: "47%",
     borderRadius: 16,
     padding: 14,
-    backgroundColor: colors.cardBackground,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
   cardLocked: { opacity: 0.5 },
   iconWrap: {
@@ -74,14 +77,11 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.06)",
   },
-  iconWrapEarned: { backgroundColor: colors.cardBackgroundActive },
   title: {
-    color: colors.textPrimary,
     fontSize: 12,
     fontWeight: "700",
     marginTop: 10,
   },
-  description: { color: colors.textMuted, fontSize: 10, marginTop: 2 },
+  description: { fontSize: 10, marginTop: 2 },
 });

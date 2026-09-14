@@ -1,12 +1,13 @@
 import { StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../theme/ThemeContext";
 
 type Props = { unlocked?: boolean };
 
 export function PlusBadge({ unlocked }: Props) {
+  const { colors } = useTheme();
   return (
-    <View style={[styles.badge, unlocked && styles.badgeUnlocked]}>
+    <View style={[styles.badge, { borderColor: colors.primary }, unlocked && styles.badgeUnlocked]}>
       <Text style={styles.label}>{unlocked ? "✓ PLUS" : "PLUS"}</Text>
     </View>
   );
@@ -21,7 +22,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "rgba(5,5,5,0.4)",
     borderWidth: 1,
-    borderColor: colors.electricBlue,
   },
   badgeUnlocked: { borderColor: "rgba(0,168,255,0.4)" },
   label: {

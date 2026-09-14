@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
   label: string;
@@ -18,20 +18,28 @@ export function OnboardingOption({
   onPress,
   shape = "radio",
 }: Props) {
+  const { colors } = useTheme();
   return (
     <Pressable
       onPress={onPress}
-      style={[styles.card, selected && styles.cardActive]}
+      style={[
+        styles.card,
+        { borderColor: colors.border, backgroundColor: colors.card },
+        selected && { borderColor: colors.borderActive, backgroundColor: colors.cardActive },
+      ]}
     >
       <View style={styles.textBlock}>
-        <Text style={styles.label}>{label}</Text>
-        {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+        <Text style={[styles.label, { color: colors.text }]}>{label}</Text>
+        {subtitle ? (
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{subtitle}</Text>
+        ) : null}
       </View>
       <View
         style={[
           styles.indicator,
+          { borderColor: colors.border },
           shape === "check" && styles.indicatorSquare,
-          selected && styles.indicatorActive,
+          selected && { borderColor: colors.primary, backgroundColor: colors.primary },
         ]}
       >
         {selected ? <Text style={styles.checkmark}>✓</Text> : null}
@@ -49,30 +57,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     borderRadius: 14,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    backgroundColor: colors.cardBackground,
     marginBottom: 10,
   },
-  cardActive: {
-    borderColor: colors.cardBorderActive,
-    backgroundColor: colors.cardBackgroundActive,
-  },
   textBlock: { flex: 1, paddingRight: 12 },
-  label: { color: colors.textPrimary, fontSize: 15, fontWeight: "600" },
-  subtitle: { color: colors.textMuted, fontSize: 12, marginTop: 3 },
+  label: { fontSize: 15, fontWeight: "600" },
+  subtitle: { fontSize: 12, marginTop: 3 },
   indicator: {
     width: 22,
     height: 22,
     borderRadius: 11,
     borderWidth: 1.5,
-    borderColor: colors.border,
     alignItems: "center",
     justifyContent: "center",
   },
   indicatorSquare: { borderRadius: 6 },
-  indicatorActive: {
-    borderColor: colors.electricBlue,
-    backgroundColor: colors.electricBlue,
-  },
   checkmark: { color: "#FFFFFF", fontSize: 12, fontWeight: "700" },
 });

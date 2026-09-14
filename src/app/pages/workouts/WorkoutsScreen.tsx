@@ -1,5 +1,4 @@
 import { useRouter } from "expo-router";
-import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -17,7 +16,7 @@ import { WorkoutGrid } from "./components/WorkoutGrid";
 import { WorkoutHeader } from "./components/WorkoutHeader";
 import { WorkoutSearch } from "./components/WorkoutSearch";
 import { WorkoutSkeleton } from "./components/WorkoutSkeleton";
-import { colors } from "./theme";
+import { useTheme } from "../../../shared/theme/ThemeContext";
 import {
     Category,
     EMPTY_FILTERS,
@@ -45,6 +44,7 @@ function mapApiWorkout(item: WorkoutListItem): Workout {
 export function WorkoutsScreen() {
   const router = useRouter();
   const searchRef = useRef<TextInput>(null);
+  const { colors } = useTheme();
 
   const [allWorkouts, setAllWorkouts] = useState<Workout[]>([]);
   const [personalized, setPersonalized] = useState<Workout[]>([]);
@@ -147,8 +147,7 @@ export function WorkoutsScreen() {
   };
 
   return (
-    <View style={styles.root}>
-      <StatusBar style="light" />
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
       <SafeAreaView style={styles.flex} edges={["top"]}>
         <ScrollView
           style={styles.flex}
@@ -186,9 +185,9 @@ export function WorkoutsScreen() {
               <WorkoutSkeleton />
             ) : errorMessage ? (
               <View style={styles.errorBox}>
-                <Text style={styles.errorText}>{errorMessage}</Text>
+                <Text style={[styles.errorText, { color: colors.textSecondary }]}>{errorMessage}</Text>
                 <Text
-                  style={styles.retryLabel}
+                  style={[styles.retryLabel, { color: colors.primary }]}
                   onPress={() => {
                     setLoading(true);
                     loadWorkouts();
@@ -251,7 +250,7 @@ export function WorkoutsScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
+  root: { flex: 1 },
   flex: { flex: 1 },
   scrollContent: { paddingTop: 16, paddingBottom: 156 },
   padded: { paddingHorizontal: 24 },
@@ -259,6 +258,6 @@ const styles = StyleSheet.create({
   categoriesGap: { marginTop: 18 },
   sectionGap: { marginTop: 28 },
   errorBox: { alignItems: "center", gap: 12, paddingVertical: 40 },
-  errorText: { color: colors.textMuted, fontSize: 13, textAlign: "center" },
-  retryLabel: { color: colors.electricBlue, fontSize: 13, fontWeight: "700" },
+  errorText: { fontSize: 13, textAlign: "center" },
+  retryLabel: { fontSize: 13, fontWeight: "700" },
 });

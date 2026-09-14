@@ -1,5 +1,4 @@
 import { useRouter } from "expo-router";
-import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
 import {
     ActivityIndicator,
@@ -15,13 +14,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../../../../shared/auth/AuthContext";
 import { ApiError, isApiError, NetworkError } from "../../../../services/api/client";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { OnboardingButton } from "../../onboarding/components/OnboardingButton";
 import { OnboardingInput } from "../../onboarding/components/OnboardingInput";
-import { colors } from ".././theme";
 
 export function LoginScreen() {
   const router = useRouter();
   const { login } = useAuth();
+  const { colors } = useTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -61,19 +61,18 @@ export function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <SafeAreaView style={styles.flex} edges={["top", "bottom"]}>
-        <StatusBar style="light" />
 
         <View style={styles.header}>
           <Pressable
             onPress={() => router.back()}
             hitSlop={12}
-            style={styles.backButton}
+            style={[styles.backButton, { backgroundColor: colors.inputBackground }]}
           >
-            <Text style={styles.backLabel}>←</Text>
+            <Text style={[styles.backLabel, { color: colors.text }]}>←</Text>
           </Pressable>
         </View>
 
@@ -83,8 +82,8 @@ export function LoginScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.title}>Tekrar hoş geldin.</Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.title, { color: colors.text }]}>Tekrar hoş geldin.</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             MB FIT yolculuğuna devam etmek için giriş yap.
           </Text>
 
@@ -109,7 +108,7 @@ export function LoginScreen() {
             />
 
             <Pressable hitSlop={8} style={styles.forgotRow}>
-              <Text style={styles.forgotLabel}>Şifreni mi unuttun?</Text>
+              <Text style={[styles.forgotLabel, { color: colors.primary }]}>Şifreni mi unuttun?</Text>
             </Pressable>
 
             {errorMessage ? (
@@ -117,20 +116,23 @@ export function LoginScreen() {
             ) : null}
 
             <View style={styles.dividerRow}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerLabel}>veya</Text>
-              <View style={styles.dividerLine} />
+              <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+              <Text style={[styles.dividerLabel, { color: colors.textSecondary }]}>veya</Text>
+              <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
             </View>
 
-            <Pressable onPress={handleGoogleLogin} style={styles.googleButton}>
-              <Text style={styles.googleLabel}>Google ile devam et</Text>
+            <Pressable
+              onPress={handleGoogleLogin}
+              style={[styles.googleButton, { borderColor: colors.border, backgroundColor: colors.inputBackground }]}
+            >
+              <Text style={[styles.googleLabel, { color: colors.text }]}>Google ile devam et</Text>
             </Pressable>
           </View>
         </ScrollView>
 
         <View style={styles.footer}>
           {isSubmitting ? (
-            <View style={styles.loadingButton}>
+            <View style={[styles.loadingButton, { backgroundColor: colors.primaryPressed }]}>
               <ActivityIndicator color="#FFFFFF" />
             </View>
           ) : (
@@ -145,9 +147,9 @@ export function LoginScreen() {
             hitSlop={8}
             style={styles.signupRow}
           >
-            <Text style={styles.signupText}>
+            <Text style={[styles.signupText, { color: colors.textSecondary }]}>
               Hesabın yok mu?{" "}
-              <Text style={styles.signupLink}>Kayıt ol</Text>
+              <Text style={[styles.signupLink, { color: colors.primary }]}>Kayıt ol</Text>
             </Text>
           </Pressable>
         </View>
@@ -157,13 +159,12 @@ export function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1 },
   loadingButton: {
     height: 56,
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.buttonElectricBlue,
   },
   errorText: {
     color: "#FF6B6B",
@@ -179,18 +180,15 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.06)",
   },
-  backLabel: { color: colors.textPrimary, fontSize: 17, fontWeight: "600" },
+  backLabel: { fontSize: 17, fontWeight: "600" },
   scrollContent: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 36 },
   title: {
-    color: colors.textPrimary,
     fontSize: 28,
     fontWeight: "700",
     lineHeight: 34,
   },
   subtitle: {
-    color: colors.textMuted,
     fontSize: 14,
     lineHeight: 20,
     marginTop: 10,
@@ -199,7 +197,7 @@ const styles = StyleSheet.create({
   fieldFont: { fontSize: 16, fontWeight: "600" },
   gap: { height: 12 },
   forgotRow: { alignSelf: "flex-end", marginTop: 14 },
-  forgotLabel: { color: colors.electricBlue, fontSize: 12, fontWeight: "600" },
+  forgotLabel: { fontSize: 12, fontWeight: "600" },
   dividerRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -208,21 +206,18 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.border,
   },
-  dividerLabel: { color: colors.textMuted, fontSize: 12, marginHorizontal: 12 },
+  dividerLabel: { fontSize: 12, marginHorizontal: 12 },
   googleButton: {
     height: 56,
     borderRadius: 14,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    backgroundColor: "rgba(255,255,255,0.06)",
     alignItems: "center",
     justifyContent: "center",
   },
-  googleLabel: { color: colors.textPrimary, fontSize: 14, fontWeight: "600" },
+  googleLabel: { fontSize: 14, fontWeight: "600" },
   footer: { paddingHorizontal: 24, paddingBottom: 8, paddingTop: 8 },
   signupRow: { marginTop: 16, alignItems: "center" },
-  signupText: { color: colors.textMuted, fontSize: 13 },
-  signupLink: { color: colors.electricBlue, fontWeight: "700" },
+  signupText: { fontSize: 13 },
+  signupLink: { fontWeight: "700" },
 });

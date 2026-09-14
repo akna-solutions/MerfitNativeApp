@@ -1,6 +1,6 @@
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
   visible: boolean;
@@ -15,10 +15,14 @@ export function LogOutButton({
   onConfirm,
   onCancel,
 }: Props) {
+  const { colors } = useTheme();
   return (
     <>
-      <Pressable onPress={onRequestOpen} style={styles.button}>
-        <Text style={styles.label}>Çıkış Yap</Text>
+      <Pressable
+        onPress={onRequestOpen}
+        style={[styles.button, { backgroundColor: colors.card, borderColor: colors.border }]}
+      >
+        <Text style={[styles.label, { color: colors.text }]}>Çıkış Yap</Text>
       </Pressable>
 
       <Modal
@@ -30,17 +34,23 @@ export function LogOutButton({
         <View style={styles.backdrop}>
           <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} />
 
-          <View style={styles.dialog}>
-            <Text style={styles.title}>MB FIT'ten çıkış yapılsın mı?</Text>
-            <Text style={styles.message}>
+          <View style={[styles.dialog, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Text style={[styles.title, { color: colors.text }]}>MB FIT'ten çıkış yapılsın mı?</Text>
+            <Text style={[styles.message, { color: colors.textSecondary }]}>
               Hesabından çıkış yapmak istediğine emin misin?
             </Text>
 
             <View style={styles.actions}>
-              <Pressable onPress={onCancel} style={styles.cancelButton}>
-                <Text style={styles.cancelLabel}>İptal</Text>
+              <Pressable
+                onPress={onCancel}
+                style={[styles.cancelButton, { backgroundColor: colors.inputBackground }]}
+              >
+                <Text style={[styles.cancelLabel, { color: colors.text }]}>İptal</Text>
               </Pressable>
-              <Pressable onPress={onConfirm} style={styles.confirmButton}>
+              <Pressable
+                onPress={onConfirm}
+                style={[styles.confirmButton, { backgroundColor: colors.primaryPressed }]}
+              >
                 <Text style={styles.confirmLabel}>Çıkış Yap</Text>
               </Pressable>
             </View>
@@ -57,11 +67,9 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.cardBackground,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
-  label: { color: colors.textPrimary, fontSize: 14, fontWeight: "700" },
+  label: { fontSize: 14, fontWeight: "700" },
   backdrop: {
     flex: 1,
     alignItems: "center",
@@ -73,13 +81,10 @@ const styles = StyleSheet.create({
     width: "100%",
     borderRadius: 22,
     padding: 22,
-    backgroundColor: "#15181E",
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
-  title: { color: colors.textPrimary, fontSize: 16, fontWeight: "700" },
+  title: { fontSize: 16, fontWeight: "700" },
   message: {
-    color: colors.textMuted,
     fontSize: 13,
     marginTop: 8,
     lineHeight: 19,
@@ -91,16 +96,14 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.06)",
   },
-  cancelLabel: { color: colors.textPrimary, fontSize: 13, fontWeight: "700" },
+  cancelLabel: { fontSize: 13, fontWeight: "700" },
   confirmButton: {
     flex: 1,
     height: 46,
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.buttonElectricBlue,
   },
   confirmLabel: { color: "#FFFFFF", fontSize: 13, fontWeight: "700" },
 });

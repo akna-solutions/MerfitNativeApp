@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 
 import { OnboardingOption } from "../components/OnboardingOption";
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { Equipment, TrainingLocation } from "../types";
 
 const LOCATION_OPTIONS: { label: string; value: TrainingLocation }[] = [
@@ -33,6 +33,7 @@ export function EquipmentStep({
   equipment,
   onEquipmentChange,
 }: Props) {
+  const { colors } = useTheme();
   const toggleEquipment = (value: Equipment) => {
     if (value === "none") {
       onEquipmentChange(equipment.includes("none") ? [] : ["none"]);
@@ -59,7 +60,7 @@ export function EquipmentStep({
 
       {location ? (
         <View style={styles.equipmentBlock}>
-          <Text style={styles.equipmentTitle}>Hangi ekipmanlara sahipsin?</Text>
+          <Text style={[styles.equipmentTitle, { color: colors.text }]}>Hangi ekipmanlara sahipsin?</Text>
           {EQUIPMENT_OPTIONS.map((option) => (
             <OnboardingOption
               key={option.value}
@@ -78,7 +79,6 @@ export function EquipmentStep({
 const styles = StyleSheet.create({
   equipmentBlock: { marginTop: 24 },
   equipmentTitle: {
-    color: colors.textPrimary,
     fontSize: 15,
     fontWeight: "700",
     marginBottom: 12,

@@ -1,11 +1,12 @@
 import { StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { GoalProgress } from "../types";
 
 type Props = { goal: GoalProgress };
 
 export function GoalProgressCard({ goal }: Props) {
+  const { colors } = useTheme();
   const { currentWeightKg, goalWeightKg, startWeightKg } = goal;
   const totalDistance = Math.abs(startWeightKg - goalWeightKg);
   const covered = Math.abs(startWeightKg - currentWeightKg);
@@ -18,25 +19,25 @@ export function GoalProgressCard({ goal }: Props) {
 
   return (
     <View style={styles.wrapper}>
-      <Text style={styles.sectionTitle}>İlerlemen</Text>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>İlerlemen</Text>
 
-      <View style={styles.card}>
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <View style={styles.row}>
           <View>
-            <Text style={styles.label}>Kilo</Text>
-            <Text style={styles.value}>{currentWeightKg} kg</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Kilo</Text>
+            <Text style={[styles.value, { color: colors.text }]}>{currentWeightKg} kg</Text>
           </View>
           <View style={styles.alignEnd}>
-            <Text style={styles.label}>Hedef</Text>
-            <Text style={styles.value}>{goalWeightKg} kg</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Hedef</Text>
+            <Text style={[styles.value, { color: colors.text }]}>{goalWeightKg} kg</Text>
           </View>
         </View>
 
-        <View style={styles.track}>
-          <View style={[styles.fill, { width: `${ratio * 100}%` }]} />
+        <View style={[styles.track, { backgroundColor: colors.progressTrack }]}>
+          <View style={[styles.fill, { width: `${ratio * 100}%`, backgroundColor: colors.primary }]} />
         </View>
 
-        <Text style={styles.remaining}>{remainingLabel}</Text>
+        <Text style={[styles.remaining, { color: colors.primary }]}>{remainingLabel}</Text>
       </View>
     </View>
   );
@@ -45,7 +46,6 @@ export function GoalProgressCard({ goal }: Props) {
 const styles = StyleSheet.create({
   wrapper: { marginTop: 28 },
   sectionTitle: {
-    color: colors.textPrimary,
     fontSize: 16,
     fontWeight: "700",
     marginBottom: 12,
@@ -53,15 +53,12 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 20,
     padding: 20,
-    backgroundColor: colors.cardBackground,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
   row: { flexDirection: "row", justifyContent: "space-between" },
   alignEnd: { alignItems: "flex-end" },
-  label: { color: colors.textMuted, fontSize: 11 },
+  label: { fontSize: 11 },
   value: {
-    color: colors.textPrimary,
     fontSize: 18,
     fontWeight: "700",
     marginTop: 4,
@@ -69,13 +66,11 @@ const styles = StyleSheet.create({
   track: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: colors.progressTrack,
     marginTop: 16,
     overflow: "hidden",
   },
-  fill: { height: 6, borderRadius: 3, backgroundColor: colors.electricBlue },
+  fill: { height: 6, borderRadius: 3 },
   remaining: {
-    color: colors.electricBlue,
     fontSize: 12,
     fontWeight: "600",
     marginTop: 10,

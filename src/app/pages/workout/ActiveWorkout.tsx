@@ -1,5 +1,4 @@
 import { useRouter } from "expo-router";
-import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
@@ -32,7 +31,7 @@ import { SetTracker } from "./components/SetTracker";
 import { WorkoutComplete } from "./components/WorkoutComplete";
 import { WorkoutProgress } from "./components/WorkoutProgress";
 import { WorkoutTopBar } from "./components/WorkoutTopBar";
-import { colors } from "./theme";
+import { useTheme } from "../../../shared/theme/ThemeContext";
 import { Exercise, ExerciseProgress, WorkoutPhase, WorkoutSession } from "./types";
 import { WorkoutSummary } from "./WorkoutSummary";
 
@@ -85,6 +84,7 @@ function mapApiSession(api: ApiWorkoutSession): {
 
 export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Props) {
   const router = useRouter();
+  const { colors } = useTheme();
 
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [session, setSession] = useState<WorkoutSession | null>(null);
@@ -208,21 +208,19 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
 
   if (isLoading) {
     return (
-      <View style={[styles.root, styles.centered]}>
-        <StatusBar style="light" />
-        <ActivityIndicator color={colors.electricBlue} size="large" />
+      <View style={[styles.root, styles.centered, { backgroundColor: colors.background }]}>
+        <ActivityIndicator color={colors.primary} size="large" />
       </View>
     );
   }
 
   if (loadError || !session || !currentExercise || !currentProgress || !sessionId) {
     return (
-      <View style={[styles.root, styles.centered]}>
-        <StatusBar style="light" />
-        <Text style={styles.errorText}>
+      <View style={[styles.root, styles.centered, { backgroundColor: colors.background }]}>
+        <Text style={[styles.errorText, { color: colors.textSecondary }]}>
           {loadError ?? "Antrenman verisi yüklenemedi."}
         </Text>
-        <Text style={styles.retryLabel} onPress={() => router.back()}>
+        <Text style={[styles.retryLabel, { color: colors.primary }]} onPress={() => router.back()}>
           Geri dön
         </Text>
       </View>
@@ -359,8 +357,7 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
   }
 
   return (
-    <View style={styles.root}>
-      <StatusBar style="light" />
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
       <SafeAreaView style={styles.flex} edges={["top", "bottom"]}>
         <KeyboardAvoidingView
           style={styles.flex}
@@ -454,11 +451,11 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
+  root: { flex: 1 },
   flex: { flex: 1 },
   centered: { alignItems: "center", justifyContent: "center", gap: 16, paddingHorizontal: 32 },
-  errorText: { color: colors.textMuted, fontSize: 14, textAlign: "center" },
-  retryLabel: { color: colors.electricBlue, fontSize: 13, fontWeight: "700" },
+  errorText: { fontSize: 14, textAlign: "center" },
+  retryLabel: { fontSize: 13, fontWeight: "700" },
   header: { paddingHorizontal: 20, paddingTop: 6 },
   progressGap: { marginTop: 16 },
   scrollContent: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 24 },

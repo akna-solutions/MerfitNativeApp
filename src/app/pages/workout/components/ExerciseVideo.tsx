@@ -3,7 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { Image, StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
   video: number | string | null;
@@ -11,6 +11,7 @@ type Props = {
 };
 
 export function ExerciseVideo({ video, imageUrl }: Props) {
+  const { colors } = useTheme();
   // Hook her zaman çağrılmalı; video yoksa player boş kalır ve VideoView
   // render edilmez (aşağıda source'a göre dallanıyoruz).
   const player = useVideoPlayer(video ?? null, (p) => {
@@ -21,7 +22,7 @@ export function ExerciseVideo({ video, imageUrl }: Props) {
 
   if (video) {
     return (
-      <View style={styles.wrapper}>
+      <View style={[styles.wrapper, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <VideoView
           style={styles.media}
           player={player}
@@ -34,7 +35,7 @@ export function ExerciseVideo({ video, imageUrl }: Props) {
   }
 
   return (
-    <View style={styles.wrapper}>
+    <View style={[styles.wrapper, { backgroundColor: colors.card, borderColor: colors.border }]}>
       <Image source={{ uri: imageUrl }} style={styles.media} />
       <LinearGradient
         colors={["rgba(5,5,5,0)", "rgba(5,5,5,0.45)"]}
@@ -44,7 +45,7 @@ export function ExerciseVideo({ video, imageUrl }: Props) {
         <Ionicons
           name="play-circle-outline"
           size={14}
-          color={colors.textPrimary}
+          color="#FFFFFF"
         />
         <Text style={styles.placeholderLabel}>Egzersiz gösterimi</Text>
       </View>
@@ -57,9 +58,7 @@ const styles = StyleSheet.create({
     height: 260,
     borderRadius: 24,
     overflow: "hidden",
-    backgroundColor: colors.cardBackground,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
   media: { width: "100%", height: "100%" },
   placeholderBadge: {
@@ -75,7 +74,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(5,5,5,0.55)",
   },
   placeholderLabel: {
-    color: colors.textPrimary,
+    color: "#FFFFFF",
     fontSize: 11,
     fontWeight: "600",
   },

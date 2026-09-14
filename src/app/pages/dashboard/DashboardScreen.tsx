@@ -1,5 +1,4 @@
 import { useRouter } from "expo-router";
-import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
@@ -28,8 +27,8 @@ import { QuickStats } from "./components/QuickStats";
 import { RecommendedWorkouts } from "./components/RecommendedWorkouts";
 import { TodayPersonalWorkoutCard } from "./components/TodayPersonalWorkoutCard";
 import { WorkoutCard } from "./components/WorkoutCard";
-import { colors } from "./theme";
 import { DashboardData, WorkoutSummary } from "./types";
+import { useTheme } from "../../../shared/theme/ThemeContext";
 
 /** Backend'in CustomerDashboardResponse'unu (services/api/types.ts) ekranin bekledigi DashboardData sekline cevirir. */
 function mapToDashboardData(response: DashboardResponse): DashboardData {
@@ -60,6 +59,7 @@ function mapToDashboardData(response: DashboardResponse): DashboardData {
 
 export function DashboardScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
 
   const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -185,22 +185,20 @@ export function DashboardScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.root, styles.centered]}>
-        <StatusBar style="light" />
-        <ActivityIndicator color={colors.electricBlue} size="large" />
+      <View style={[styles.root, styles.centered, { backgroundColor: colors.background }]}>
+        <ActivityIndicator color={colors.primary} size="large" />
       </View>
     );
   }
 
   if (errorMessage || !data) {
     return (
-      <View style={[styles.root, styles.centered]}>
-        <StatusBar style="light" />
-        <Text style={styles.errorText}>
+      <View style={[styles.root, styles.centered, { backgroundColor: colors.background }]}>
+        <Text style={[styles.errorText, { color: colors.textSecondary }]}>
           {errorMessage ?? "Dashboard yüklenemedi."}
         </Text>
         <Pressable
-          style={styles.retryButton}
+          style={[styles.retryButton, { backgroundColor: colors.primary }]}
           onPress={() => {
             setIsLoading(true);
             loadDashboard();
@@ -213,8 +211,7 @@ export function DashboardScreen() {
   }
 
   return (
-    <View style={styles.root}>
-      <StatusBar style="light" />
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
       <SafeAreaView style={styles.flex} edges={["top"]}>
         <ScrollView
           style={styles.flex}
@@ -292,15 +289,14 @@ export function DashboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
+  root: { flex: 1 },
   flex: { flex: 1 },
   centered: { alignItems: "center", justifyContent: "center", gap: 16, paddingHorizontal: 32 },
-  errorText: { color: colors.textMuted, fontSize: 14, textAlign: "center" },
+  errorText: { fontSize: 14, textAlign: "center" },
   retryButton: {
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 12,
-    backgroundColor: colors.electricBlue,
   },
   retryLabel: { color: "#FFFFFF", fontSize: 14, fontWeight: "700" },
   scrollContent: { paddingTop: 16, paddingBottom: 156 },

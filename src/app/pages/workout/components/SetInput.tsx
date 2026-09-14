@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 
 import { OnboardingInput } from "../../onboarding/components/OnboardingInput";
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
   setNumber: number;
@@ -20,15 +20,16 @@ export function SetInput({
   reps,
   onRepsChange,
 }: Props) {
+  const { colors } = useTheme();
   return (
-    <View style={styles.card}>
-      <Text style={styles.title}>
+    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <Text style={[styles.title, { color: colors.textSecondary }]}>
         SET {setNumber} / {totalSets}
       </Text>
 
       <View style={styles.row}>
         <View style={styles.field}>
-          <Text style={styles.label}>Ağırlık (kg)</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>Ağırlık (kg)</Text>
           <OnboardingInput
             value={weight}
             onChangeText={(text) =>
@@ -40,7 +41,7 @@ export function SetInput({
           />
         </View>
         <View style={styles.field}>
-          <Text style={styles.label}>Tekrar</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>Tekrar</Text>
           <OnboardingInput
             value={reps}
             onChangeText={(text) =>
@@ -61,12 +62,9 @@ const styles = StyleSheet.create({
     marginTop: 22,
     borderRadius: 20,
     padding: 20,
-    backgroundColor: colors.cardBackground,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
   title: {
-    color: colors.textMuted,
     fontSize: 11,
     fontWeight: "700",
     letterSpacing: 0.8,
@@ -76,7 +74,6 @@ const styles = StyleSheet.create({
   row: { flexDirection: "row", gap: 12 },
   field: { flex: 1 },
   label: {
-    color: colors.textMuted,
     fontSize: 11,
     fontWeight: "600",
     marginBottom: 8,

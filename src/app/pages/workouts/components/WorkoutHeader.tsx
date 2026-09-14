@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
   onSearchPress: () => void;
@@ -14,36 +14,37 @@ export function WorkoutHeader({
   onFilterPress,
   filtersActive,
 }: Props) {
+  const { colors } = useTheme();
   return (
     <View style={styles.row}>
       <View style={styles.textBlock}>
-        <Text style={styles.title}>Antrenmanlar</Text>
-        <Text style={styles.subtitle}>Bir sonraki mücadeleni bul.</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Antrenmanlar</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Bir sonraki mücadeleni bul.</Text>
       </View>
 
       <View style={styles.actions}>
         <Pressable
           onPress={onSearchPress}
-          style={styles.iconButton}
+          style={[styles.iconButton, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
           hitSlop={8}
         >
           <Ionicons
             name="search-outline"
             size={19}
-            color={colors.textPrimary}
+            color={colors.text}
           />
         </Pressable>
         <Pressable
           onPress={onFilterPress}
-          style={styles.iconButton}
+          style={[styles.iconButton, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
           hitSlop={8}
         >
           <Ionicons
             name="options-outline"
             size={19}
-            color={colors.textPrimary}
+            color={colors.text}
           />
-          {filtersActive ? <View style={styles.dot} /> : null}
+          {filtersActive ? <View style={[styles.dot, { backgroundColor: colors.primary }]} /> : null}
         </Pressable>
       </View>
     </View>
@@ -57,8 +58,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   textBlock: { flex: 1, paddingRight: 12 },
-  title: { color: colors.textPrimary, fontSize: 26, fontWeight: "700" },
-  subtitle: { color: colors.textMuted, fontSize: 13, marginTop: 4 },
+  title: { fontSize: 26, fontWeight: "700" },
+  subtitle: { fontSize: 13, marginTop: 4 },
   actions: { flexDirection: "row", gap: 10 },
   iconButton: {
     width: 40,
@@ -66,9 +67,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.06)",
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
   dot: {
     position: "absolute",
@@ -77,6 +76,5 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 3.5,
-    backgroundColor: colors.electricBlue,
   },
 });

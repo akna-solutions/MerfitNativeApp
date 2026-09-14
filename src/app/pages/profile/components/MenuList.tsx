@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 export type MenuItem = {
   id: string;
@@ -17,30 +17,36 @@ type Props = {
 };
 
 export function MenuList({ title, items }: Props) {
+  const { colors } = useTheme();
+
   return (
     <View>
-      <Text style={styles.sectionTitle}>{title}</Text>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
 
-      <View style={styles.card}>
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
         {items.map((item, index) => (
           <Pressable
             key={item.id}
             onPress={item.onPress}
-            style={[styles.row, index === items.length - 1 && styles.rowLast]}
+            style={[
+              styles.row,
+              { borderBottomColor: colors.border },
+              index === items.length - 1 && styles.rowLast,
+            ]}
           >
-            <View style={styles.iconWrap}>
-              <Ionicons name={item.icon} size={16} color={colors.textMuted} />
+            <View style={[styles.iconWrap, { backgroundColor: colors.inputBackground }]}>
+              <Ionicons name={item.icon} size={16} color={colors.textSecondary} />
             </View>
             <View style={styles.textBlock}>
-              <Text style={styles.itemTitle}>{item.title}</Text>
+              <Text style={[styles.itemTitle, { color: colors.text }]}>{item.title}</Text>
               {item.subtitle ? (
-                <Text style={styles.itemSubtitle}>{item.subtitle}</Text>
+                <Text style={[styles.itemSubtitle, { color: colors.textSecondary }]}>{item.subtitle}</Text>
               ) : null}
             </View>
             <Ionicons
               name="chevron-forward"
               size={15}
-              color={colors.textMuted}
+              color={colors.textSecondary}
             />
           </Pressable>
         ))}
@@ -51,7 +57,6 @@ export function MenuList({ title, items }: Props) {
 
 const styles = StyleSheet.create({
   sectionTitle: {
-    color: colors.textPrimary,
     fontSize: 16,
     fontWeight: "700",
     marginBottom: 12,
@@ -59,9 +64,7 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 20,
     paddingHorizontal: 18,
-    backgroundColor: colors.cardBackground,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
   row: {
     flexDirection: "row",
@@ -69,7 +72,6 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
   },
   rowLast: { borderBottomWidth: 0 },
   iconWrap: {
@@ -78,9 +80,8 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.06)",
   },
   textBlock: { flex: 1 },
-  itemTitle: { color: colors.textPrimary, fontSize: 13, fontWeight: "600" },
-  itemSubtitle: { color: colors.textMuted, fontSize: 11, marginTop: 2 },
+  itemTitle: { fontSize: 13, fontWeight: "600" },
+  itemSubtitle: { fontSize: 11, marginTop: 2 },
 });

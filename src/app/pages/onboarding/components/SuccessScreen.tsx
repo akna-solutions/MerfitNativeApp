@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { Animated, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { OnboardingButton } from "./OnboardingButton";
 
 type Props = {
@@ -11,6 +11,7 @@ type Props = {
 };
 
 export function SuccessScreen({ name, onStart }: Props) {
+  const { colors } = useTheme();
   const fade = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -22,7 +23,7 @@ export function SuccessScreen({ name, onStart }: Props) {
   }, [fade]);
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={["top", "bottom"]}>
       <View style={styles.spacer} />
 
       <Animated.View
@@ -41,15 +42,15 @@ export function SuccessScreen({ name, onStart }: Props) {
           },
         ]}
       >
-        <View style={styles.badge}>
-          <Text style={styles.badgeCheck}>✓</Text>
+        <View style={[styles.badge, { borderColor: colors.primary, backgroundColor: colors.cardActive }]}>
+          <Text style={[styles.badgeCheck, { color: colors.primary }]}>✓</Text>
         </View>
 
-        <Text style={styles.title}>
+        <Text style={[styles.title, { color: colors.text }]}>
           Hazırsın{name ? `, ${name}` : ""}.
         </Text>
-        <Text style={styles.subtitle}>MB FIT yolculuğun şimdi başlıyor.</Text>
-        <Text style={styles.description}>
+        <Text style={[styles.subtitle, { color: colors.text }]}>MB FIT yolculuğun şimdi başlıyor.</Text>
+        <Text style={[styles.description, { color: colors.textSecondary }]}>
           Antrenman deneyimini kişiselleştirmek için profilini kullanacağız.
         </Text>
       </Animated.View>
@@ -66,7 +67,6 @@ export function SuccessScreen({ name, onStart }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
     paddingHorizontal: 24,
   },
   spacer: { flex: 1 },
@@ -76,28 +76,23 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: 32,
     borderWidth: 1.5,
-    borderColor: colors.electricBlue,
-    backgroundColor: colors.cardBackgroundActive,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 24,
   },
-  badgeCheck: { color: colors.electricBlue, fontSize: 26, fontWeight: "700" },
+  badgeCheck: { fontSize: 26, fontWeight: "700" },
   title: {
-    color: colors.textPrimary,
     fontSize: 26,
     fontWeight: "700",
     textAlign: "center",
   },
   subtitle: {
-    color: colors.textPrimary,
     fontSize: 15,
     fontWeight: "600",
     textAlign: "center",
     marginTop: 10,
   },
   description: {
-    color: colors.textMuted,
     fontSize: 13,
     lineHeight: 19,
     textAlign: "center",

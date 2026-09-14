@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { ProgressData } from "../types";
 
 type Props = Pick<
@@ -23,12 +23,13 @@ export function GoalProgress({
   currentWeight,
   targetWeight,
 }: Props) {
+  const { colors } = useTheme();
   return (
     <View>
-      <Text style={styles.sectionTitle}>Hedef İlerlemesi</Text>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>Hedef İlerlemesi</Text>
 
-      <View style={styles.card}>
-        <Text style={styles.goalLabel}>{goalLabel}</Text>
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Text style={[styles.goalLabel, { color: colors.text }]}>{goalLabel}</Text>
 
         {goalType === "lose_weight" || goalType === "maintain_weight" ? (
           <WeightGoalBody
@@ -55,6 +56,7 @@ function WeightGoalBody({
   currentWeight: number;
   targetWeight: number;
 }) {
+  const { colors } = useTheme();
   const remaining = currentWeight - targetWeight;
   const label =
     remaining === 0
@@ -65,15 +67,15 @@ function WeightGoalBody({
     <View style={styles.weightRow}>
       <View style={styles.weightTopRow}>
         <View>
-          <Text style={styles.metaLabel}>Güncel</Text>
-          <Text style={styles.metaValue}>{currentWeight} kg</Text>
+          <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Güncel</Text>
+          <Text style={[styles.metaValue, { color: colors.text }]}>{currentWeight} kg</Text>
         </View>
         <View style={styles.alignEnd}>
-          <Text style={styles.metaLabel}>Hedef</Text>
-          <Text style={styles.metaValue}>{targetWeight} kg</Text>
+          <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Hedef</Text>
+          <Text style={[styles.metaValue, { color: colors.text }]}>{targetWeight} kg</Text>
         </View>
       </View>
-      <Text style={styles.remaining}>{label}</Text>
+      <Text style={[styles.remaining, { color: colors.primary }]}>{label}</Text>
     </View>
   );
 }
@@ -85,35 +87,36 @@ function WorkoutGoalBody({
   completed: number;
   goal: number;
 }) {
+  const { colors } = useTheme();
   const ratio = goal > 0 ? Math.min(1, completed / goal) : 0;
   return (
     <View style={styles.percentBody}>
-      <Text style={styles.percentValue}>
-        {completed} / {goal} <Text style={styles.percentUnit}>antrenman</Text>
+      <Text style={[styles.percentValue, { color: colors.text }]}>
+        {completed} / {goal} <Text style={[styles.percentUnit, { color: colors.textSecondary }]}>antrenman</Text>
       </Text>
-      <View style={styles.track}>
-        <View style={[styles.fill, { width: `${ratio * 100}%` }]} />
+      <View style={[styles.track, { backgroundColor: colors.progressTrack }]}>
+        <View style={[styles.fill, { width: `${ratio * 100}%`, backgroundColor: colors.primary }]} />
       </View>
     </View>
   );
 }
 
 function PercentGoalBody({ percent }: { percent: number }) {
+  const { colors } = useTheme();
   const clamped = Math.min(100, Math.max(0, percent));
   return (
     <View style={styles.percentBody}>
-      <Text style={styles.percentValue}>{clamped}%</Text>
-      <View style={styles.track}>
-        <View style={[styles.fill, { width: `${clamped}%` }]} />
+      <Text style={[styles.percentValue, { color: colors.text }]}>{clamped}%</Text>
+      <View style={[styles.track, { backgroundColor: colors.progressTrack }]}>
+        <View style={[styles.fill, { width: `${clamped}%`, backgroundColor: colors.primary }]} />
       </View>
-      <Text style={styles.remaining}>%{100 - clamped} kaldı</Text>
+      <Text style={[styles.remaining, { color: colors.primary }]}>%{100 - clamped} kaldı</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   sectionTitle: {
-    color: colors.textPrimary,
     fontSize: 16,
     fontWeight: "700",
     marginBottom: 12,
@@ -121,24 +124,20 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 20,
     padding: 20,
-    backgroundColor: colors.cardBackground,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
-  goalLabel: { color: colors.textPrimary, fontSize: 16, fontWeight: "700" },
+  goalLabel: { fontSize: 16, fontWeight: "700" },
   percentBody: { marginTop: 16 },
-  percentValue: { color: colors.textPrimary, fontSize: 22, fontWeight: "700" },
-  percentUnit: { color: colors.textMuted, fontSize: 13, fontWeight: "600" },
+  percentValue: { fontSize: 22, fontWeight: "700" },
+  percentUnit: { fontSize: 13, fontWeight: "600" },
   track: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: colors.progressTrack,
     marginTop: 12,
     overflow: "hidden",
   },
-  fill: { height: 6, borderRadius: 3, backgroundColor: colors.electricBlue },
+  fill: { height: 6, borderRadius: 3 },
   remaining: {
-    color: colors.electricBlue,
     fontSize: 12,
     fontWeight: "600",
     marginTop: 10,
@@ -146,9 +145,8 @@ const styles = StyleSheet.create({
   weightRow: { marginTop: 16 },
   weightTopRow: { flexDirection: "row", justifyContent: "space-between" },
   alignEnd: { alignItems: "flex-end" },
-  metaLabel: { color: colors.textMuted, fontSize: 11 },
+  metaLabel: { fontSize: 11 },
   metaValue: {
-    color: colors.textPrimary,
     fontSize: 18,
     fontWeight: "700",
     marginTop: 4,

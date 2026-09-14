@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { PeriodFilter as PeriodFilterType } from "../types";
 
 const OPTIONS: { label: string; value: PeriodFilterType }[] = [
@@ -15,6 +15,7 @@ type Props = {
 };
 
 export function PeriodFilter({ value, onChange }: Props) {
+  const { colors } = useTheme();
   return (
     <View style={styles.row}>
       {OPTIONS.map((option) => {
@@ -23,9 +24,13 @@ export function PeriodFilter({ value, onChange }: Props) {
           <Pressable
             key={option.value}
             onPress={() => onChange(option.value)}
-            style={[styles.pill, active && styles.pillActive]}
+            style={[
+              styles.pill,
+              { backgroundColor: colors.inputBackground },
+              active && { backgroundColor: colors.primaryPressed },
+            ]}
           >
-            <Text style={[styles.label, active && styles.labelActive]}>
+            <Text style={[styles.label, { color: colors.textSecondary }, active && styles.labelActive]}>
               {option.label}
             </Text>
           </Pressable>
@@ -43,9 +48,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#171A20",
   },
-  pillActive: { backgroundColor: colors.buttonElectricBlue },
-  label: { color: colors.textMuted, fontSize: 11, fontWeight: "600" },
+  label: { fontSize: 11, fontWeight: "600" },
   labelActive: { color: "#FFFFFF" },
 });

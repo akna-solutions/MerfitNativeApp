@@ -14,7 +14,7 @@ import {
 } from "../../../shared/profile/types";
 import { OnboardingButton } from "../onboarding/components/OnboardingButton";
 import { OnboardingOption } from "../onboarding/components/OnboardingOption";
-import { colors } from "./theme";
+import { useTheme } from "../../../shared/theme/ThemeContext";
 
 const DURATION_OPTIONS = [15, 30, 45, 60, 90];
 const DAY_LABELS: Record<Weekday, string> = {
@@ -41,6 +41,7 @@ const EQUIPMENT_OPTIONS: Equipment[] = [
 export default function WorkoutPreferencesRoute() {
   const router = useRouter();
   const { profile, updateProfile } = useProfile();
+  const { colors } = useTheme();
 
   const [trainingDays, setTrainingDays] = useState<Weekday[]>(
     profile.trainingDays,
@@ -72,7 +73,7 @@ export default function WorkoutPreferencesRoute() {
       title="Antrenman Tercihleri"
       footer={<OnboardingButton label="Değişiklikleri Kaydet" onPress={handleSave} />}
     >
-      <Text style={styles.label}>Antrenman Günleri</Text>
+      <Text style={[styles.label, { color: colors.textSecondary }]}>Antrenman Günleri</Text>
       <View style={styles.daysRow}>
         {WEEKDAYS.map((day) => {
           const active = trainingDays.includes(day);
@@ -80,9 +81,19 @@ export default function WorkoutPreferencesRoute() {
             <Pressable
               key={day}
               onPress={() => toggleDay(day)}
-              style={[styles.dayPill, active && styles.dayPillActive]}
+              style={[
+                styles.dayPill,
+                { backgroundColor: colors.inputBackground },
+                active && { backgroundColor: colors.primaryPressed },
+              ]}
             >
-              <Text style={[styles.dayLabel, active && styles.dayLabelActive]}>
+              <Text
+                style={[
+                  styles.dayLabel,
+                  { color: colors.textSecondary },
+                  active && styles.dayLabelActive,
+                ]}
+              >
                 {DAY_LABELS[day]}
               </Text>
             </Pressable>
@@ -90,7 +101,7 @@ export default function WorkoutPreferencesRoute() {
         })}
       </View>
 
-      <Text style={[styles.label, styles.gapTop]}>Antrenman Süresi</Text>
+      <Text style={[styles.label, styles.gapTop, { color: colors.textSecondary }]}>Antrenman Süresi</Text>
       {DURATION_OPTIONS.map((minutes) => (
         <OnboardingOption
           key={minutes}
@@ -100,7 +111,7 @@ export default function WorkoutPreferencesRoute() {
         />
       ))}
 
-      <Text style={[styles.label, styles.gapTop]}>Deneyim Seviyesi</Text>
+      <Text style={[styles.label, styles.gapTop, { color: colors.textSecondary }]}>Deneyim Seviyesi</Text>
       {EXPERIENCE_OPTIONS.map((level) => (
         <OnboardingOption
           key={level}
@@ -110,7 +121,7 @@ export default function WorkoutPreferencesRoute() {
         />
       ))}
 
-      <Text style={[styles.label, styles.gapTop]}>Ekipman</Text>
+      <Text style={[styles.label, styles.gapTop, { color: colors.textSecondary }]}>Ekipman</Text>
       {EQUIPMENT_OPTIONS.map((option) => (
         <OnboardingOption
           key={option}
@@ -125,7 +136,6 @@ export default function WorkoutPreferencesRoute() {
 
 const styles = StyleSheet.create({
   label: {
-    color: colors.textMuted,
     fontSize: 11,
     fontWeight: "600",
     marginBottom: 10,
@@ -138,9 +148,7 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.06)",
   },
-  dayPillActive: { backgroundColor: colors.buttonElectricBlue },
-  dayLabel: { color: colors.textMuted, fontSize: 12, fontWeight: "700" },
+  dayLabel: { fontSize: 12, fontWeight: "700" },
   dayLabelActive: { color: "#FFFFFF" },
 });

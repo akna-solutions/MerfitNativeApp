@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
   height: number;
@@ -10,6 +10,7 @@ type Props = {
 };
 
 export function BodyStats({ height, weight, age, onEditPress }: Props) {
+  const { colors } = useTheme();
   const bmi = height > 0 ? weight / Math.pow(height / 100, 2) : 0;
 
   const items = [
@@ -22,19 +23,19 @@ export function BodyStats({ height, weight, age, onEditPress }: Props) {
   return (
     <View>
       <View style={styles.header}>
-        <Text style={styles.sectionTitle}>İstatistiklerin</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>İstatistiklerin</Text>
         <Pressable onPress={onEditPress} hitSlop={8}>
-          <Text style={styles.edit}>Düzenle</Text>
+          <Text style={[styles.edit, { color: colors.primary }]}>Düzenle</Text>
         </Pressable>
       </View>
 
       <View style={styles.grid}>
         {items.map((item) => (
-          <View key={item.label} style={styles.card}>
-            <Text style={styles.label}>{item.label}</Text>
+          <View key={item.label} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>{item.label}</Text>
             <View style={styles.valueRow}>
-              <Text style={styles.value}>{item.value}</Text>
-              {item.unit ? <Text style={styles.unit}> {item.unit}</Text> : null}
+              <Text style={[styles.value, { color: colors.text }]}>{item.value}</Text>
+              {item.unit ? <Text style={[styles.unit, { color: colors.textSecondary }]}> {item.unit}</Text> : null}
             </View>
           </View>
         ))}
@@ -50,19 +51,17 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 12,
   },
-  sectionTitle: { color: colors.textPrimary, fontSize: 16, fontWeight: "700" },
-  edit: { color: colors.electricBlue, fontSize: 12, fontWeight: "600" },
+  sectionTitle: { fontSize: 16, fontWeight: "700" },
+  edit: { fontSize: 12, fontWeight: "600" },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
   card: {
     width: "47%",
     borderRadius: 16,
     padding: 16,
-    backgroundColor: colors.cardBackground,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
-  label: { color: colors.textMuted, fontSize: 11, fontWeight: "600" },
+  label: { fontSize: 11, fontWeight: "600" },
   valueRow: { flexDirection: "row", alignItems: "baseline", marginTop: 8 },
-  value: { color: colors.textPrimary, fontSize: 20, fontWeight: "700" },
-  unit: { color: colors.textMuted, fontSize: 12, fontWeight: "600" },
+  value: { fontSize: 20, fontWeight: "700" },
+  unit: { fontSize: 12, fontWeight: "600" },
 });

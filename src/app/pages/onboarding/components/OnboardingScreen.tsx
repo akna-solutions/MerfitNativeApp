@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { OnboardingButton } from "./OnboardingButton";
 import { ProgressBar } from "./ProgressBar";
 
@@ -42,6 +42,7 @@ export function OnboardingScreen({
   continueLabel = "Devam et",
   continueLoading,
 }: Props) {
+  const { colors } = useTheme();
   const fade = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -54,19 +55,23 @@ export function OnboardingScreen({
   }, [step, fade]);
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={["top", "bottom"]}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <View style={styles.header}>
           <View style={styles.headerTopRow}>
-            <Pressable onPress={onBack} hitSlop={12} style={styles.backButton}>
-              <Text style={styles.backLabel}>←</Text>
+            <Pressable
+              onPress={onBack}
+              hitSlop={12}
+              style={[styles.backButton, { backgroundColor: colors.inputBackground }]}
+            >
+              <Text style={[styles.backLabel, { color: colors.text }]}>←</Text>
             </Pressable>
           </View>
           <ProgressBar current={step} total={totalSteps} />
-          <Text style={styles.stepLabel}>
+          <Text style={[styles.stepLabel, { color: colors.textSecondary }]}>
             Adım {step} / {totalSteps}
           </Text>
         </View>
@@ -93,9 +98,9 @@ export function OnboardingScreen({
               },
             ]}
           >
-            <Text style={styles.title}>{title}</Text>
+            <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
             {description ? (
-              <Text style={styles.description}>{description}</Text>
+              <Text style={[styles.description, { color: colors.textSecondary }]}>{description}</Text>
             ) : null}
             <View style={styles.content}>{children}</View>
           </Animated.View>
@@ -122,7 +127,7 @@ export function OnboardingScreen({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1 },
   flex: { flex: 1 },
   header: { paddingHorizontal: 24, paddingTop: 4 },
   headerTopRow: { marginBottom: 18 },
@@ -132,11 +137,9 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.06)",
   },
-  backLabel: { color: colors.textPrimary, fontSize: 17, fontWeight: "600" },
+  backLabel: { fontSize: 17, fontWeight: "600" },
   stepLabel: {
-    color: colors.textMuted,
     fontSize: 11,
     fontWeight: "500",
     letterSpacing: 0.4,
@@ -145,13 +148,11 @@ const styles = StyleSheet.create({
   scrollContent: { flexGrow: 1, paddingHorizontal: 24 },
   body: { paddingTop: 28, paddingBottom: 24 },
   title: {
-    color: colors.textPrimary,
     fontSize: 26,
     fontWeight: "700",
     lineHeight: 32,
   },
   description: {
-    color: colors.textMuted,
     fontSize: 14,
     lineHeight: 20,
     marginTop: 10,

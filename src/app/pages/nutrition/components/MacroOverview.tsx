@@ -1,19 +1,20 @@
 import { StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { NutritionData } from "../types";
 import { MacroCard } from "./MacroCard";
 
 type Props = { macros: NutritionData["macros"] };
 
 export function MacroOverview({ macros }: Props) {
+  const { colors } = useTheme();
   const openDetail = () => {
     // TODO: macro detay ekranı eklendiğinde buradan yönlendir.
   };
 
   return (
     <View>
-      <Text style={styles.sectionTitle}>Bugünün Makrobesinleri</Text>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>Bugünün Makrobesinleri</Text>
 
       <View style={styles.row}>
         <MacroCard
@@ -45,7 +46,6 @@ export function MacroOverview({ macros }: Props) {
 
 const styles = StyleSheet.create({
   sectionTitle: {
-    color: colors.textPrimary,
     fontSize: 16,
     fontWeight: "700",
     marginBottom: 12,

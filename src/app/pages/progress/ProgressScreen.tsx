@@ -1,5 +1,4 @@
 import { useRouter } from "expo-router";
-import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Animated, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -22,7 +21,7 @@ import { ScoreCard } from "./components/ScoreCard";
 import { TimeRangeSelector } from "./components/TimeRangeSelector";
 import { WeeklyActivity } from "./components/WeeklyActivity";
 import { WeightChart } from "./components/WeightChart";
-import { colors } from "./theme";
+import { useTheme } from "../../../shared/theme/ThemeContext";
 import { ProgressData, TimeRange } from "./types";
 
 function mapToProgressData(response: ProgressResponse): ProgressData {
@@ -55,6 +54,7 @@ function mapToProgressData(response: ProgressResponse): ProgressData {
 
 export function ProgressScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const [timeRange, setTimeRange] = useState<TimeRange>("3months");
 
   const [data, setData] = useState<ProgressData | null>(null);
@@ -137,20 +137,18 @@ export function ProgressScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.root, styles.centered]}>
-        <StatusBar style="light" />
-        <ActivityIndicator color={colors.electricBlue} size="large" />
+      <View style={[styles.root, styles.centered, { backgroundColor: colors.background }]}>
+        <ActivityIndicator color={colors.primary} size="large" />
       </View>
     );
   }
 
   if (errorMessage || !data) {
     return (
-      <View style={[styles.root, styles.centered]}>
-        <StatusBar style="light" />
-        <Text style={styles.errorText}>{errorMessage ?? "İlerleme verisi yüklenemedi."}</Text>
+      <View style={[styles.root, styles.centered, { backgroundColor: colors.background }]}>
+        <Text style={[styles.errorText, { color: colors.textSecondary }]}>{errorMessage ?? "İlerleme verisi yüklenemedi."}</Text>
         <Pressable
-          style={styles.retryButton}
+          style={[styles.retryButton, { backgroundColor: colors.primary }]}
           onPress={() => {
             setIsLoading(true);
             loadProgress(timeRange);
@@ -163,8 +161,7 @@ export function ProgressScreen() {
   }
 
   return (
-    <View style={styles.root}>
-      <StatusBar style="light" />
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
       <SafeAreaView style={styles.flex} edges={["top"]}>
         <ScrollView
           style={styles.flex}
@@ -293,15 +290,14 @@ export function ProgressScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
+  root: { flex: 1 },
   flex: { flex: 1 },
   centered: { alignItems: "center", justifyContent: "center", gap: 16, paddingHorizontal: 32 },
-  errorText: { color: colors.textMuted, fontSize: 14, textAlign: "center" },
+  errorText: { fontSize: 14, textAlign: "center" },
   retryButton: {
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 12,
-    backgroundColor: colors.electricBlue,
   },
   retryLabel: { color: "#FFFFFF", fontSize: 14, fontWeight: "700" },
   scrollContent: { paddingTop: 16, paddingBottom: 156 },

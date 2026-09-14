@@ -7,7 +7,7 @@ import {
   Text,
 } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
   label: string;
@@ -25,6 +25,7 @@ export function OnboardingButton({
   variant = "primary",
   isLoading = false,
 }: Props) {
+  const { colors } = useTheme();
   const scale = useRef(new Animated.Value(1)).current;
   const isDisabled = disabled || isLoading;
 
@@ -41,7 +42,7 @@ export function OnboardingButton({
   if (variant === "text") {
     return (
       <Pressable onPress={onPress} disabled={isDisabled} hitSlop={8}>
-        <Text style={styles.textLabel}>{label}</Text>
+        <Text style={[styles.textLabel, { color: colors.textSecondary }]}>{label}</Text>
       </Pressable>
     );
   }
@@ -56,6 +57,7 @@ export function OnboardingButton({
       <Animated.View
         style={[
           styles.primary,
+          { backgroundColor: colors.primaryPressed },
           isDisabled && styles.primaryDisabled,
           { transform: [{ scale }] },
         ]}
@@ -83,7 +85,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.buttonElectricBlue,
   },
   primaryDisabled: {
     backgroundColor: "rgba(255,255,255,0.08)",
@@ -98,7 +99,6 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.35)",
   },
   textLabel: {
-    color: colors.textMuted,
     fontSize: 13,
     fontWeight: "600",
     textAlign: "center",

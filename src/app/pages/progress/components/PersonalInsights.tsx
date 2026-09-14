@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 const INSIGHTS: string[] = [
   "İstikrarlı bir şekilde gelişiyorsun.",
@@ -9,14 +9,19 @@ const INSIGHTS: string[] = [
 ];
 
 export function PersonalInsights() {
+  const { colors } = useTheme();
   return (
     <View>
-      <Text style={styles.sectionTitle}>Kişisel Analizlerin</Text>
-      <View style={styles.card}>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>Kişisel Analizlerin</Text>
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
         {INSIGHTS.map((insight, index) => (
           <Text
             key={insight}
-            style={[styles.insight, index === 0 && styles.insightPrimary]}
+            style={[
+              styles.insight,
+              { color: colors.textSecondary },
+              index === 0 && [styles.insightPrimary, { color: colors.text }],
+            ]}
           >
             {insight}
           </Text>
@@ -28,7 +33,6 @@ export function PersonalInsights() {
 
 const styles = StyleSheet.create({
   sectionTitle: {
-    color: colors.textPrimary,
     fontSize: 16,
     fontWeight: "700",
     marginBottom: 12,
@@ -37,13 +41,10 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 20,
     gap: 10,
-    backgroundColor: colors.cardBackground,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
-  insight: { color: colors.textMuted, fontSize: 13, lineHeight: 19 },
+  insight: { fontSize: 13, lineHeight: 19 },
   insightPrimary: {
-    color: colors.textPrimary,
     fontSize: 15,
     fontWeight: "700",
   },
