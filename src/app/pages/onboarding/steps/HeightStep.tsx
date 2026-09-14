@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { OnboardingInput } from "../components/OnboardingInput";
 import { UnitToggle } from "../components/UnitToggle";
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { HeightUnit } from "../types";
 
 const UNIT_OPTIONS: [
@@ -34,6 +34,7 @@ export function HeightStep({
   inchesValue,
   onInchesChange,
 }: Props) {
+  const { colors } = useTheme();
   const numeric = (text: string) => text.replace(/[^0-9]/g, "").slice(0, 3);
 
   return (
@@ -60,7 +61,7 @@ export function HeightStep({
               maxLength={1}
               autoFocus
             />
-            <Text style={styles.unitLabel}>ft</Text>
+            <Text style={[styles.unitLabel, { color: colors.textSecondary }]}>ft</Text>
           </View>
           <View style={styles.half}>
             <OnboardingInput
@@ -70,7 +71,7 @@ export function HeightStep({
               keyboardType="number-pad"
               maxLength={2}
             />
-            <Text style={styles.unitLabel}>in</Text>
+            <Text style={[styles.unitLabel, { color: colors.textSecondary }]}>in</Text>
           </View>
         </View>
       )}
@@ -82,7 +83,6 @@ const styles = StyleSheet.create({
   row: { flexDirection: "row", gap: 12 },
   half: { flex: 1 },
   unitLabel: {
-    color: colors.textMuted,
     fontSize: 12,
     fontWeight: "600",
     marginTop: 8,

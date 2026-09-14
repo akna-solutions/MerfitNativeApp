@@ -1,6 +1,6 @@
 import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { Category } from "../types";
 
 const CATEGORIES: ("Tümü" | Category)[] = [
@@ -20,6 +20,7 @@ type Props = {
 };
 
 export function WorkoutCategories({ active, onChange }: Props) {
+  const { colors } = useTheme();
   return (
     <ScrollView
       horizontal
@@ -32,9 +33,13 @@ export function WorkoutCategories({ active, onChange }: Props) {
           <Pressable
             key={category}
             onPress={() => onChange(category)}
-            style={[styles.pill, isActive && styles.pillActive]}
+            style={[
+              styles.pill,
+              { backgroundColor: colors.inputBackground },
+              isActive && { backgroundColor: colors.primaryPressed },
+            ]}
           >
-            <Text style={[styles.label, isActive && styles.labelActive]}>
+            <Text style={[styles.label, { color: colors.textSecondary }, isActive && styles.labelActive]}>
               {category}
             </Text>
           </Pressable>
@@ -52,9 +57,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#171A20",
   },
-  pillActive: { backgroundColor: colors.buttonElectricBlue },
-  label: { color: colors.textMuted, fontSize: 12, fontWeight: "600" },
+  label: { fontSize: 12, fontWeight: "600" },
   labelActive: { color: "#FFFFFF" },
 });

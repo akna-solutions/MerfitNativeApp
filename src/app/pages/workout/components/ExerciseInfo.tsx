@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
   name: string;
@@ -10,20 +10,21 @@ type Props = {
 };
 
 export function ExerciseInfo({ name, sets, reps, restSec }: Props) {
+  const { colors } = useTheme();
   return (
     <View style={styles.wrapper}>
-      <Text style={styles.name}>{name}</Text>
-      <Text style={styles.meta}>
+      <Text style={[styles.name, { color: colors.text }]}>{name}</Text>
+      <Text style={[styles.meta, { color: colors.textSecondary }]}>
         {sets} set × {reps} tekrar
       </Text>
-      <Text style={styles.rest}>{restSec} sn dinlenme</Text>
+      <Text style={[styles.rest, { color: colors.textSecondary }]}>{restSec} sn dinlenme</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrapper: { alignItems: "center", marginTop: 20 },
-  name: { color: colors.textPrimary, fontSize: 24, fontWeight: "700" },
-  meta: { color: colors.textMuted, fontSize: 13, marginTop: 6 },
-  rest: { color: colors.textMuted, fontSize: 12, marginTop: 4, opacity: 0.8 },
+  name: { fontSize: 24, fontWeight: "700" },
+  meta: { fontSize: 13, marginTop: 6 },
+  rest: { fontSize: 12, marginTop: 4, opacity: 0.8 },
 });

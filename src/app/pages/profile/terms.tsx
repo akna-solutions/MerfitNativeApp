@@ -1,12 +1,14 @@
 import { StyleSheet, Text } from "react-native";
 
 import { ProfileDetailShell } from "../../../shared/profile/components/ProfileDetailShell";
-import { colors } from "./theme";
+import { useTheme } from "../../../shared/theme/ThemeContext";
 
 export default function TermsRoute() {
+  const { colors } = useTheme();
+
   return (
     <ProfileDetailShell title="Şartlar ve Koşullar">
-      <Text style={styles.text}>
+      <Text style={[styles.text, { color: colors.textSecondary }]}>
         Şartlar ve Koşullar içeriğin burada görünecek.
       </Text>
     </ProfileDetailShell>
@@ -14,5 +16,5 @@ export default function TermsRoute() {
 }
 
 const styles = StyleSheet.create({
-  text: { color: colors.textMuted, fontSize: 13, lineHeight: 20 },
+  text: { fontSize: 13, lineHeight: 20 },
 });

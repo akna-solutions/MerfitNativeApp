@@ -5,7 +5,7 @@ import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { ProfileDetailShell } from "../../../shared/profile/components/ProfileDetailShell";
 import { SettingsRow } from "../../../shared/profile/components/SettingsRow";
 import { SettingsSection } from "../../../shared/profile/components/SettingsSection";
-import { colors } from "./theme";
+import { useTheme } from "../../../shared/theme/ThemeContext";
 
 const FAQ_ITEMS: { question: string; answer: string }[] = [
   {
@@ -43,11 +43,12 @@ function sendMail(subject: string) {
 
 export default function HelpRoute() {
   const [expanded, setExpanded] = useState<number | null>(null);
+  const { colors } = useTheme();
 
   return (
     <ProfileDetailShell title="Yardım ve Destek">
-      <Text style={styles.sectionTitle}>Sıkça Sorulan Sorular</Text>
-      <View style={styles.faqCard}>
+      <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Sıkça Sorulan Sorular</Text>
+      <View style={[styles.faqCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
         {FAQ_ITEMS.map((item, index) => {
           const isOpen = expanded === index;
           return (
@@ -55,6 +56,7 @@ export default function HelpRoute() {
               key={item.question}
               style={[
                 styles.faqRow,
+                { borderBottomColor: colors.border },
                 index === FAQ_ITEMS.length - 1 && styles.faqRowLast,
               ]}
             >
@@ -62,15 +64,15 @@ export default function HelpRoute() {
                 onPress={() => setExpanded(isOpen ? null : index)}
                 style={styles.faqHeader}
               >
-                <Text style={styles.faqQuestion}>{item.question}</Text>
+                <Text style={[styles.faqQuestion, { color: colors.text }]}>{item.question}</Text>
                 <Ionicons
                   name={isOpen ? "chevron-up" : "chevron-down"}
                   size={16}
-                  color={colors.textMuted}
+                  color={colors.textSecondary}
                 />
               </Pressable>
               {isOpen ? (
-                <Text style={styles.faqAnswer}>{item.answer}</Text>
+                <Text style={[styles.faqAnswer, { color: colors.textSecondary }]}>{item.answer}</Text>
               ) : null}
             </View>
           );
@@ -103,7 +105,6 @@ export default function HelpRoute() {
 
 const styles = StyleSheet.create({
   sectionTitle: {
-    color: colors.textMuted,
     fontSize: 11,
     fontWeight: "700",
     letterSpacing: 0.6,
@@ -113,14 +114,11 @@ const styles = StyleSheet.create({
   faqCard: {
     borderRadius: 20,
     paddingHorizontal: 18,
-    backgroundColor: colors.cardBackground,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
   faqRow: {
     paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
   },
   faqRowLast: { borderBottomWidth: 0 },
   faqHeader: {
@@ -130,13 +128,11 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   faqQuestion: {
-    color: colors.textPrimary,
     fontSize: 13,
     fontWeight: "600",
     flex: 1,
   },
   faqAnswer: {
-    color: colors.textMuted,
     fontSize: 12,
     lineHeight: 18,
     marginTop: 10,

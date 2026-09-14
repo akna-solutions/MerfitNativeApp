@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { QuickStat } from "../types";
 
 const ICONS: Record<QuickStat["icon"], keyof typeof Ionicons.glyphMap> = {
@@ -14,19 +14,20 @@ const ICONS: Record<QuickStat["icon"], keyof typeof Ionicons.glyphMap> = {
 type Props = { stats: QuickStat[] };
 
 export function QuickStats({ stats }: Props) {
+  const { colors } = useTheme();
   return (
     <View style={styles.wrapper}>
-      <Text style={styles.sectionTitle}>Hızlı İstatistikler</Text>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>Hızlı İstatistikler</Text>
       <View style={styles.grid}>
         {stats.map((stat) => (
-          <View key={stat.id} style={styles.card}>
+          <View key={stat.id} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Ionicons
               name={ICONS[stat.icon]}
               size={18}
-              color={colors.electricBlue}
+              color={colors.primary}
             />
-            <Text style={styles.value}>{stat.value}</Text>
-            <Text style={styles.label}>{stat.label}</Text>
+            <Text style={[styles.value, { color: colors.text }]}>{stat.value}</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>{stat.label}</Text>
           </View>
         ))}
       </View>
@@ -37,7 +38,6 @@ export function QuickStats({ stats }: Props) {
 const styles = StyleSheet.create({
   wrapper: { marginTop: 28 },
   sectionTitle: {
-    color: colors.textPrimary,
     fontSize: 16,
     fontWeight: "700",
     marginBottom: 12,
@@ -47,15 +47,12 @@ const styles = StyleSheet.create({
     width: "47%",
     borderRadius: 16,
     padding: 16,
-    backgroundColor: colors.cardBackground,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
   value: {
-    color: colors.textPrimary,
     fontSize: 16,
     fontWeight: "700",
     marginTop: 10,
   },
-  label: { color: colors.textMuted, fontSize: 11, marginTop: 2 },
+  label: { fontSize: 11, marginTop: 2 },
 });

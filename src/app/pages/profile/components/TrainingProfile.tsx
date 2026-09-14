@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
   experience: string;
@@ -17,6 +17,7 @@ export function TrainingProfile({
   workoutLocation,
   equipment,
 }: Props) {
+  const { colors } = useTheme();
   const rows = [
     { label: "Deneyim", value: experience },
     { label: "Aktivite Seviyesi", value: activityLevel },
@@ -27,16 +28,20 @@ export function TrainingProfile({
 
   return (
     <View>
-      <Text style={styles.sectionTitle}>Antrenman Profili</Text>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>Antrenman Profili</Text>
 
-      <View style={styles.card}>
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
         {rows.map((row, index) => (
           <View
             key={row.label}
-            style={[styles.row, index === rows.length - 1 && styles.rowLast]}
+            style={[
+              styles.row,
+              { borderBottomColor: colors.border },
+              index === rows.length - 1 && styles.rowLast,
+            ]}
           >
-            <Text style={styles.label}>{row.label}</Text>
-            <Text style={styles.value} numberOfLines={1}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>{row.label}</Text>
+            <Text style={[styles.value, { color: colors.text }]} numberOfLines={1}>
               {row.value}
             </Text>
           </View>
@@ -48,7 +53,6 @@ export function TrainingProfile({
 
 const styles = StyleSheet.create({
   sectionTitle: {
-    color: colors.textPrimary,
     fontSize: 16,
     fontWeight: "700",
     marginBottom: 12,
@@ -56,9 +60,7 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 20,
     paddingHorizontal: 20,
-    backgroundColor: colors.cardBackground,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
   row: {
     flexDirection: "row",
@@ -66,13 +68,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
     gap: 12,
   },
   rowLast: { borderBottomWidth: 0 },
-  label: { color: colors.textMuted, fontSize: 13 },
+  label: { fontSize: 13 },
   value: {
-    color: colors.textPrimary,
     fontSize: 13,
     fontWeight: "700",
     flexShrink: 1,

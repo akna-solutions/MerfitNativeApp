@@ -24,7 +24,7 @@ export const INITIAL_PROFILE_DATA: ProfileData = {
   trainingDays: ["Mon", "Tue", "Thu", "Fri"],
 
   unitSystem: "metric",
-  appearance: "dark",
+  appearance: "system",
 
   notifications: {
     workoutReminders: true,

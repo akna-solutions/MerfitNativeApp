@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 const SEGMENT_LITERS = 0.5;
 
@@ -12,6 +12,7 @@ type Props = {
 };
 
 export function WaterTracker({ consumedL, targetL, onAdd }: Props) {
+  const { colors } = useTheme();
   const totalSegments = Math.max(1, Math.round(targetL / SEGMENT_LITERS));
   const filledSegments = Math.min(
     totalSegments,
@@ -20,9 +21,9 @@ export function WaterTracker({ consumedL, targetL, onAdd }: Props) {
 
   return (
     <View>
-      <Text style={styles.sectionTitle}>Su</Text>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>Su</Text>
 
-      <View style={styles.card}>
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <View style={styles.row}>
           {Array.from({ length: totalSegments }).map((_, index) => (
             <Pressable key={index} onPress={onAdd} hitSlop={4}>
@@ -31,8 +32,8 @@ export function WaterTracker({ consumedL, targetL, onAdd }: Props) {
                 size={20}
                 color={
                   index < filledSegments
-                    ? colors.electricBlue
-                    : colors.textMuted
+                    ? colors.primary
+                    : colors.textSecondary
                 }
               />
             </Pressable>
@@ -40,11 +41,11 @@ export function WaterTracker({ consumedL, targetL, onAdd }: Props) {
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.amount}>
+          <Text style={[styles.amount, { color: colors.text }]}>
             {consumedL.toFixed(1)} / {targetL.toFixed(1)} L
           </Text>
-          <Pressable onPress={onAdd} style={styles.addButton} hitSlop={8}>
-            <Text style={styles.addLabel}>+ 250 ml</Text>
+          <Pressable onPress={onAdd} style={[styles.addButton, { backgroundColor: colors.cardActive }]} hitSlop={8}>
+            <Text style={[styles.addLabel, { color: colors.primary }]}>+ 250 ml</Text>
           </Pressable>
         </View>
       </View>
@@ -54,7 +55,6 @@ export function WaterTracker({ consumedL, targetL, onAdd }: Props) {
 
 const styles = StyleSheet.create({
   sectionTitle: {
-    color: colors.textPrimary,
     fontSize: 16,
     fontWeight: "700",
     marginBottom: 12,
@@ -62,9 +62,7 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 20,
     padding: 20,
-    backgroundColor: colors.cardBackground,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
   row: { flexDirection: "row", justifyContent: "space-between" },
   footer: {
@@ -73,14 +71,13 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginTop: 16,
   },
-  amount: { color: colors.textPrimary, fontSize: 13, fontWeight: "700" },
+  amount: { fontSize: 13, fontWeight: "700" },
   addButton: {
     height: 32,
     paddingHorizontal: 14,
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.cardBackgroundActive,
   },
-  addLabel: { color: colors.electricBlue, fontSize: 12, fontWeight: "700" },
+  addLabel: { fontSize: 12, fontWeight: "700" },
 });

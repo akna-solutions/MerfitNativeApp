@@ -1,4 +1,3 @@
-import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Animated, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -19,7 +18,7 @@ import { NutritionHeader } from "./components/NutritionHeader";
 import { NutritionInsight } from "./components/NutritionInsight";
 import { TodayNutritionPlanCard } from "./components/TodayNutritionPlanCard";
 import { WaterTracker } from "./components/WaterTracker";
-import { colors } from "./theme";
+import { useTheme } from "../../../shared/theme/ThemeContext";
 import { MealEntry, MealType, NutritionData } from "./types";
 
 /** "yyyy-MM-dd" - backend'in DateOnly query param formati (yerel saat diliminde). */
@@ -46,6 +45,7 @@ function mapToNutritionData(response: NutritionResponse): NutritionData {
 }
 
 export function NutritionScreen() {
+  const { colors } = useTheme();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [data, setData] = useState<NutritionData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -148,20 +148,18 @@ export function NutritionScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.root, styles.centered]}>
-        <StatusBar style="light" />
-        <ActivityIndicator color={colors.electricBlue} size="large" />
+      <View style={[styles.root, styles.centered, { backgroundColor: colors.background }]}>
+        <ActivityIndicator color={colors.primary} size="large" />
       </View>
     );
   }
 
   if (errorMessage || !data) {
     return (
-      <View style={[styles.root, styles.centered]}>
-        <StatusBar style="light" />
-        <Text style={styles.errorText}>{errorMessage ?? "Beslenme verisi yüklenemedi."}</Text>
+      <View style={[styles.root, styles.centered, { backgroundColor: colors.background }]}>
+        <Text style={[styles.errorText, { color: colors.textSecondary }]}>{errorMessage ?? "Beslenme verisi yüklenemedi."}</Text>
         <Pressable
-          style={styles.retryButton}
+          style={[styles.retryButton, { backgroundColor: colors.primary }]}
           onPress={() => {
             setIsLoading(true);
             loadNutrition(selectedDate);
@@ -174,8 +172,7 @@ export function NutritionScreen() {
   }
 
   return (
-    <View style={styles.root}>
-      <StatusBar style="light" />
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
       <SafeAreaView style={styles.flex} edges={["top"]}>
         <ScrollView
           style={styles.flex}
@@ -279,15 +276,14 @@ export function NutritionScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
+  root: { flex: 1 },
   flex: { flex: 1 },
   centered: { alignItems: "center", justifyContent: "center", gap: 16, paddingHorizontal: 32 },
-  errorText: { color: colors.textMuted, fontSize: 14, textAlign: "center" },
+  errorText: { fontSize: 14, textAlign: "center" },
   retryButton: {
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 12,
-    backgroundColor: colors.electricBlue,
   },
   retryLabel: { color: "#FFFFFF", fontSize: 14, fontWeight: "700" },
   scrollContent: { paddingTop: 16, paddingBottom: 156 },

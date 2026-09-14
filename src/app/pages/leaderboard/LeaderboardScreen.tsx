@@ -1,5 +1,4 @@
 import { useRouter } from "expo-router";
-import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -21,11 +20,12 @@ import { PeriodFilter } from "./components/PeriodFilter";
 import { RewardsSection } from "./components/RewardsSection";
 import { ScoreBreakdown } from "./components/ScoreBreakdown";
 import { ScoreChart } from "./components/ScoreChart";
-import { colors } from "./theme";
+import { useTheme } from "../../../shared/theme/ThemeContext";
 import { PeriodFilter as PeriodFilterType } from "./types";
 
 export function LeaderboardScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const { profile } = useProfile();
   const [period, setPeriod] = useState<PeriodFilterType>("month");
   const [data, setData] = useState<LeaderboardResponse | null>(null);
@@ -62,11 +62,10 @@ export function LeaderboardScreen() {
 
   if (errorMessage) {
     return (
-      <View style={[styles.root, styles.centered]}>
-        <StatusBar style="light" />
-        <Text style={styles.errorText}>{errorMessage}</Text>
+      <View style={[styles.root, styles.centered, { backgroundColor: colors.background }]}>
+        <Text style={[styles.errorText, { color: colors.textSecondary }]}>{errorMessage}</Text>
         <Pressable
-          style={styles.retryButton}
+          style={[styles.retryButton, { backgroundColor: colors.primary }]}
           onPress={() => {
             setIsLoading(true);
             loadLeaderboard(period);
@@ -88,8 +87,7 @@ export function LeaderboardScreen() {
   const pointsToNextRank = nextUser ? nextUser.points - data!.currentUser.points : 0;
 
   return (
-    <View style={styles.root}>
-      <StatusBar style="light" />
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
       <SafeAreaView style={styles.flex} edges={["top", "bottom"]}>
         <ScrollView
           style={styles.flex}
@@ -195,15 +193,14 @@ export function LeaderboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
+  root: { flex: 1 },
   flex: { flex: 1 },
   centered: { alignItems: "center", justifyContent: "center", gap: 16, paddingHorizontal: 32 },
-  errorText: { color: colors.textMuted, fontSize: 14, textAlign: "center" },
+  errorText: { fontSize: 14, textAlign: "center" },
   retryButton: {
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 12,
-    backgroundColor: colors.electricBlue,
   },
   retryLabel: { color: "#FFFFFF", fontSize: 14, fontWeight: "700" },
   scrollContent: { paddingTop: 16, paddingBottom: 40 },

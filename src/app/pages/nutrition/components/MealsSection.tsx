@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { MEAL_TYPES, MealEntry, MealType } from "../types";
 import { MealCard } from "./MealCard";
 
@@ -19,9 +19,10 @@ type Props = {
 };
 
 export function MealsSection({ meals, onAddMeal, onSelectMeal }: Props) {
+  const { colors } = useTheme();
   return (
     <View>
-      <Text style={styles.sectionTitle}>Bugünün Öğünleri</Text>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>Bugünün Öğünleri</Text>
 
       {MEAL_TYPES.map((type, index) => {
         const entries = meals.filter((meal) => meal.type === type);
@@ -38,16 +39,16 @@ export function MealsSection({ meals, onAddMeal, onSelectMeal }: Props) {
                 <Ionicons
                   name={MEAL_ICONS[type]}
                   size={15}
-                  color={colors.textMuted}
+                  color={colors.textSecondary}
                 />
-                <Text style={styles.groupTitle}>{type}</Text>
+                <Text style={[styles.groupTitle, { color: colors.text }]}>{type}</Text>
               </View>
               <Pressable
                 onPress={() => onAddMeal(type)}
                 hitSlop={10}
-                style={styles.addButton}
+                style={[styles.addButton, { backgroundColor: colors.inputBackground }]}
               >
-                <Ionicons name="add" size={16} color={colors.electricBlue} />
+                <Ionicons name="add" size={16} color={colors.primary} />
               </Pressable>
             </View>
 
@@ -64,10 +65,10 @@ export function MealsSection({ meals, onAddMeal, onSelectMeal }: Props) {
             ) : (
               <Pressable
                 onPress={() => onAddMeal(type)}
-                style={styles.emptyCard}
+                style={[styles.emptyCard, { borderColor: colors.border }]}
               >
-                <Text style={styles.emptyLabel}>Henüz öğün eklenmedi</Text>
-                <Text style={styles.emptyAction}>+ Öğün ekle</Text>
+                <Text style={[styles.emptyLabel, { color: colors.textSecondary }]}>Henüz öğün eklenmedi</Text>
+                <Text style={[styles.emptyAction, { color: colors.primary }]}>+ Öğün ekle</Text>
               </Pressable>
             )}
           </View>
@@ -79,7 +80,6 @@ export function MealsSection({ meals, onAddMeal, onSelectMeal }: Props) {
 
 const styles = StyleSheet.create({
   sectionTitle: {
-    color: colors.textPrimary,
     fontSize: 16,
     fontWeight: "700",
     marginBottom: 14,
@@ -93,14 +93,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   groupTitleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  groupTitle: { color: colors.textPrimary, fontSize: 13, fontWeight: "700" },
+  groupTitle: { fontSize: 13, fontWeight: "700" },
   addButton: {
     width: 26,
     height: 26,
     borderRadius: 13,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.06)",
   },
   entries: { gap: 8 },
   emptyCard: {
@@ -111,9 +110,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
     borderStyle: "dashed",
   },
-  emptyLabel: { color: colors.textMuted, fontSize: 12 },
-  emptyAction: { color: colors.electricBlue, fontSize: 12, fontWeight: "700" },
+  emptyLabel: { fontSize: 12 },
+  emptyAction: { fontSize: 12, fontWeight: "700" },
 });

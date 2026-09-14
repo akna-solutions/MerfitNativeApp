@@ -2,7 +2,7 @@ import { useState } from "react";
 import { LayoutChangeEvent, StyleSheet, Text, View } from "react-native";
 import Svg, { Defs, LinearGradient, Path, Stop } from "react-native-svg";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { ScoreHistoryPoint } from "../types";
 
 type Props = {
@@ -15,6 +15,7 @@ const CHART_HEIGHT = 120;
 const PADDING = 12;
 
 export function ScoreChart({ points, weeklyChange, history }: Props) {
+  const { colors } = useTheme();
   const [width, setWidth] = useState(0);
   const onLayout = (event: LayoutChangeEvent) =>
     setWidth(event.nativeEvent.layout.width);
@@ -40,11 +41,11 @@ export function ScoreChart({ points, weeklyChange, history }: Props) {
 
   return (
     <View>
-      <Text style={styles.sectionTitle}>Puan İlerlemesi</Text>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>Puan İlerlemesi</Text>
 
-      <View style={styles.card}>
-        <Text style={styles.points}>{points.toLocaleString()}</Text>
-        <Text style={styles.change}>+{weeklyChange} bu hafta</Text>
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Text style={[styles.points, { color: colors.text }]}>{points.toLocaleString()}</Text>
+        <Text style={[styles.change, { color: colors.primary }]}>+{weeklyChange} bu hafta</Text>
 
         <View style={styles.chartArea} onLayout={onLayout}>
           {width > 0 ? (
@@ -53,12 +54,12 @@ export function ScoreChart({ points, weeklyChange, history }: Props) {
                 <LinearGradient id="scoreFill" x1="0" y1="0" x2="0" y2="1">
                   <Stop
                     offset="0"
-                    stopColor={colors.electricBlue}
+                    stopColor={colors.primary}
                     stopOpacity={0.2}
                   />
                   <Stop
                     offset="1"
-                    stopColor={colors.electricBlue}
+                    stopColor={colors.primary}
                     stopOpacity={0}
                   />
                 </LinearGradient>
@@ -67,7 +68,7 @@ export function ScoreChart({ points, weeklyChange, history }: Props) {
               {coords.length > 1 ? (
                 <Path
                   d={linePath}
-                  stroke={colors.electricBlue}
+                  stroke={colors.primary}
                   strokeWidth={2.5}
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -80,7 +81,7 @@ export function ScoreChart({ points, weeklyChange, history }: Props) {
 
         <View style={styles.labelsRow}>
           {history.map((point) => (
-            <Text key={point.label} style={styles.axisLabel}>
+            <Text key={point.label} style={[styles.axisLabel, { color: colors.textSecondary }]}>
               {point.label}
             </Text>
           ))}
@@ -92,7 +93,6 @@ export function ScoreChart({ points, weeklyChange, history }: Props) {
 
 const styles = StyleSheet.create({
   sectionTitle: {
-    color: colors.textPrimary,
     fontSize: 16,
     fontWeight: "700",
     marginBottom: 12,
@@ -100,13 +100,10 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 20,
     padding: 20,
-    backgroundColor: colors.cardBackground,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
-  points: { color: colors.textPrimary, fontSize: 22, fontWeight: "700" },
+  points: { fontSize: 22, fontWeight: "700" },
   change: {
-    color: colors.electricBlue,
     fontSize: 12,
     fontWeight: "600",
     marginTop: 4,
@@ -117,5 +114,5 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginTop: 6,
   },
-  axisLabel: { color: colors.textMuted, fontSize: 10, fontWeight: "600" },
+  axisLabel: { fontSize: 10, fontWeight: "600" },
 });

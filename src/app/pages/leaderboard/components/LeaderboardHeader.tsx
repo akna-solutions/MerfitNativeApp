@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
   onBack: () => void;
@@ -22,38 +22,39 @@ export function LeaderboardHeader({
   bestRank,
   bestRankMonthLabel,
 }: Props) {
+  const { colors } = useTheme();
   return (
     <View>
       <View style={styles.topRow}>
-        <Pressable onPress={onBack} hitSlop={12} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={18} color={colors.textPrimary} />
+        <Pressable onPress={onBack} hitSlop={12} style={[styles.backButton, { backgroundColor: colors.inputBackground }]}>
+          <Ionicons name="chevron-back" size={18} color={colors.text} />
         </Pressable>
         <View style={styles.titleBlock}>
-          <Text style={styles.title}>MB FIT Sıralaması</Text>
-          <Text style={styles.subtitle}>Türkiye genelinde sıralamanı gör.</Text>
+          <Text style={[styles.title, { color: colors.text }]}>MB FIT Sıralaması</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Türkiye genelinde sıralamanı gör.</Text>
         </View>
         <View style={styles.backButtonGhost} />
       </View>
 
-      <View style={styles.card}>
-        <Text style={styles.country}>Türkiye</Text>
-        <Text style={styles.rank}>#{currentRank}</Text>
-        <Text style={styles.rankLabel}>Mevcut sıralaman</Text>
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Text style={[styles.country, { color: colors.textSecondary }]}>Türkiye</Text>
+        <Text style={[styles.rank, { color: colors.text }]}>#{currentRank}</Text>
+        <Text style={[styles.rankLabel, { color: colors.textSecondary }]}>Mevcut sıralaman</Text>
 
         <View style={styles.statsRow}>
           <View style={styles.stat}>
-            <Text style={styles.statValue}>{points.toLocaleString()}</Text>
-            <Text style={styles.statLabel}>MB FIT Puanı</Text>
+            <Text style={[styles.statValue, { color: colors.primary }]}>{points.toLocaleString()}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>MB FIT Puanı</Text>
           </View>
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <View style={styles.stat}>
-            <Text style={styles.statValue}>İlk %{topPercent}</Text>
-            <Text style={styles.statLabel}>{league} Ligi</Text>
+            <Text style={[styles.statValue, { color: colors.primary }]}>İlk %{topPercent}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{league} Ligi</Text>
           </View>
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <View style={styles.stat}>
-            <Text style={styles.statValue}>#{bestRank}</Text>
-            <Text style={styles.statLabel}>En İyi · {bestRankMonthLabel}</Text>
+            <Text style={[styles.statValue, { color: colors.primary }]}>#{bestRank}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>En İyi · {bestRankMonthLabel}</Text>
           </View>
         </View>
       </View>
@@ -73,35 +74,30 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.06)",
   },
   backButtonGhost: { width: 36, height: 36 },
   titleBlock: { flex: 1, alignItems: "center" },
-  title: { color: colors.textPrimary, fontSize: 16, fontWeight: "700" },
-  subtitle: { color: colors.textMuted, fontSize: 11, marginTop: 2 },
+  title: { fontSize: 16, fontWeight: "700" },
+  subtitle: { fontSize: 11, marginTop: 2 },
   card: {
     marginTop: 20,
     borderRadius: 22,
     padding: 24,
     alignItems: "center",
-    backgroundColor: colors.cardBackground,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
   country: {
-    color: colors.textMuted,
     fontSize: 11,
     fontWeight: "700",
     letterSpacing: 1,
     textTransform: "uppercase",
   },
   rank: {
-    color: colors.textPrimary,
     fontSize: 42,
     fontWeight: "700",
     marginTop: 8,
   },
-  rankLabel: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
+  rankLabel: { fontSize: 12, marginTop: 2 },
   statsRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -109,9 +105,8 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   stat: { flex: 1, alignItems: "center" },
-  statValue: { color: colors.electricBlue, fontSize: 15, fontWeight: "700" },
+  statValue: { fontSize: 15, fontWeight: "700" },
   statLabel: {
-    color: colors.textMuted,
     fontSize: 10,
     marginTop: 4,
     textAlign: "center",
@@ -119,6 +114,5 @@ const styles = StyleSheet.create({
   divider: {
     width: StyleSheet.hairlineWidth,
     height: 30,
-    backgroundColor: colors.border,
   },
 });

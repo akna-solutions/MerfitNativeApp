@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { OnboardingButton } from "../onboarding/components/OnboardingButton";
-import { colors } from "./theme";
+import { useTheme } from "../../../shared/theme/ThemeContext";
 import { Exercise, ExerciseProgress } from "./types";
 
 type Props = {
@@ -22,6 +22,7 @@ export function WorkoutSummary({
   personalRecords,
   onDone,
 }: Props) {
+  const { colors } = useTheme();
   const setCount = Object.values(progress).reduce(
     (sum, item) => sum + item.completedSets.length,
     0,
@@ -35,11 +36,11 @@ export function WorkoutSummary({
   const estimatedCalories = Math.round(setCount * 17.5);
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={["top", "bottom"]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Antrenman Özeti</Text>
-        <Text style={styles.workoutTitle}>{title}</Text>
-        <Text style={styles.duration}>{durationLabel}</Text>
+        <Text style={[styles.title, { color: colors.textSecondary }]}>Antrenman Özeti</Text>
+        <Text style={[styles.workoutTitle, { color: colors.text }]}>{title}</Text>
+        <Text style={[styles.duration, { color: colors.primary }]}>{durationLabel}</Text>
       </View>
 
       <View style={styles.grid}>
@@ -52,12 +53,12 @@ export function WorkoutSummary({
       {personalRecords.length > 0 ? (
         <View style={styles.prSection}>
           {personalRecords.map((pr) => (
-            <View key={pr.exerciseName} style={styles.prCard}>
-              <View style={styles.prBadge}>
+            <View key={pr.exerciseName} style={[styles.prCard, { backgroundColor: colors.card }]}>
+              <View style={[styles.prBadge, { backgroundColor: colors.primaryPressed }]}>
                 <Text style={styles.prBadgeLabel}>YENİ REKOR</Text>
               </View>
-              <Text style={styles.prExercise}>{pr.exerciseName}</Text>
-              <Text style={styles.prValue}>
+              <Text style={[styles.prExercise, { color: colors.text }]}>{pr.exerciseName}</Text>
+              <Text style={[styles.prValue, { color: colors.textSecondary }]}>
                 {pr.weight} kg × {pr.reps} tekrar
               </Text>
             </View>
@@ -73,10 +74,11 @@ export function WorkoutSummary({
 }
 
 function StatCard({ label, value }: { label: string; value: string }) {
+  const { colors } = useTheme();
   return (
-    <View style={styles.statCard}>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
+    <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <Text style={[styles.statValue, { color: colors.text }]}>{value}</Text>
+      <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
     </View>
   );
 }
@@ -84,24 +86,20 @@ function StatCard({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
     paddingHorizontal: 24,
   },
   header: { alignItems: "center", marginTop: 24 },
   title: {
-    color: colors.textMuted,
     fontSize: 12,
     fontWeight: "700",
     letterSpacing: 1,
   },
   workoutTitle: {
-    color: colors.textPrimary,
     fontSize: 22,
     fontWeight: "700",
     marginTop: 10,
   },
   duration: {
-    color: colors.electricBlue,
     fontSize: 14,
     fontWeight: "600",
     marginTop: 6,
@@ -111,17 +109,14 @@ const styles = StyleSheet.create({
     width: "47%",
     borderRadius: 16,
     padding: 18,
-    backgroundColor: colors.cardBackground,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
-  statValue: { color: colors.textPrimary, fontSize: 18, fontWeight: "700" },
-  statLabel: { color: colors.textMuted, fontSize: 11, marginTop: 4 },
+  statValue: { fontSize: 18, fontWeight: "700" },
+  statLabel: { fontSize: 11, marginTop: 4 },
   prSection: { marginTop: 20, gap: 10 },
   prCard: {
     borderRadius: 16,
     padding: 16,
-    backgroundColor: colors.cardBackground,
     borderWidth: 1,
     borderColor: "rgba(0,168,255,0.32)",
   },
@@ -132,7 +127,6 @@ const styles = StyleSheet.create({
     borderRadius: 11,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.buttonElectricBlue,
   },
   prBadgeLabel: {
     color: "#FFFFFF",
@@ -141,11 +135,10 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   prExercise: {
-    color: colors.textPrimary,
     fontSize: 14,
     fontWeight: "700",
     marginTop: 10,
   },
-  prValue: { color: colors.textMuted, fontSize: 12, marginTop: 3 },
+  prValue: { fontSize: 12, marginTop: 3 },
   footer: { marginTop: "auto", paddingBottom: 16 },
 });

@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { OnboardingButton } from "../../onboarding/components/OnboardingButton";
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
   onResume: () => void;
@@ -10,12 +10,13 @@ type Props = {
 };
 
 export function PauseOverlay({ onResume, onExit }: Props) {
+  const { colors } = useTheme();
   return (
     <View style={styles.overlay}>
       <SafeAreaView style={styles.content} edges={["top", "bottom"]}>
         <View style={styles.center}>
-          <Text style={styles.title}>Antrenman Duraklatıldı</Text>
-          <Text style={styles.subtitle}>Biraz mola ver.</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Antrenman Duraklatıldı</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Biraz mola ver.</Text>
         </View>
 
         <View style={styles.actions}>
@@ -40,8 +41,8 @@ const styles = StyleSheet.create({
   },
   content: { flex: 1, justifyContent: "space-between", paddingHorizontal: 24 },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
-  title: { color: colors.textPrimary, fontSize: 22, fontWeight: "700" },
-  subtitle: { color: colors.textMuted, fontSize: 14, marginTop: 8 },
+  title: { fontSize: 22, fontWeight: "700" },
+  subtitle: { fontSize: 14, marginTop: 8 },
   actions: { paddingBottom: 16 },
   exitGap: { marginTop: 4 },
 });

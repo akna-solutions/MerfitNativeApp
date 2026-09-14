@@ -1,51 +1,57 @@
+import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { ProfileDetailShell } from "../../../shared/profile/components/ProfileDetailShell";
-import { useProfile } from "../../../shared/profile/ProfileContext";
 import { AppearanceMode } from "../../../shared/profile/types";
-import { colors } from "./theme";
+import { APPEARANCE_LABELS } from "../../../shared/theme/labels";
+import { useTheme } from "../../../shared/theme/ThemeContext";
 
-const OPTIONS: { value: AppearanceMode; label: string; enabled: boolean }[] = [
-  { value: "dark", label: "Koyu", enabled: true },
-  { value: "light", label: "Açık", enabled: false },
-  { value: "system", label: "Sistem", enabled: false },
+const OPTIONS: {
+  value: AppearanceMode;
+  description: string;
+  icon: keyof typeof Ionicons.glyphMap;
+}[] = [
+  { value: "system", description: "Cihazının temasını takip eder", icon: "phone-portrait-outline" },
+  { value: "light", description: "Her zaman açık tema kullan", icon: "sunny-outline" },
+  { value: "dark", description: "Her zaman koyu tema kullan", icon: "moon-outline" },
 ];
 
 export default function AppearanceRoute() {
-  const { profile, updateProfile } = useProfile();
+  const { mode, setThemeMode, colors } = useTheme();
 
   return (
     <ProfileDetailShell
       title="Görünüm"
-      subtitle="MB FIT şu anda yalnızca Koyu modu destekliyor."
+      subtitle="Uygulamanın görünümünü seç; değişiklik anında uygulanır."
     >
       {OPTIONS.map((option) => {
-        const selected = profile.appearance === option.value;
+        const selected = mode === option.value;
         return (
           <Pressable
             key={option.value}
-            disabled={!option.enabled}
-            onPress={() => updateProfile({ appearance: option.value })}
+            onPress={() => setThemeMode(option.value)}
             style={[
               styles.card,
-              selected && styles.cardActive,
-              !option.enabled && styles.cardDisabled,
+              { borderColor: colors.border, backgroundColor: colors.card },
+              selected && { borderColor: colors.primary, backgroundColor: colors.cardActive },
             ]}
           >
-            <Text
-              style={[styles.label, !option.enabled && styles.labelDisabled]}
+            <View style={[styles.iconWrap, { backgroundColor: colors.inputBackground }]}>
+              <Ionicons name={option.icon} size={18} color={selected ? colors.primary : colors.textSecondary} />
+            </View>
+            <View style={styles.textBlock}>
+              <Text style={[styles.label, { color: colors.text }]}>{APPEARANCE_LABELS[option.value]}</Text>
+              <Text style={[styles.description, { color: colors.textSecondary }]}>{option.description}</Text>
+            </View>
+            <View
+              style={[
+                styles.indicator,
+                { borderColor: colors.border },
+                selected && { borderColor: colors.primary, backgroundColor: colors.primary },
+              ]}
             >
-              {option.label}
-            </Text>
-            {option.enabled ? (
-              <View
-                style={[styles.indicator, selected && styles.indicatorActive]}
-              />
-            ) : (
-              <View style={styles.soonBadge}>
-                <Text style={styles.soonLabel}>Yakında</Text>
-              </View>
-            )}
+              {selected ? <Ionicons name="checkmark" size={13} color="#FFFFFF" /> : null}
+            </View>
           </Pressable>
         );
       })}
@@ -57,40 +63,29 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 16,
-    paddingHorizontal: 18,
+    gap: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     borderRadius: 14,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    backgroundColor: colors.cardBackground,
     marginBottom: 10,
   },
-  cardActive: {
-    borderColor: "rgba(0,168,255,0.55)",
-    backgroundColor: colors.cardBackgroundActive,
-  },
-  cardDisabled: { opacity: 0.5 },
-  label: { color: colors.textPrimary, fontSize: 15, fontWeight: "600" },
-  labelDisabled: { color: colors.textMuted },
-  indicator: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-  },
-  indicatorActive: {
-    borderColor: colors.electricBlue,
-    backgroundColor: colors.electricBlue,
-  },
-  soonBadge: {
-    paddingHorizontal: 8,
-    height: 20,
-    borderRadius: 10,
+  iconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.06)",
   },
-  soonLabel: { color: colors.textMuted, fontSize: 10, fontWeight: "700" },
+  textBlock: { flex: 1 },
+  label: { fontSize: 15, fontWeight: "600" },
+  description: { fontSize: 12, marginTop: 2 },
+  indicator: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });

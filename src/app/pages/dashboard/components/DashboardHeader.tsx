@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
   name: string;
@@ -15,27 +15,28 @@ function getGreeting() {
 }
 
 export function DashboardHeader({ name }: Props) {
+  const { colors } = useTheme();
   const initial = name.trim().charAt(0).toUpperCase() || "M";
 
   return (
     <View style={styles.row}>
       <View style={styles.textBlock}>
-        <Text style={styles.greeting}>
+        <Text style={[styles.greeting, { color: colors.text }]}>
           {getGreeting()}, {name}
         </Text>
-        <Text style={styles.subtitle}>Bugünü değerlendirelim.</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Bugünü değerlendirelim.</Text>
       </View>
 
       <View style={styles.actions}>
-        <View style={styles.bellButton}>
+        <View style={[styles.bellButton, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
           <Ionicons
             name="notifications-outline"
             size={19}
-            color={colors.textPrimary}
+            color={colors.text}
           />
-          <View style={styles.dot} />
+          <View style={[styles.dot, { backgroundColor: colors.primary }]} />
         </View>
-        <View style={styles.avatar}>
+        <View style={[styles.avatar, { backgroundColor: colors.primaryPressed }]}>
           <Text style={styles.avatarLabel}>{initial}</Text>
         </View>
       </View>
@@ -50,8 +51,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   textBlock: { flex: 1, paddingRight: 12 },
-  greeting: { color: colors.textPrimary, fontSize: 21, fontWeight: "700" },
-  subtitle: { color: colors.textMuted, fontSize: 13, marginTop: 4 },
+  greeting: { fontSize: 21, fontWeight: "700" },
+  subtitle: { fontSize: 13, marginTop: 4 },
   actions: { flexDirection: "row", alignItems: "center", gap: 10 },
   bellButton: {
     width: 40,
@@ -59,9 +60,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.06)",
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
   dot: {
     position: "absolute",
@@ -70,7 +69,6 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: colors.electricBlue,
   },
   avatar: {
     width: 40,
@@ -78,7 +76,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.buttonElectricBlue,
   },
   avatarLabel: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" },
 });

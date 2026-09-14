@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../theme/ThemeContext";
 import { PlusBadge } from "./PlusBadge";
 
 type Props = {
@@ -10,17 +10,18 @@ type Props = {
 };
 
 export function LockedOverlay({ title, description }: Props) {
+  const { colors } = useTheme();
   return (
     <View style={styles.overlay}>
       <View style={styles.lockCircle}>
-        <Ionicons name="lock-closed" size={16} color={colors.electricBlue} />
+        <Ionicons name="lock-closed" size={16} color={colors.primary} />
       </View>
       <View style={styles.badgeGap}>
         <PlusBadge />
       </View>
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.description}>{description}</Text>
-      <Text style={styles.cta}>Plus'ı Görüntüle</Text>
+      <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
+      <Text style={[styles.description, { color: colors.textSecondary }]}>{description}</Text>
+      <Text style={[styles.cta, { color: colors.primary }]}>Plus'ı Görüntüle</Text>
     </View>
   );
 }
@@ -45,21 +46,18 @@ const styles = StyleSheet.create({
   },
   badgeGap: { marginTop: 10 },
   title: {
-    color: colors.textPrimary,
     fontSize: 14,
     fontWeight: "700",
     marginTop: 10,
     textAlign: "center",
   },
   description: {
-    color: colors.textMuted,
     fontSize: 11,
     marginTop: 4,
     textAlign: "center",
     lineHeight: 16,
   },
   cta: {
-    color: colors.electricBlue,
     fontSize: 11,
     fontWeight: "700",
     marginTop: 10,

@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { OnboardingButton } from "../../onboarding/components/OnboardingButton";
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { Exercise } from "../types";
 
 type Props = {
@@ -26,16 +26,17 @@ export function RestTimer({
   onAdjust,
   onSkip,
 }: Props) {
+  const { colors } = useTheme();
   const ratio =
     totalSec > 0 ? Math.max(0, Math.min(1, remainingSec / totalSec)) : 0;
 
   return (
     <View style={styles.wrapper}>
-      <Text style={styles.label}>DİNLENME</Text>
-      <Text style={styles.timer}>{formatTime(remainingSec)}</Text>
+      <Text style={[styles.label, { color: colors.textSecondary }]}>DİNLENME</Text>
+      <Text style={[styles.timer, { color: colors.text }]}>{formatTime(remainingSec)}</Text>
 
-      <View style={styles.track}>
-        <View style={[styles.fill, { width: `${ratio * 100}%` }]} />
+      <View style={[styles.track, { backgroundColor: colors.progressTrack }]}>
+        <View style={[styles.fill, { width: `${ratio * 100}%`, backgroundColor: colors.primary }]} />
       </View>
 
       <View style={styles.adjustRow}>
@@ -45,9 +46,9 @@ export function RestTimer({
 
       {nextExercise ? (
         <View style={styles.nextBlock}>
-          <Text style={styles.nextLabel}>SONRAKİ EGZERSİZ</Text>
-          <Text style={styles.nextName}>{nextExercise.name}</Text>
-          <Text style={styles.nextMeta}>
+          <Text style={[styles.nextLabel, { color: colors.textSecondary }]}>SONRAKİ EGZERSİZ</Text>
+          <Text style={[styles.nextName, { color: colors.text }]}>{nextExercise.name}</Text>
+          <Text style={[styles.nextMeta, { color: colors.textSecondary }]}>
             {nextExercise.sets} × {nextExercise.reps}
           </Text>
         </View>
@@ -67,13 +68,14 @@ function AdjustButton({
   label: string;
   onPress: () => void;
 }) {
+  const { colors } = useTheme();
   return (
     <Pressable
       onPress={onPress}
       hitSlop={10}
-      style={styles.adjustButtonWrapper}
+      style={[styles.adjustButtonWrapper, { backgroundColor: colors.inputBackground }]}
     >
-      <Text style={styles.adjustLabel}>{label} sn</Text>
+      <Text style={[styles.adjustLabel, { color: colors.text }]}>{label} sn</Text>
     </Pressable>
   );
 }
@@ -81,13 +83,11 @@ function AdjustButton({
 const styles = StyleSheet.create({
   wrapper: { alignItems: "center", paddingTop: 32 },
   label: {
-    color: colors.textMuted,
     fontSize: 13,
     fontWeight: "700",
     letterSpacing: 2,
   },
   timer: {
-    color: colors.textPrimary,
     fontSize: 64,
     fontWeight: "700",
     marginTop: 12,
@@ -97,11 +97,10 @@ const styles = StyleSheet.create({
     width: "70%",
     height: 5,
     borderRadius: 3,
-    backgroundColor: colors.progressTrack,
     marginTop: 22,
     overflow: "hidden",
   },
-  fill: { height: 5, borderRadius: 3, backgroundColor: colors.electricBlue },
+  fill: { height: 5, borderRadius: 3 },
   adjustRow: { flexDirection: "row", gap: 16, marginTop: 22 },
   adjustButtonWrapper: {
     height: 40,
@@ -109,22 +108,19 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.06)",
   },
-  adjustLabel: { color: colors.textPrimary, fontSize: 13, fontWeight: "700" },
+  adjustLabel: { fontSize: 13, fontWeight: "700" },
   nextBlock: { alignItems: "center", marginTop: 40 },
   nextLabel: {
-    color: colors.textMuted,
     fontSize: 11,
     fontWeight: "700",
     letterSpacing: 1,
   },
   nextName: {
-    color: colors.textPrimary,
     fontSize: 17,
     fontWeight: "700",
     marginTop: 8,
   },
-  nextMeta: { color: colors.textMuted, fontSize: 12, marginTop: 4 },
+  nextMeta: { fontSize: 12, marginTop: 4 },
   skipButton: { marginTop: 28 },
 });

@@ -12,7 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { OnboardingButton } from "../../onboarding/components/OnboardingButton";
 import { OnboardingOption } from "../../onboarding/components/OnboardingOption";
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 import {
     Difficulty,
     DurationRange,
@@ -59,6 +59,7 @@ export function WorkoutFilterModal({
   onApply,
   onClose,
 }: Props) {
+  const { colors } = useTheme();
   const [draft, setDraft] = useState<WorkoutFilters>(filters);
 
   // Modal her açıldığında dışarıdaki mevcut filtrelerle senkronize başla.
@@ -81,20 +82,20 @@ export function WorkoutFilterModal({
       <View style={styles.backdrop}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
 
-        <SafeAreaView style={styles.sheet} edges={["bottom"]}>
+        <SafeAreaView style={[styles.sheet, { backgroundColor: colors.background, borderColor: colors.border }]} edges={["bottom"]}>
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>Antrenmanları Filtrele</Text>
+            <Text style={[styles.headerTitle, { color: colors.text }]}>Antrenmanları Filtrele</Text>
             <Pressable
               onPress={onClose}
               hitSlop={10}
-              style={styles.closeButton}
+              style={[styles.closeButton, { backgroundColor: colors.inputBackground }]}
             >
-              <Ionicons name="close" size={18} color={colors.textPrimary} />
+              <Ionicons name="close" size={18} color={colors.text} />
             </Pressable>
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} style={styles.body}>
-            <Text style={styles.groupTitle}>Zorluk</Text>
+            <Text style={[styles.groupTitle, { color: colors.textSecondary }]}>Zorluk</Text>
             {DIFFICULTY_OPTIONS.map((option) => (
               <OnboardingOption
                 key={option}
@@ -109,7 +110,7 @@ export function WorkoutFilterModal({
               />
             ))}
 
-            <Text style={styles.groupTitle}>Süre</Text>
+            <Text style={[styles.groupTitle, { color: colors.textSecondary }]}>Süre</Text>
             {DURATION_OPTIONS.map((option) => (
               <OnboardingOption
                 key={option.value}
@@ -124,7 +125,7 @@ export function WorkoutFilterModal({
               />
             ))}
 
-            <Text style={styles.groupTitle}>Ekipman</Text>
+            <Text style={[styles.groupTitle, { color: colors.textSecondary }]}>Ekipman</Text>
             {EQUIPMENT_OPTIONS.map((option) => (
               <OnboardingOption
                 key={option}
@@ -140,7 +141,7 @@ export function WorkoutFilterModal({
               />
             ))}
 
-            <Text style={styles.groupTitle}>Kas Grubu</Text>
+            <Text style={[styles.groupTitle, { color: colors.textSecondary }]}>Kas Grubu</Text>
             {MUSCLE_GROUP_OPTIONS.map((option) => (
               <OnboardingOption
                 key={option}
@@ -159,9 +160,9 @@ export function WorkoutFilterModal({
             <View style={styles.scrollBottomSpace} />
           </ScrollView>
 
-          <View style={styles.footer}>
+          <View style={[styles.footer, { borderTopColor: colors.border }]}>
             <Pressable onPress={() => setDraft(EMPTY_FILTERS)} hitSlop={8}>
-              <Text style={styles.clearLabel}>Tümünü temizle</Text>
+              <Text style={[styles.clearLabel, { color: colors.textSecondary }]}>Tümünü temizle</Text>
             </Pressable>
             <View style={styles.applyButton}>
               <OnboardingButton
@@ -184,11 +185,9 @@ const styles = StyleSheet.create({
   },
   sheet: {
     maxHeight: "84%",
-    backgroundColor: colors.background,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
   header: {
     flexDirection: "row",
@@ -198,18 +197,16 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 8,
   },
-  headerTitle: { color: colors.textPrimary, fontSize: 18, fontWeight: "700" },
+  headerTitle: { fontSize: 18, fontWeight: "700" },
   closeButton: {
     width: 32,
     height: 32,
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.06)",
   },
   body: { paddingHorizontal: 24 },
   groupTitle: {
-    color: colors.textMuted,
     fontSize: 12,
     fontWeight: "700",
     letterSpacing: 0.3,
@@ -223,10 +220,8 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
   },
   clearLabel: {
-    color: colors.textMuted,
     fontSize: 12,
     fontWeight: "600",
     textAlign: "center",

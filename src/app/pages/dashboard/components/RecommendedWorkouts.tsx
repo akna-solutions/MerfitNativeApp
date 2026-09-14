@@ -7,7 +7,7 @@ import {
     View,
 } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { WorkoutSummary } from "../types";
 
 type Props = {
@@ -16,9 +16,10 @@ type Props = {
 };
 
 export function RecommendedWorkouts({ workouts, onSelect }: Props) {
+  const { colors } = useTheme();
   return (
     <View style={styles.wrapper}>
-      <Text style={styles.sectionTitle}>Senin için önerilenler</Text>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>Senin için önerilenler</Text>
 
       <ScrollView
         horizontal
@@ -28,15 +29,15 @@ export function RecommendedWorkouts({ workouts, onSelect }: Props) {
         {workouts.map((workout) => (
           <Pressable
             key={workout.id}
-            style={styles.card}
+            style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={() => onSelect(workout)}
           >
             <Image source={{ uri: workout.imageUrl }} style={styles.image} />
             <View style={styles.body}>
-              <Text style={styles.title} numberOfLines={1}>
+              <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
                 {workout.title}
               </Text>
-              <Text style={styles.meta}>
+              <Text style={[styles.meta, { color: colors.textSecondary }]}>
                 {workout.duration} · {workout.difficulty}
               </Text>
             </View>
@@ -52,7 +53,6 @@ const CARD_WIDTH = 168;
 const styles = StyleSheet.create({
   wrapper: { marginTop: 28 },
   sectionTitle: {
-    color: colors.textPrimary,
     fontSize: 16,
     fontWeight: "700",
     marginBottom: 12,
@@ -63,12 +63,10 @@ const styles = StyleSheet.create({
     width: CARD_WIDTH,
     borderRadius: 16,
     overflow: "hidden",
-    backgroundColor: colors.cardBackground,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
   image: { width: "100%", height: 96 },
   body: { padding: 12 },
-  title: { color: colors.textPrimary, fontSize: 13, fontWeight: "700" },
-  meta: { color: colors.textMuted, fontSize: 11, marginTop: 4 },
+  title: { fontSize: 13, fontWeight: "700" },
+  meta: { fontSize: 11, marginTop: 4 },
 });

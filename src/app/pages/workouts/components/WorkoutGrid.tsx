@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { Workout } from "../types";
 import { WorkoutCard } from "./WorkoutCard";
 
@@ -12,15 +12,16 @@ type Props = {
 };
 
 export function WorkoutGrid({ title, workouts, onSelect, onSeeAll }: Props) {
+  const { colors } = useTheme();
   if (workouts.length === 0) return null;
 
   return (
     <View>
       <View style={styles.header}>
-        <Text style={styles.sectionTitle}>{title}</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
         {onSeeAll ? (
           <Pressable onPress={onSeeAll} hitSlop={8}>
-            <Text style={styles.seeAll}>Tümünü gör</Text>
+            <Text style={[styles.seeAll, { color: colors.primary }]}>Tümünü gör</Text>
           </Pressable>
         ) : null}
       </View>
@@ -45,7 +46,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 12,
   },
-  sectionTitle: { color: colors.textPrimary, fontSize: 16, fontWeight: "700" },
-  seeAll: { color: colors.electricBlue, fontSize: 12, fontWeight: "600" },
+  sectionTitle: { fontSize: 16, fontWeight: "700" },
+  seeAll: { fontSize: 12, fontWeight: "600" },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
 });

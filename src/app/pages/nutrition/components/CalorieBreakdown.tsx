@@ -1,11 +1,12 @@
 import { StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { MEAL_TYPES, MealEntry } from "../types";
 
 type Props = { meals: MealEntry[] };
 
 export function CalorieBreakdown({ meals }: Props) {
+  const { colors } = useTheme();
   const totals = MEAL_TYPES.map((type) => ({
     type,
     calories: meals
@@ -16,19 +17,19 @@ export function CalorieBreakdown({ meals }: Props) {
 
   return (
     <View>
-      <Text style={styles.sectionTitle}>Kalori Dağılımı</Text>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>Kalori Dağılımı</Text>
 
-      <View style={styles.card}>
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
         {totals.map((item) => (
           <View key={item.type} style={styles.row}>
-            <Text style={styles.label}>{item.type}</Text>
-            <Text style={styles.value}>{item.calories}</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>{item.type}</Text>
+            <Text style={[styles.value, { color: colors.text }]}>{item.calories}</Text>
           </View>
         ))}
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
         <View style={styles.row}>
-          <Text style={styles.totalLabel}>Toplam</Text>
-          <Text style={styles.totalValue}>{total}</Text>
+          <Text style={[styles.totalLabel, { color: colors.text }]}>Toplam</Text>
+          <Text style={[styles.totalValue, { color: colors.primary }]}>{total}</Text>
         </View>
       </View>
     </View>
@@ -37,7 +38,6 @@ export function CalorieBreakdown({ meals }: Props) {
 
 const styles = StyleSheet.create({
   sectionTitle: {
-    color: colors.textPrimary,
     fontSize: 16,
     fontWeight: "700",
     marginBottom: 12,
@@ -45,22 +45,19 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 20,
     padding: 20,
-    backgroundColor: colors.cardBackground,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
     paddingVertical: 6,
   },
-  label: { color: colors.textMuted, fontSize: 13 },
-  value: { color: colors.textPrimary, fontSize: 13, fontWeight: "600" },
+  label: { fontSize: 13 },
+  value: { fontSize: 13, fontWeight: "600" },
   divider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.border,
     marginVertical: 8,
   },
-  totalLabel: { color: colors.textPrimary, fontSize: 13, fontWeight: "700" },
-  totalValue: { color: colors.electricBlue, fontSize: 13, fontWeight: "700" },
+  totalLabel: { fontSize: 13, fontWeight: "700" },
+  totalValue: { fontSize: 13, fontWeight: "700" },
 });

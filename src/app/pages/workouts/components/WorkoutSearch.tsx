@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { forwardRef } from "react";
 import { StyleSheet, TextInput, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
   value: string;
@@ -11,20 +11,21 @@ type Props = {
 
 export const WorkoutSearch = forwardRef<TextInput, Props>(
   function WorkoutSearch({ value, onChange }, ref) {
+    const { colors, isDark } = useTheme();
     return (
-      <View style={styles.wrapper}>
-        <Ionicons name="search-outline" size={17} color={colors.textMuted} />
+      <View style={[styles.wrapper, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Ionicons name="search-outline" size={17} color={colors.textSecondary} />
         <TextInput
           ref={ref}
           value={value}
           onChangeText={onChange}
           placeholder="Antrenman ara..."
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor={colors.textSecondary}
           autoCapitalize="none"
           autoCorrect={false}
-          keyboardAppearance="dark"
+          keyboardAppearance={isDark ? "dark" : "light"}
           returnKeyType="search"
-          style={styles.input}
+          style={[styles.input, { color: colors.text }]}
         />
       </View>
     );
@@ -39,13 +40,10 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingHorizontal: 16,
     gap: 10,
-    backgroundColor: colors.cardBackground,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
   input: {
     flex: 1,
-    color: colors.textPrimary,
     fontSize: 14,
     fontWeight: "500",
     padding: 0,

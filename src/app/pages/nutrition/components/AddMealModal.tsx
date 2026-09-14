@@ -16,7 +16,7 @@ import { ApiError } from "../../../../services/api/client";
 import { searchFoods } from "../../../../services/api/foods";
 import { logMealItem } from "../../../../services/api/nutrition";
 import { ApiMealType, FoodListItem } from "../../../../services/api/types";
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { MealEntry, MealType } from "../types";
 
 const MEAL_TYPE_TO_API: Record<MealType, ApiMealType> = {
@@ -49,6 +49,7 @@ export function AddMealModal({
   onLogged,
   onClose,
 }: Props) {
+  const { colors, isDark } = useTheme();
   const [query, setQuery] = useState("");
   const [foods, setFoods] = useState<FoodListItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -115,38 +116,38 @@ export function AddMealModal({
       <View style={styles.backdrop}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
 
-        <SafeAreaView style={styles.sheet} edges={["bottom"]}>
+        <SafeAreaView style={[styles.sheet, { backgroundColor: colors.background, borderColor: colors.border }]} edges={["bottom"]}>
           <View style={styles.header}>
             <View>
-              <Text style={styles.headerTitle}>Öğün Ekle</Text>
+              <Text style={[styles.headerTitle, { color: colors.text }]}>Öğün Ekle</Text>
               {mealType ? (
-                <Text style={styles.headerSubtitle}>{mealType}</Text>
+                <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>{mealType}</Text>
               ) : null}
             </View>
             <Pressable
               onPress={onClose}
               hitSlop={10}
-              style={styles.closeButton}
+              style={[styles.closeButton, { backgroundColor: colors.inputBackground }]}
             >
-              <Ionicons name="close" size={18} color={colors.textPrimary} />
+              <Ionicons name="close" size={18} color={colors.text} />
             </Pressable>
           </View>
 
-          <View style={styles.searchWrapper}>
+          <View style={[styles.searchWrapper, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Ionicons
               name="search-outline"
               size={16}
-              color={colors.textMuted}
+              color={colors.textSecondary}
             />
             <TextInput
               value={query}
               onChangeText={setQuery}
               placeholder="Yiyecek ara..."
-              placeholderTextColor={colors.textMuted}
+              placeholderTextColor={colors.textSecondary}
               autoCapitalize="none"
               autoCorrect={false}
-              keyboardAppearance="dark"
-              style={styles.searchInput}
+              keyboardAppearance={isDark ? "dark" : "light"}
+              style={[styles.searchInput, { color: colors.text }]}
             />
           </View>
 
@@ -160,9 +161,9 @@ export function AddMealModal({
             <Ionicons
               name="barcode-outline"
               size={16}
-              color={colors.electricBlue}
+              color={colors.primary}
             />
-            <Text style={styles.scanLabel}>Barkod tara</Text>
+            <Text style={[styles.scanLabel, { color: colors.primary }]}>Barkod tara</Text>
           </Pressable>
 
           {errorMessage ? (
@@ -171,7 +172,7 @@ export function AddMealModal({
 
           {isSearching ? (
             <ActivityIndicator
-              color={colors.electricBlue}
+              color={colors.primary}
               style={styles.loadingIndicator}
             />
           ) : (
@@ -179,18 +180,18 @@ export function AddMealModal({
               data={foods}
               keyExtractor={(item) => String(item.id)}
               contentContainerStyle={styles.list}
-              ItemSeparatorComponent={() => <View style={styles.separator} />}
+              ItemSeparatorComponent={() => <View style={[styles.separator, { backgroundColor: colors.border }]} />}
               renderItem={({ item }) => (
                 <Pressable
                   style={styles.foodRow}
                   onPress={() => handleSelectFood(item)}
                   disabled={loggingFoodId !== null}
                 >
-                  <Text style={styles.foodName}>{item.name}</Text>
+                  <Text style={[styles.foodName, { color: colors.text }]}>{item.name}</Text>
                   {loggingFoodId === item.id ? (
-                    <ActivityIndicator color={colors.electricBlue} size="small" />
+                    <ActivityIndicator color={colors.primary} size="small" />
                   ) : (
-                    <Text style={styles.foodCalories}>{item.calories} kcal</Text>
+                    <Text style={[styles.foodCalories, { color: colors.textSecondary }]}>{item.calories} kcal</Text>
                   )}
                 </Pressable>
               )}
@@ -210,11 +211,9 @@ const styles = StyleSheet.create({
   },
   sheet: {
     maxHeight: "80%",
-    backgroundColor: colors.background,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
     paddingHorizontal: 24,
   },
   header: {
@@ -223,15 +222,14 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingTop: 20,
   },
-  headerTitle: { color: colors.textPrimary, fontSize: 18, fontWeight: "700" },
-  headerSubtitle: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
+  headerTitle: { fontSize: 18, fontWeight: "700" },
+  headerSubtitle: { fontSize: 12, marginTop: 2 },
   closeButton: {
     width: 32,
     height: 32,
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.06)",
   },
   searchWrapper: {
     flexDirection: "row",
@@ -241,24 +239,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     gap: 10,
     marginTop: 18,
-    backgroundColor: colors.cardBackground,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
-  searchInput: { flex: 1, color: colors.textPrimary, fontSize: 13, padding: 0 },
+  searchInput: { flex: 1, fontSize: 13, padding: 0 },
   scanRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
     marginTop: 14,
   },
-  scanLabel: { color: colors.electricBlue, fontSize: 12, fontWeight: "600" },
+  scanLabel: { fontSize: 12, fontWeight: "600" },
   errorText: { color: "#FF6B6B", fontSize: 12, fontWeight: "600", marginTop: 12 },
   loadingIndicator: { marginTop: 24 },
   list: { paddingTop: 14, paddingBottom: 24 },
   separator: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.border,
   },
   foodRow: {
     flexDirection: "row",
@@ -266,6 +261,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 14,
   },
-  foodName: { color: colors.textPrimary, fontSize: 13, fontWeight: "600" },
-  foodCalories: { color: colors.textMuted, fontSize: 12, fontWeight: "600" },
+  foodName: { fontSize: 13, fontWeight: "600" },
+  foodCalories: { fontSize: 12, fontWeight: "600" },
 });

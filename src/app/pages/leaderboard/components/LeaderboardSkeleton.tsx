@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Animated, StyleSheet, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 function Shimmer({ style }: { style: object }) {
   const opacity = useRef(new Animated.Value(0.4)).current;
@@ -29,13 +29,14 @@ function Shimmer({ style }: { style: object }) {
 }
 
 export function LeaderboardSkeleton() {
+  const { colors } = useTheme();
   return (
     <View>
-      <Shimmer style={styles.headerCard} />
-      <Shimmer style={styles.rewardsCard} />
+      <Shimmer style={[styles.headerCard, { backgroundColor: colors.card }]} />
+      <Shimmer style={[styles.rewardsCard, { backgroundColor: colors.card }]} />
       <View style={styles.rows}>
         {[1, 2, 3, 4, 5].map((key) => (
-          <Shimmer key={key} style={styles.row} />
+          <Shimmer key={key} style={[styles.row, { backgroundColor: colors.card }]} />
         ))}
       </View>
     </View>
@@ -46,15 +47,13 @@ const styles = StyleSheet.create({
   headerCard: {
     height: 180,
     borderRadius: 22,
-    backgroundColor: colors.cardBackground,
     marginTop: 20,
   },
   rewardsCard: {
     height: 220,
     borderRadius: 22,
-    backgroundColor: colors.cardBackground,
     marginTop: 28,
   },
   rows: { marginTop: 28, gap: 10 },
-  row: { height: 56, borderRadius: 14, backgroundColor: colors.cardBackground },
+  row: { height: 56, borderRadius: 14 },
 });

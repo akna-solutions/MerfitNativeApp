@@ -1,15 +1,16 @@
 import { StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 export function ProfileHeader() {
+  const { colors } = useTheme();
   return (
     <View>
-      <Text style={styles.title}>Profil</Text>
+      <Text style={[styles.title, { color: colors.text }]}>Profil</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  title: { color: colors.textPrimary, fontSize: 24, fontWeight: "700" },
+  title: { fontSize: 24, fontWeight: "700" },
 });

@@ -8,7 +8,7 @@ import { Gender } from "../../../shared/profile/types";
 import { OnboardingButton } from "../onboarding/components/OnboardingButton";
 import { OnboardingInput } from "../onboarding/components/OnboardingInput";
 import { OnboardingOption } from "../onboarding/components/OnboardingOption";
-import { colors } from "./theme";
+import { useTheme } from "../../../shared/theme/ThemeContext";
 
 const GENDER_OPTIONS: Gender[] = [
   "Erkek",
@@ -20,6 +20,7 @@ const GENDER_OPTIONS: Gender[] = [
 export default function EditProfileRoute() {
   const router = useRouter();
   const { profile, updateProfile } = useProfile();
+  const { colors } = useTheme();
 
   const [firstName, setFirstName] = useState(profile.firstName);
   const [lastName, setLastName] = useState(profile.lastName);
@@ -49,10 +50,10 @@ export default function EditProfileRoute() {
     >
       <Pressable style={styles.avatarWrapper}>
         {/* TODO: expo-image-picker eklendiğinde kullanıcı galeriden fotoğraf seçebilecek. */}
-        <View style={styles.avatar}>
+        <View style={[styles.avatar, { backgroundColor: colors.primaryPressed }]}>
           <Text style={styles.avatarLabel}>{initial}</Text>
         </View>
-        <Text style={styles.avatarHint}>Fotoğrafı Değiştir</Text>
+        <Text style={[styles.avatarHint, { color: colors.primary }]}>Fotoğrafı Değiştir</Text>
       </Pressable>
 
       <Field label="Ad">
@@ -95,7 +96,7 @@ export default function EditProfileRoute() {
         />
       </Field>
 
-      <Text style={styles.label}>Cinsiyet</Text>
+      <Text style={[styles.label, { color: colors.textSecondary }]}>Cinsiyet</Text>
       <View style={styles.genderGap}>
         {GENDER_OPTIONS.map((option) => (
           <OnboardingOption
@@ -117,9 +118,10 @@ function Field({
   label: string;
   children: React.ReactNode;
 }) {
+  const { colors } = useTheme();
   return (
     <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>
       {children}
     </View>
   );
@@ -133,20 +135,17 @@ const styles = StyleSheet.create({
     borderRadius: 42,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.buttonElectricBlue,
     borderWidth: 2,
     borderColor: "rgba(0,168,255,0.35)",
   },
   avatarLabel: { color: "#FFFFFF", fontSize: 28, fontWeight: "700" },
   avatarHint: {
-    color: colors.electricBlue,
     fontSize: 12,
     fontWeight: "600",
     marginTop: 10,
   },
   field: { marginBottom: 16 },
   label: {
-    color: colors.textMuted,
     fontSize: 11,
     fontWeight: "600",
     marginBottom: 8,

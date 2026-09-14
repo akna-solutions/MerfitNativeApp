@@ -1,17 +1,18 @@
 import { StyleSheet, Text, View } from "react-native";
 
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { OnboardingButton } from "../../onboarding/components/OnboardingButton";
-import { colors } from "../theme";
 
 type Props = {
   onClearFilters: () => void;
 };
 
 export function WorkoutEmptyState({ onClearFilters }: Props) {
+  const { colors } = useTheme();
   return (
-    <View style={styles.card}>
-      <Text style={styles.title}>Antrenman bulunamadı.</Text>
-      <Text style={styles.description}>
+    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <Text style={[styles.title, { color: colors.text }]}>Antrenman bulunamadı.</Text>
+      <Text style={[styles.description, { color: colors.textSecondary }]}>
         Filtrelerini değiştirmeyi veya başka bir antrenman aramayı dene.
       </Text>
       <View style={styles.button}>
@@ -26,13 +27,10 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 28,
     alignItems: "center",
-    backgroundColor: colors.cardBackground,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
-  title: { color: colors.textPrimary, fontSize: 16, fontWeight: "700" },
+  title: { fontSize: 16, fontWeight: "700" },
   description: {
-    color: colors.textMuted,
     fontSize: 13,
     textAlign: "center",
     marginTop: 8,

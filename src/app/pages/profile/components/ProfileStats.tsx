@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
   workouts: number;
@@ -9,6 +9,7 @@ type Props = {
 };
 
 export function ProfileStats({ workouts, streak, weight }: Props) {
+  const { colors } = useTheme();
   const items = [
     { label: "Antrenman", value: `${workouts}` },
     { label: "Seri", value: `${streak}` },
@@ -16,14 +17,16 @@ export function ProfileStats({ workouts, streak, weight }: Props) {
   ];
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
       {items.map((item, index) => (
         <View key={item.label} style={styles.itemRow}>
           <View style={styles.item}>
-            <Text style={styles.value}>{item.value}</Text>
-            <Text style={styles.label}>{item.label}</Text>
+            <Text style={[styles.value, { color: colors.text }]}>{item.value}</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>{item.label}</Text>
           </View>
-          {index < items.length - 1 ? <View style={styles.divider} /> : null}
+          {index < items.length - 1 ? (
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+          ) : null}
         </View>
       ))}
     </View>
@@ -35,17 +38,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     borderRadius: 18,
     paddingVertical: 16,
-    backgroundColor: colors.cardBackground,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
   itemRow: { flex: 1, flexDirection: "row", alignItems: "center" },
   item: { flex: 1, alignItems: "center" },
-  value: { color: colors.textPrimary, fontSize: 17, fontWeight: "700" },
-  label: { color: colors.textMuted, fontSize: 11, marginTop: 3 },
+  value: { fontSize: 17, fontWeight: "700" },
+  label: { fontSize: 11, marginTop: 3 },
   divider: {
     width: StyleSheet.hairlineWidth,
     height: 28,
-    backgroundColor: colors.border,
   },
 });

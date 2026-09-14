@@ -1,5 +1,4 @@
 import { useRouter } from "expo-router";
-import { StatusBar } from "expo-status-bar";
 import { StyleSheet, View } from "react-native";
 
 import { BackgroundVideo } from "./components/BackgroundVideo";
@@ -11,7 +10,6 @@ export default function WelcomeScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar style="light" />
       <BackgroundVideo />
       <WelcomeContent
         onGetStarted={() => router.push("/pages/onboarding")}

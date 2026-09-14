@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
   workouts: number;
@@ -16,6 +16,7 @@ export function OverviewStats({
   streak,
   trainingMinutes,
 }: Props) {
+  const { colors } = useTheme();
   const items: {
     id: string;
     label: string;
@@ -50,13 +51,13 @@ export function OverviewStats({
 
   return (
     <View>
-      <Text style={styles.sectionTitle}>Genel Bakış</Text>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>Genel Bakış</Text>
       <View style={styles.grid}>
         {items.map((item) => (
-          <View key={item.id} style={styles.card}>
-            <Ionicons name={item.icon} size={18} color={colors.electricBlue} />
-            <Text style={styles.value}>{item.value}</Text>
-            <Text style={styles.label}>{item.label}</Text>
+          <View key={item.id} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Ionicons name={item.icon} size={18} color={colors.primary} />
+            <Text style={[styles.value, { color: colors.text }]}>{item.value}</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>{item.label}</Text>
           </View>
         ))}
       </View>
@@ -66,7 +67,6 @@ export function OverviewStats({
 
 const styles = StyleSheet.create({
   sectionTitle: {
-    color: colors.textPrimary,
     fontSize: 16,
     fontWeight: "700",
     marginBottom: 12,
@@ -76,15 +76,12 @@ const styles = StyleSheet.create({
     width: "47%",
     borderRadius: 16,
     padding: 16,
-    backgroundColor: colors.cardBackground,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
   value: {
-    color: colors.textPrimary,
     fontSize: 16,
     fontWeight: "700",
     marginTop: 10,
   },
-  label: { color: colors.textMuted, fontSize: 11, marginTop: 2 },
+  label: { fontSize: 11, marginTop: 2 },
 });

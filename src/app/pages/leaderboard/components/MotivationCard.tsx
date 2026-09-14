@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
   pointsToNextRank: number;
@@ -8,16 +8,17 @@ type Props = {
 };
 
 export function MotivationCard({ pointsToNextRank, nextRank }: Props) {
+  const { colors } = useTheme();
   return (
-    <View style={styles.card}>
-      <Text style={styles.text}>
+    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <Text style={[styles.text, { color: colors.text }]}>
         #{nextRank} sıraya sadece{" "}
-        <Text style={styles.accent}>
+        <Text style={[styles.accent, { color: colors.primary }]}>
           {pointsToNextRank.toLocaleString()} puan
         </Text>{" "}
         kaldı.
       </Text>
-      <Text style={styles.subtext}>Devam et.</Text>
+      <Text style={[styles.subtext, { color: colors.textSecondary }]}>Devam et.</Text>
     </View>
   );
 }
@@ -27,16 +28,13 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     padding: 18,
     alignItems: "center",
-    backgroundColor: colors.cardBackground,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
   text: {
-    color: colors.textPrimary,
     fontSize: 13,
     fontWeight: "600",
     textAlign: "center",
   },
-  accent: { color: colors.electricBlue, fontWeight: "700" },
-  subtext: { color: colors.textMuted, fontSize: 12, marginTop: 4 },
+  accent: { fontWeight: "700" },
+  subtext: { fontSize: 12, marginTop: 4 },
 });

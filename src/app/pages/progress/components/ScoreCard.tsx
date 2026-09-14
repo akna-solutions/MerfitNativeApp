@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
   points: number;
@@ -11,15 +11,16 @@ type Props = {
 };
 
 export function ScoreCard({ points, weeklyChange, rank, onPress }: Props) {
+  const { colors } = useTheme();
   return (
-    <Pressable onPress={onPress} style={styles.card}>
+    <Pressable onPress={onPress} style={[styles.card, { backgroundColor: colors.card }]}>
       <View style={styles.textBlock}>
-        <Text style={styles.title}>MB FIT Puanın</Text>
-        <Text style={styles.points}>{points.toLocaleString()}</Text>
-        <Text style={styles.change}>+{weeklyChange} bu hafta</Text>
-        <Text style={styles.rank}>🇹🇷 Türkiye'de #{rank}</Text>
+        <Text style={[styles.title, { color: colors.textSecondary }]}>MB FIT Puanın</Text>
+        <Text style={[styles.points, { color: colors.text }]}>{points.toLocaleString()}</Text>
+        <Text style={[styles.change, { color: colors.primary }]}>+{weeklyChange} bu hafta</Text>
+        <Text style={[styles.rank, { color: colors.textSecondary }]}>🇹🇷 Türkiye'de #{rank}</Text>
       </View>
-      <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+      <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
     </Pressable>
   );
 }
@@ -31,23 +32,20 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     borderRadius: 20,
     padding: 20,
-    backgroundColor: colors.cardBackground,
     borderWidth: 1,
     borderColor: "rgba(0,168,255,0.28)",
   },
   textBlock: { flex: 1 },
-  title: { color: colors.textMuted, fontSize: 12, fontWeight: "600" },
+  title: { fontSize: 12, fontWeight: "600" },
   points: {
-    color: colors.textPrimary,
     fontSize: 30,
     fontWeight: "700",
     marginTop: 6,
   },
   change: {
-    color: colors.electricBlue,
     fontSize: 12,
     fontWeight: "600",
     marginTop: 4,
   },
-  rank: { color: colors.textMuted, fontSize: 12, marginTop: 10 },
+  rank: { fontSize: 12, marginTop: 10 },
 });

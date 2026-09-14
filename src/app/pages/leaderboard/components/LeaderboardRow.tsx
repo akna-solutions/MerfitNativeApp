@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { LeaderboardEntry } from "../types";
 
 type Props = {
@@ -11,6 +11,7 @@ type Props = {
 };
 
 export function LeaderboardRow({ entry, showRewardBadge, anonymized }: Props) {
+  const { colors } = useTheme();
   const isHiddenSelf = entry.isCurrentUser && anonymized;
   const displayName = isHiddenSelf ? "Anonim" : entry.name;
   const initial = isHiddenSelf
@@ -18,33 +19,33 @@ export function LeaderboardRow({ entry, showRewardBadge, anonymized }: Props) {
     : entry.name.trim().charAt(0).toUpperCase() || "?";
 
   return (
-    <View style={[styles.row, entry.isCurrentUser && styles.rowActive]}>
-      <Text style={[styles.rank, entry.isCurrentUser && styles.rankActive]}>
+    <View style={[styles.row, entry.isCurrentUser && { backgroundColor: colors.cardActive, borderWidth: 1, borderColor: "rgba(0,168,255,0.35)" }]}>
+      <Text style={[styles.rank, { color: colors.textSecondary }, entry.isCurrentUser && { color: colors.primary }]}>
         #{entry.rank}
       </Text>
 
-      <View style={[styles.avatar, entry.isCurrentUser && styles.avatarActive]}>
-        <Text style={styles.avatarLabel}>{initial}</Text>
+      <View style={[styles.avatar, { backgroundColor: colors.inputBackground }, entry.isCurrentUser && { backgroundColor: colors.primaryPressed }]}>
+        <Text style={[styles.avatarLabel, { color: entry.isCurrentUser ? "#FFFFFF" : colors.text }]}>{initial}</Text>
       </View>
 
       <View style={styles.nameBlock}>
-        <Text style={styles.name} numberOfLines={1}>
+        <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
           {entry.isCurrentUser
             ? isHiddenSelf
               ? "Anonim (Sen)"
               : `${displayName} (Sen)`
             : displayName}
         </Text>
-        <Text style={styles.workouts}>{entry.workouts} antrenman</Text>
+        <Text style={[styles.workouts, { color: colors.textSecondary }]}>{entry.workouts} antrenman</Text>
       </View>
 
       {showRewardBadge && entry.rank <= 10 ? (
         <View style={styles.rewardBadge}>
-          <Text style={styles.rewardBadgeLabel}>Ödül</Text>
+          <Text style={[styles.rewardBadgeLabel, { color: colors.primary }]}>Ödül</Text>
         </View>
       ) : null}
 
-      <Text style={styles.points}>{entry.points.toLocaleString()}</Text>
+      <Text style={[styles.points, { color: colors.text }]}>{entry.points.toLocaleString()}</Text>
     </View>
   );
 }
@@ -58,26 +59,18 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     gap: 12,
   },
-  rowActive: {
-    backgroundColor: colors.cardBackgroundActive,
-    borderWidth: 1,
-    borderColor: "rgba(0,168,255,0.35)",
-  },
-  rank: { color: colors.textMuted, fontSize: 13, fontWeight: "700", width: 32 },
-  rankActive: { color: colors.electricBlue },
+  rank: { fontSize: 13, fontWeight: "700", width: 32 },
   avatar: {
     width: 32,
     height: 32,
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.08)",
   },
-  avatarActive: { backgroundColor: colors.buttonElectricBlue },
-  avatarLabel: { color: colors.textPrimary, fontSize: 12, fontWeight: "700" },
+  avatarLabel: { fontSize: 12, fontWeight: "700" },
   nameBlock: { flex: 1 },
-  name: { color: colors.textPrimary, fontSize: 13, fontWeight: "700" },
-  workouts: { color: colors.textMuted, fontSize: 11, marginTop: 2 },
+  name: { fontSize: 13, fontWeight: "700" },
+  workouts: { fontSize: 11, marginTop: 2 },
   rewardBadge: {
     height: 20,
     paddingHorizontal: 8,
@@ -88,9 +81,8 @@ const styles = StyleSheet.create({
     borderColor: "rgba(0,168,255,0.4)",
   },
   rewardBadgeLabel: {
-    color: colors.electricBlue,
     fontSize: 9,
     fontWeight: "700",
   },
-  points: { color: colors.textPrimary, fontSize: 13, fontWeight: "700" },
+  points: { fontSize: 13, fontWeight: "700" },
 });

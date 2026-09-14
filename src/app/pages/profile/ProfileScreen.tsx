@@ -1,5 +1,4 @@
 import { useRouter } from "expo-router";
-import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef, useState } from "react";
 import { Animated, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -10,17 +9,19 @@ import { useProfile } from "../../../shared/profile/ProfileContext";
 import { SettingsRow } from "../../../shared/profile/components/SettingsRow";
 import { SettingsSection } from "../../../shared/profile/components/SettingsSection";
 import { GOAL_LABELS } from "../../../shared/profile/types";
+import { APPEARANCE_LABELS } from "../../../shared/theme/labels";
+import { useTheme } from "../../../shared/theme/ThemeContext";
 import { LogOutButton } from "./components/LogOutButton";
 import { PlusStatusCard } from "./components/PlusStatusCard";
 import { ProfileHeader } from "./components/ProfileHeader";
 import { ProfileIdentity } from "./components/ProfileIdentity";
-import { colors } from "./theme";
 
 export function ProfileScreen() {
   const router = useRouter();
   const { logout } = useAuth();
   const { isPlusUser, openPlusModal } = usePlus();
   const { profile } = useProfile();
+  const { mode, colors } = useTheme();
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
 
   const headerAnim = useRef(new Animated.Value(0)).current;
@@ -73,8 +74,7 @@ export function ProfileScreen() {
   };
 
   return (
-    <View style={styles.root}>
-      <StatusBar style="light" />
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
       <SafeAreaView style={styles.flex} edges={["top"]}>
         <ScrollView
           style={styles.flex}
@@ -182,7 +182,7 @@ export function ProfileScreen() {
               <SettingsRow
                 icon="moon-outline"
                 title="Görünüm"
-                subtitle="Koyu"
+                subtitle={APPEARANCE_LABELS[mode]}
                 onPress={() =>
                   router.push("/pages/profile/appearance" as never)
                 }
@@ -239,7 +239,7 @@ export function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
+  root: { flex: 1 },
   flex: { flex: 1 },
   scrollContent: { paddingTop: 16, paddingBottom: 156 },
   padded: { paddingHorizontal: 24 },

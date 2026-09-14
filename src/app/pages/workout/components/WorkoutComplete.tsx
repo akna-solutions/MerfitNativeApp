@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { OnboardingButton } from "../../onboarding/components/OnboardingButton";
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
   durationLabel: string;
@@ -20,21 +20,22 @@ export function WorkoutComplete({
   onViewSummary,
   onDone,
 }: Props) {
+  const { colors } = useTheme();
   return (
-    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={["top", "bottom"]}>
       <View style={styles.center}>
-        <View style={styles.badge}>
+        <View style={[styles.badge, { backgroundColor: colors.primaryPressed }]}>
           <Ionicons name="checkmark" size={30} color="#FFFFFF" />
         </View>
 
-        <Text style={styles.title}>ANTRENMAN TAMAMLANDI</Text>
-        <Text style={styles.subtitle}>Harika iş çıkardın!</Text>
+        <Text style={[styles.title, { color: colors.text }]}>ANTRENMAN TAMAMLANDI</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Harika iş çıkardın!</Text>
 
         <View style={styles.statsRow}>
           <Stat value={durationLabel} label="Süre" />
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <Stat value={`${exerciseCount}`} label="Egzersiz" />
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <Stat value={`${setCount}`} label="Set" />
         </View>
       </View>
@@ -50,10 +51,11 @@ export function WorkoutComplete({
 }
 
 function Stat({ value, label }: { value: string; label: string }) {
+  const { colors } = useTheme();
   return (
     <View style={styles.stat}>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={[styles.statValue, { color: colors.text }]}>{value}</Text>
+      <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
     </View>
   );
 }
@@ -61,7 +63,6 @@ function Stat({ value, label }: { value: string; label: string }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
     paddingHorizontal: 24,
   },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
@@ -71,16 +72,14 @@ const styles = StyleSheet.create({
     borderRadius: 36,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.buttonElectricBlue,
     marginBottom: 24,
   },
   title: {
-    color: colors.textPrimary,
     fontSize: 20,
     fontWeight: "700",
     letterSpacing: 1,
   },
-  subtitle: { color: colors.textMuted, fontSize: 14, marginTop: 8 },
+  subtitle: { fontSize: 14, marginTop: 8 },
   statsRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -88,12 +87,11 @@ const styles = StyleSheet.create({
     gap: 20,
   },
   stat: { alignItems: "center" },
-  statValue: { color: colors.textPrimary, fontSize: 18, fontWeight: "700" },
-  statLabel: { color: colors.textMuted, fontSize: 11, marginTop: 4 },
+  statValue: { fontSize: 18, fontWeight: "700" },
+  statLabel: { fontSize: 11, marginTop: 4 },
   divider: {
     width: StyleSheet.hairlineWidth,
     height: 30,
-    backgroundColor: colors.border,
   },
   footer: { paddingBottom: 8 },
   doneGap: { marginTop: 2 },

@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
   currentWeight: number;
@@ -9,20 +9,21 @@ type Props = {
 };
 
 export function CurrentWeightCard({ currentWeight, monthlyChange }: Props) {
+  const { colors } = useTheme();
   const improving = monthlyChange < 0;
 
   return (
-    <View style={styles.card}>
-      <Text style={styles.label}>Güncel Kilo</Text>
-      <Text style={styles.value}>{currentWeight} kg</Text>
+    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <Text style={[styles.label, { color: colors.textSecondary }]}>Güncel Kilo</Text>
+      <Text style={[styles.value, { color: colors.text }]}>{currentWeight} kg</Text>
 
       <View style={styles.changeRow}>
         <Ionicons
           name={improving ? "arrow-down" : "arrow-up"}
           size={13}
-          color={colors.electricBlue}
+          color={colors.primary}
         />
-        <Text style={styles.changeText}>
+        <Text style={[styles.changeText, { color: colors.primary }]}>
           {Math.abs(monthlyChange)} kg bu ay
         </Text>
       </View>
@@ -35,13 +36,10 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     padding: 24,
     alignItems: "center",
-    backgroundColor: colors.cardBackground,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
-  label: { color: colors.textMuted, fontSize: 12, fontWeight: "600" },
+  label: { fontSize: 12, fontWeight: "600" },
   value: {
-    color: colors.textPrimary,
     fontSize: 40,
     fontWeight: "700",
     marginTop: 8,
@@ -52,5 +50,5 @@ const styles = StyleSheet.create({
     gap: 6,
     marginTop: 14,
   },
-  changeText: { color: colors.electricBlue, fontSize: 12, fontWeight: "600" },
+  changeText: { fontSize: 12, fontWeight: "600" },
 });

@@ -1,6 +1,6 @@
 import { StyleSheet, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
   current: number;
@@ -8,6 +8,7 @@ type Props = {
 };
 
 export function ProgressBar({ current, total }: Props) {
+  const { colors } = useTheme();
   return (
     <View style={styles.row}>
       {Array.from({ length: total }).map((_, index) => (
@@ -15,7 +16,7 @@ export function ProgressBar({ current, total }: Props) {
           key={index}
           style={[
             styles.segment,
-            index < current ? styles.segmentActive : styles.segmentInactive,
+            { backgroundColor: index < current ? colors.primary : colors.progressTrack },
           ]}
         />
       ))}
@@ -26,6 +27,4 @@ export function ProgressBar({ current, total }: Props) {
 const styles = StyleSheet.create({
   row: { flexDirection: "row", gap: 4 },
   segment: { flex: 1, height: 3, borderRadius: 2 },
-  segmentActive: { backgroundColor: colors.electricBlue },
-  segmentInactive: { backgroundColor: colors.progressTrack },
 });

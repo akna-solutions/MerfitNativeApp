@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { Reward } from "../types";
 import { RewardCard } from "./RewardCard";
 import { RewardDetailModal } from "./RewardDetailModal";
@@ -44,6 +44,7 @@ export function RewardsSection({
   currentRank,
   pointsToRewardZone,
 }: Props) {
+  const { colors } = useTheme();
   const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
   const countdown = useCountdown(resetAt);
 
@@ -53,14 +54,14 @@ export function RewardsSection({
   return (
     <View>
       <View style={styles.header}>
-        <Text style={styles.sectionTitle}>Bu Ayın Ödülleri</Text>
-        <Text style={styles.countdown}>{countdown} sonra yenilenir</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Bu Ayın Ödülleri</Text>
+        <Text style={[styles.countdown, { color: colors.textSecondary }]}>{countdown} sonra yenilenir</Text>
       </View>
-      <Text style={styles.subtitle}>
+      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
         İlk 10'a gir ve özel ödüller kazan.
       </Text>
 
-      <View style={styles.card}>
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
         {first ? (
           <View style={styles.first}>
             <RewardCard
@@ -100,15 +101,15 @@ export function RewardsSection({
           </View>
         ) : null}
 
-        <View style={styles.motivation}>
+        <View style={[styles.motivation, { borderTopColor: colors.border }]}>
           {inRewardZone ? (
-            <Text style={styles.motivationText}>
+            <Text style={[styles.motivationText, { color: colors.textSecondary }]}>
               You're #{currentRank} — you're in the reward zone.
             </Text>
           ) : (
-            <Text style={styles.motivationText}>
+            <Text style={[styles.motivationText, { color: colors.textSecondary }]}>
               You're #{currentRank}. Only{" "}
-              <Text style={styles.motivationAccent}>
+              <Text style={[styles.motivationAccent, { color: colors.primary }]}>
                 {pointsToRewardZone.toLocaleString()} points
               </Text>{" "}
               away from a reward.
@@ -131,10 +132,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  sectionTitle: { color: colors.textPrimary, fontSize: 16, fontWeight: "700" },
-  countdown: { color: colors.textMuted, fontSize: 11, fontWeight: "600" },
+  sectionTitle: { fontSize: 16, fontWeight: "700" },
+  countdown: { fontSize: 11, fontWeight: "600" },
   subtitle: {
-    color: colors.textMuted,
     fontSize: 12,
     marginTop: 4,
     marginBottom: 14,
@@ -142,9 +142,7 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 22,
     padding: 20,
-    backgroundColor: colors.cardBackground,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
   first: { alignItems: "center" },
   secondThirdRow: { flexDirection: "row", gap: 16, marginTop: 22 },
@@ -159,13 +157,11 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingTop: 16,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
   },
   motivationText: {
-    color: colors.textMuted,
     fontSize: 12,
     textAlign: "center",
     lineHeight: 18,
   },
-  motivationAccent: { color: colors.electricBlue, fontWeight: "700" },
+  motivationAccent: { fontWeight: "700" },
 });

@@ -1,17 +1,22 @@
 import { StyleSheet, TextInput, TextInputProps } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 export function OnboardingInput({ style, ...rest }: TextInputProps) {
+  const { colors, isDark } = useTheme();
   return (
     <TextInput
-      placeholderTextColor={colors.textMuted}
-      selectionColor={colors.electricBlue}
-      keyboardAppearance="dark"
+      placeholderTextColor={colors.textSecondary}
+      selectionColor={colors.primary}
+      keyboardAppearance={isDark ? "dark" : "light"}
       {...rest}
       // style en son birleştirilir ki caller'ın font boyutu gibi override'ları
       // taban stili (renk, arkaplan, yükseklik) SİLMESİN, sadece üstüne eklensin.
-      style={[styles.input, style]}
+      style={[
+        styles.input,
+        { borderColor: colors.border, backgroundColor: colors.inputBackground, color: colors.text },
+        style,
+      ]}
     />
   );
 }
@@ -21,12 +26,9 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: 14,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    backgroundColor: colors.inputBackground,
     paddingHorizontal: 20,
     paddingVertical: 0,
     fontSize: 26,
     fontWeight: "700",
-    color: colors.textPrimary,
   },
 });
