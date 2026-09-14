@@ -7,6 +7,13 @@ type Props = {
   isTimedOut: boolean;
   /** PersonalizationJob Failed durumundaysa true. */
   isFailed: boolean;
+  /**
+   * Backend'in PersonalizationJob.ErrorMessage alanindan gelen gercek basarisizlik sebebi
+   * (bkz. WorkoutPlanGenerator.cs). Yalnizca isFailed=true iken dolu olabilir. Teknik olmayan,
+   * kullaniciya gosterilebilecek kisa cumleler oldugundan (stack trace icermez) dogrudan
+   * gosterilir - boylece her hata icin ayni generic mesaj donulmez.
+   */
+  errorMessage: string | null;
   onRetry: () => void;
 };
 
@@ -14,7 +21,7 @@ type Props = {
  * Kayit sonrasi PersonalizationJob henuz Completed olmadiginda dashboard'da gosterilen
  * profesyonel yukleniyor/hata durumu. usePersonalizationStatus hook'u ile birlikte kullanilir.
  */
-export function PersonalizationPendingState({ isTimedOut, isFailed, onRetry }: Props) {
+export function PersonalizationPendingState({ isTimedOut, isFailed, errorMessage, onRetry }: Props) {
   const { colors } = useTheme();
 
   if (isFailed) {
@@ -25,7 +32,7 @@ export function PersonalizationPendingState({ isTimedOut, isFailed, onRetry }: P
         </View>
         <Text style={[styles.title, { color: colors.text }]}>Program hazırlanırken bir sorun oluştu.</Text>
         <Text style={[styles.description, { color: colors.textSecondary }]}>
-          Lütfen birazdan tekrar dene. Sorun devam ederse destek ekibimizle iletişime geç.
+          {errorMessage ?? "Lütfen birazdan tekrar dene. Sorun devam ederse destek ekibimizle iletişime geç."}
         </Text>
         <Text style={[styles.retryLink, { color: colors.primary }]} onPress={onRetry}>
           Tekrar dene

@@ -89,7 +89,15 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (status !== "signedIn") return;
+    if (status !== "signedIn") {
+      // Kullanici cikis yaptiginda (veya henuz giris yapmadiginda) onceki kullanicinin profilini
+      // bellekte tutmaya devam etmeyiz - aksi halde User A cikis yapip User B ayni oturumda giris
+      // yaptiginda, B'nin gercek profili GET /api/profile'dan donene kadar kisa bir sure A'nin
+      // (veya varsayilan mock) verisi gorunebilir (bkz. Faz raporu - "logout/login veri sizintisi").
+      setProfile(INITIAL_PROFILE_DATA);
+      return;
+    }
+
     let isMounted = true;
     setIsLoading(true);
     profileApi
@@ -97,9 +105,10 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       .then((response) => {
         if (isMounted) setProfile(mapToProfileData(response));
       })
-      .catch(() => {
+      .catch((error) => {
         // Sessizce yut - ekranlar INITIAL_PROFILE_DATA ile calismaya devam eder,
-        // kullanici bir sonraki ziyarette tekrar denenir.
+        // kullanici bir sonraki ziyarette tekrar denenir. Yine de debug icin logla.
+        console.warn("Profil yuklenemedi:", error);
       })
       .finally(() => {
         if (isMounted) setIsLoading(false);

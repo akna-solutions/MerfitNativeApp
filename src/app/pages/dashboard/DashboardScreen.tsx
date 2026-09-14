@@ -227,6 +227,7 @@ export function DashboardScreen() {
               <PersonalizationPendingState
                 isTimedOut={personalization.isTimedOut}
                 isFailed={personalization.isFailed}
+                errorMessage={personalization.errorMessage}
                 onRetry={personalization.refetch}
               />
             </Animated.View>

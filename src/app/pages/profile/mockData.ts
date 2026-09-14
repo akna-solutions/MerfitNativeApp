@@ -4,9 +4,9 @@ import { ProfileData } from "./types";
 // gerçek kullanıcı verisiyle değiştir. Component'ler ProfileData şeklini
 // beklediği için veri kaynağı değişse bile prop arayüzü aynı kalır.
 export const MOCK_PROFILE_DATA: ProfileData = {
-  firstName: "Mert",
-  username: "@mert",
-  email: "mert@example.com",
+  firstName: "",
+  username: "@",
+  email: "",
 
   age: 31,
   height: 180,

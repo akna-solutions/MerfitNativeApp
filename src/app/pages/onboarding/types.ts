@@ -34,6 +34,8 @@ export type Equipment =
 // Tek bir state objesi - backend'e gönderilecek onboarding profili.
 export type OnboardingData = {
   name: string;
+  /** Kullanicinin kendi sectigi kullanici adi (AccountStep). "@" ONEKI ICERMEZ. */
+  username: string;
   gender: Gender | null;
   age: string;
   height: string;
@@ -55,6 +57,7 @@ export type OnboardingData = {
 
 export const initialOnboardingData: OnboardingData = {
   name: "",
+  username: "",
   gender: null,
   age: "",
   height: "",

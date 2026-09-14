@@ -32,8 +32,15 @@ const TOTAL_STEPS = 11;
 /**
  * EquipmentStep'te secilen slug'lari (orn. "dumbbells") GET /api/equipment'ten gelen
  * slug->id listesiyle eslestirir. "none" (ekipman yok) yerel bir secenektir, backend'de
- * karsiligi olmadigindan gonderilmez. Henuz listeye eslenmeyen (orn. servis cekilemediyse)
- * ogeler sessizce atlanir - EquipmentIds backend'de opsiyonel oldugundan register'i bloklamaz.
+ * karsiligi olmadigindan gonderilmez.
+ *
+ * Eslesme normalize edilmis (trim + lowercase) slug'lar uzerinden yapilir: admin panelinden
+ * girilen Equipment.Slug degerleri buyuk/kucuk harf veya bosluk bakimindan burada sabitlenen
+ * degerlerden (dumbbells, barbell, ...) farkli olursa, birebir string karsilastirmasi TUM
+ * kullanicilarin ekipman secimini sessizce bos ("[]") gonderirdi - bu da programin her zaman
+ * "hic ekipman yok" varsayimiyla uretilmesine (ve kullaniciya yanilti bir "ekipman yetersiz"
+ * izlenimine) yol acabilirdi. Yine de listeye eslenmeyen ogeler register'i BLOKLAMAZ (EquipmentIds
+ * backend'de opsiyoneldir); yalnizca debug icin loglanir.
  */
 function mapEquipmentSlugsToIds(
   slugs: OnboardingData["equipment"],
@@ -41,11 +48,24 @@ function mapEquipmentSlugsToIds(
 ): number[] {
   if (equipmentList.length === 0) return [];
 
-  const idBySlug = new Map(equipmentList.map((item) => [item.slug, item.id]));
-  return slugs
-    .filter((slug) => slug !== "none")
-    .map((slug) => idBySlug.get(slug))
+  const normalize = (value: string) => value.trim().toLowerCase();
+  const idBySlug = new Map(equipmentList.map((item) => [normalize(item.slug), item.id]));
+
+  const selected = slugs.filter((slug) => slug !== "none");
+  const ids = selected
+    .map((slug) => idBySlug.get(normalize(slug)))
     .filter((id): id is number => id !== undefined);
+
+  if (ids.length < selected.length) {
+    console.warn(
+      "Bazi secilen ekipmanlar GET /api/equipment listesiyle eslesmedi (slug uyusmazligi olabilir):",
+      selected,
+      "mevcut slug'lar:",
+      equipmentList.map((item) => item.slug),
+    );
+  }
+
+  return ids;
 }
 
 /**
@@ -66,6 +86,7 @@ function toRegisterRequest(
 
   return {
     name: data.name.trim(),
+    username: data.username.trim(),
     email: data.email.trim(),
     password: data.password,
     confirmPassword: data.confirmPassword,
@@ -141,7 +162,22 @@ export function OnboardingContainer() {
     setSubmitError(null);
     setIsSubmitting(true);
     try {
-      await register(toRegisterRequest(data, equipmentList));
+      // Ekipman listesi mount'ta cekilirken basarisiz olduysa (orn. gecici ag hatasi) ve kullanici
+      // "Ekipman yok" disinda bir sey sectiyse, mapEquipmentSlugsToIds bos liste yuzunden secimi
+      // sessizce yok sayardi (bkz. dosya basindaki not) - bu da kullanicinin gercekte sectigi
+      // ekipmanin veritabanina hic kaydedilmemesine yol acardi. Gonderimden hemen once bir kez
+      // daha denemek, bu veri kaybini buyuk olcude onler.
+      let effectiveEquipmentList = equipmentList;
+      if (effectiveEquipmentList.length === 0 && data.equipment.some((slug) => slug !== "none")) {
+        try {
+          effectiveEquipmentList = await getEquipmentList();
+          setEquipmentList(effectiveEquipmentList);
+        } catch (error) {
+          console.warn("Ekipman listesi (gonderim oncesi tekrar deneme) alinamadi:", error);
+        }
+      }
+
+      await register(toRegisterRequest(data, effectiveEquipmentList));
       setShowSuccess(true);
     } catch (error) {
       console.error("Kayıt hatası:", error);
@@ -183,7 +219,9 @@ export function OnboardingContainer() {
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim());
   const passwordValid = data.password.length >= 6;
   const passwordsMatch = data.password === data.confirmPassword;
-  const accountValid = emailValid && passwordValid && passwordsMatch;
+  // Backend RegisterRequest.Username validasyonuyla (3-30 karakter, a-zA-Z0-9_) birebir ayni kural.
+  const usernameValid = /^[a-zA-Z0-9_]{3,30}$/.test(data.username.trim());
+  const accountValid = usernameValid && emailValid && passwordValid && passwordsMatch;
 
   switch (step) {
     case 1:
@@ -388,6 +426,8 @@ export function OnboardingContainer() {
           continueLoading={isSubmitting}
         >
           <AccountStep
+            username={data.username}
+            onUsernameChange={(value) => update("username", value)}
             email={data.email}
             onEmailChange={(value) => update("email", value)}
             password={data.password}
