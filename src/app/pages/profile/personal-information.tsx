@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { ProfileDetailShell } from "../../../shared/profile/components/ProfileDetailShell";
@@ -19,12 +19,22 @@ const GENDER_OPTIONS: Gender[] = [
 
 export default function PersonalInformationRoute() {
   const router = useRouter();
-  const { profile, updateProfile } = useProfile();
+  const { profile, updateProfile, isLoading } = useProfile();
   const { colors } = useTheme();
 
   const [firstName, setFirstName] = useState(profile.firstName);
   const [age, setAge] = useState(`${profile.age}`);
   const [gender, setGender] = useState<Gender>(profile.gender);
+
+  // bkz. edit.tsx - ekran, gercek profil yuklenmeden once mount olduysa formu gercek verilerle
+  // senkronize eder (aksi halde bos/varsayilan degerler sessizce kaydedilebilir).
+  useEffect(() => {
+    if (isLoading) return;
+    setFirstName(profile.firstName);
+    setAge(`${profile.age}`);
+    setGender(profile.gender);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading]);
 
   const handleSave = () => {
     updateProfile({ firstName, age: parseInt(age, 10) || profile.age, gender });

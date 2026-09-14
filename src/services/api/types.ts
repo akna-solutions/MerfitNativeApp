@@ -35,7 +35,8 @@ export type LoginRequest = {
  * Alanlar OnboardingData'daki (bkz. app/pages/onboarding/types.ts) adimlarla dogrudan doldurulur.
  */
 export type RegisterRequest = {
-  name: string;
+  firstName: string;
+  lastName: string;
   /**
    * Kullanicinin AccountStep'te kendi belirledigi kullanici adi. Backend UserProfile.Username'e
    * dogrudan yazilir (harf/rakam/alt cizgi, 3-30 karakter - bkz. RegisterRequest.cs validasyonu).
