@@ -1,7 +1,10 @@
+import { useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { MyPlanDay } from "../../../../services/api/types";
 import { useTheme } from "../../../../shared/theme/ThemeContext";
+import { normalizeWorkoutAttributeScores } from "../../../../shared/workoutAttributes/attributes";
+import { WorkoutAttributeBars } from "../../../../shared/workoutAttributes/WorkoutAttributeBars";
 
 type Props = {
   day: MyPlanDay;
@@ -15,8 +18,19 @@ type Props = {
  */
 export function TodayPersonalWorkoutCard({ day, onPress }: Props) {
   const { colors } = useTheme();
+  // Puanlar yalnizca bu gunun antrenmanina (day.workout) aittir; backend gondermiyorsa bos kalir.
+  const attributeScores = useMemo(
+    () => normalizeWorkoutAttributeScores(day.workout.attributeScores),
+    [day.workout.attributeScores],
+  );
+
   return (
-    <Pressable style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={onPress}>
+    <Pressable
+      style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`Bugünün antrenmanı: ${day.workout.title}. Antrenmana başla`}
+    >
       <View style={[styles.badge, { backgroundColor: colors.cardActive }]}>
         <Text style={[styles.badgeLabel, { color: colors.primary }]}>Bugün</Text>
       </View>
@@ -24,6 +38,14 @@ export function TodayPersonalWorkoutCard({ day, onPress }: Props) {
       <Text style={[styles.meta, { color: colors.textSecondary }]}>
         {day.workout.durationMin} dk · {day.exercises.length} egzersiz
       </Text>
+      <Text style={[styles.note, { color: colors.textSecondary }]}>
+        Hedefine göre hazırlanan kişisel programından.
+      </Text>
+      {attributeScores.length > 0 ? (
+        <View style={styles.attributes}>
+          <WorkoutAttributeBars scores={attributeScores} compact />
+        </View>
+      ) : null}
       <View style={[styles.button, { backgroundColor: colors.primary }]}>
         <Text style={styles.buttonLabel}>Antrenmana Başla</Text>
       </View>
@@ -47,6 +69,8 @@ const styles = StyleSheet.create({
   badgeLabel: { fontSize: 11, fontWeight: "700" },
   title: { fontSize: 18, fontWeight: "700" },
   meta: { fontSize: 13, marginTop: 4 },
+  note: { fontSize: 12, marginTop: 8 },
+  attributes: { marginTop: 16 },
   button: {
     marginTop: 18,
     borderRadius: 12,

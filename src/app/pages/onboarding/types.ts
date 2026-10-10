@@ -1,15 +1,11 @@
+import type { FitnessGoalCode } from "../../../services/api/types";
+
 export type Gender = "male" | "female";
 
 export type HeightUnit = "cm" | "ft_in";
 export type WeightUnit = "kg" | "lb";
 
-export type Goal =
-  | "lose_weight"
-  | "build_muscle"
-  | "get_stronger"
-  | "improve_fitness"
-  | "maintain_weight"
-  | "improve_endurance";
+export type Goal = FitnessGoalCode;
 
 export type ActivityLevel =
   | "sedentary"

@@ -2,6 +2,37 @@
 // birebir eslesecek sekilde elle senkronize tutulur (System.Text.Json varsayilan olarak
 // camelCase serialize eder).
 
+// ---- Fitness hedefi ----
+/**
+ * Kayit (RegisterRequest.goal) ve ilerleme (ProgressResponse.goalType) sozlesmesinde kullanilan
+ * hedef kodlari. Backend AuthService.ParseFitnessGoal bu degerleri Domain.Enums.FitnessGoal'a
+ * (LoseWeight, BuildMuscle, GetStronger, ImproveFitness, MaintainWeight, ImproveEndurance)
+ * esler; hedef agirlik profili (AttributeWeightsByGoal) tamamen backend'de secilir.
+ */
+export type FitnessGoalCode =
+  | "lose_weight"
+  | "build_muscle"
+  | "get_stronger"
+  | "improve_fitness"
+  | "maintain_weight"
+  | "improve_endurance";
+
+// ---- Antrenman ozellik puanlari ----
+/**
+ * Bir antrenmanin katalog seviyesindeki ozellik puani (0-100), ham API sekli.
+ * Backend'deki WorkoutAttributeScore entity'sine karsilik gelir; kullanicinin kisisel puani
+ * veya hedef uyum puani (FitScore) DEGILDIR.
+ *
+ * `attributeType`: admin DTO'su (AdminWorkoutAttributeScoreItemDto) enum adini metin olarak
+ * ("Hypertrophy" ...) doner. Projede JsonStringEnumConverter olmadigi icin enum dogrudan
+ * serialize edilirse sayi (0-5) gelir; iki bicim de shared/workoutAttributes'taki
+ * normalizeWorkoutAttributeScores ile karsilanir. Ekran bilesenleri bu ham tipi kullanmaz.
+ */
+export type WorkoutAttributeScoreDto = {
+  attributeType: string | number;
+  score: number;
+};
+
 // ---- Auth ----
 export type AuthResponse = {
   userId: number;
@@ -53,7 +84,7 @@ export type RegisterRequest = {
   heightInches?: number | null;
   weightUnit: "kg" | "lb";
   weight?: number | null;
-  goal?: string | null;
+  goal?: FitnessGoalCode | null;
   activityLevel?: string | null;
   trainingExperience?: string | null;
   trainingDays?: number | null;
@@ -134,6 +165,12 @@ export type MyPlanWorkout = {
   title: string;
   durationMin: number;
   imageUrl: string | null;
+  /**
+   * Antrenman ozellik puanlari. Backend (feature/workout-attribute-scoring dahil) bu alani
+   * customer DTO'larinda HENUZ DONMUYOR; eski yanitlarda alan hic gelmez. Gonderildiginde
+   * normalizeWorkoutAttributeScores ile okunur, eksik puan 0 sayilmaz.
+   */
+  attributeScores?: WorkoutAttributeScoreDto[] | null;
 };
 
 export type MyPlanExercise = {
@@ -233,6 +270,12 @@ export type WorkoutListItem = {
   equipment: string[];
   imageUrl: string | null;
   featured: boolean;
+  /**
+   * Antrenman ozellik puanlari. Backend (feature/workout-attribute-scoring dahil) bu alani
+   * customer DTO'larinda HENUZ DONMUYOR; eski yanitlarda alan hic gelmez. Gonderildiginde
+   * normalizeWorkoutAttributeScores ile okunur, eksik puan 0 sayilmaz.
+   */
+  attributeScores?: WorkoutAttributeScoreDto[] | null;
 };
 
 export type WorkoutExerciseSummary = {
@@ -425,13 +468,7 @@ export type FoodListQuery = {
 };
 
 // ---- Progress ----
-export type ProgressGoalType =
-  | "lose_weight"
-  | "build_muscle"
-  | "get_stronger"
-  | "improve_fitness"
-  | "maintain_weight"
-  | "improve_endurance";
+export type ProgressGoalType = FitnessGoalCode;
 
 export type ProgressWeightPoint = { date: string; weight: number };
 

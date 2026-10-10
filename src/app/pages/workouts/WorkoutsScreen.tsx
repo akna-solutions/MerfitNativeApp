@@ -217,6 +217,7 @@ export function WorkoutsScreen() {
                   <View style={styles.sectionGap}>
                     <WorkoutGrid
                       title="Sana özel öneriler"
+                      subtitle="Deneyim seviyene ve ekipmanlarına göre seçildi."
                       workouts={personalized}
                       onSelect={goToWorkoutDetail}
                     />
