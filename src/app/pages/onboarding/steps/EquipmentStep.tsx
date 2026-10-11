@@ -1,8 +1,9 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { OnboardingOption } from "../components/OnboardingOption";
 import { useTheme } from "../../../../shared/theme/ThemeContext";
-import { Equipment, TrainingLocation } from "../types";
+import { EquipmentListItem } from "../../../../services/api/types";
+import { EquipmentSelection, TrainingLocation } from "../types";
 
 const LOCATION_OPTIONS: { label: string; value: TrainingLocation }[] = [
   { label: "Spor salonu", value: "gym" },
@@ -10,31 +11,30 @@ const LOCATION_OPTIONS: { label: string; value: TrainingLocation }[] = [
   { label: "Açık alan", value: "outdoor" },
 ];
 
-const EQUIPMENT_OPTIONS: { label: string; value: Equipment }[] = [
-  { label: "Dambıl", value: "dumbbells" },
-  { label: "Halter", value: "barbell" },
-  { label: "Direnç bandı", value: "bands" },
-  { label: "Makineler", value: "machines" },
-  { label: "Barfiks barı", value: "pullup_bar" },
-  { label: "Kettlebell", value: "kettlebell" },
-  { label: "Ekipman yok", value: "none" },
-];
+export type EquipmentLoadStatus = "loading" | "ready" | "error";
 
 type Props = {
   location: TrainingLocation | null;
   onLocationChange: (value: TrainingLocation) => void;
-  equipment: Equipment[];
-  onEquipmentChange: (value: Equipment[]) => void;
+  /** GET /api/equipment'ten gelen liste; secenekler sabit kodlanmaz, buradan uretilir. */
+  options: EquipmentListItem[];
+  status: EquipmentLoadStatus;
+  onRetry: () => void;
+  equipment: EquipmentSelection[];
+  onEquipmentChange: (value: EquipmentSelection[]) => void;
 };
 
 export function EquipmentStep({
   location,
   onLocationChange,
+  options,
+  status,
+  onRetry,
   equipment,
   onEquipmentChange,
 }: Props) {
   const { colors } = useTheme();
-  const toggleEquipment = (value: Equipment) => {
+  const toggleEquipment = (value: EquipmentSelection) => {
     if (value === "none") {
       onEquipmentChange(equipment.includes("none") ? [] : ["none"]);
       return;
@@ -61,15 +61,31 @@ export function EquipmentStep({
       {location ? (
         <View style={styles.equipmentBlock}>
           <Text style={[styles.equipmentTitle, { color: colors.text }]}>Hangi ekipmanlara sahipsin?</Text>
-          {EQUIPMENT_OPTIONS.map((option) => (
+          {status === "loading" ? (
+            <Text style={{ color: colors.text }}>Ekipman listesi yükleniyor...</Text>
+          ) : null}
+          {status === "error" ? (
+            <Pressable onPress={onRetry}>
+              <Text style={{ color: colors.text }}>
+                Ekipman listesi alınamadı. Tekrar denemek için dokun.
+              </Text>
+            </Pressable>
+          ) : null}
+          {options.map((option) => (
             <OnboardingOption
-              key={option.value}
-              label={option.label}
+              key={option.id}
+              label={option.name}
               shape="check"
-              selected={equipment.includes(option.value)}
-              onPress={() => toggleEquipment(option.value)}
+              selected={equipment.includes(option.id)}
+              onPress={() => toggleEquipment(option.id)}
             />
           ))}
+          <OnboardingOption
+            label="Ekipman yok"
+            shape="check"
+            selected={equipment.includes("none")}
+            onPress={() => toggleEquipment("none")}
+          />
         </View>
       ) : null}
     </View>

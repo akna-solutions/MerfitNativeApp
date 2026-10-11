@@ -18,14 +18,11 @@ export type TrainingExperience = "beginner" | "intermediate" | "advanced";
 
 export type TrainingLocation = "gym" | "home" | "outdoor";
 
-export type Equipment =
-  | "dumbbells"
-  | "barbell"
-  | "bands"
-  | "machines"
-  | "pullup_bar"
-  | "kettlebell"
-  | "none";
+/**
+ * Secilen ekipmanlar: GET /api/equipment listesinden gelen sayisal Equipment.Id degerleri.
+ * "none" (Ekipman yok) yalnizca istemcide bulunan bir secenektir; backend'e gonderilmez.
+ */
+export type EquipmentSelection = number | "none";
 
 // Tek bir state objesi - backend'e gönderilecek onboarding profili.
 export type OnboardingData = {
@@ -46,7 +43,7 @@ export type OnboardingData = {
   trainingExperience: TrainingExperience | null;
   trainingDays: number | null;
   trainingLocation: TrainingLocation | null;
-  equipment: Equipment[];
+  equipment: EquipmentSelection[];
   email: string;
   password: string;
   confirmPassword: string;
