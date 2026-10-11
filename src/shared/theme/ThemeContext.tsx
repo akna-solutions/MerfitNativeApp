@@ -12,7 +12,6 @@ import { useColorScheme } from "react-native";
 
 import * as themeStorage from "../../services/theme/themeStorage";
 import { useAuth } from "../auth/AuthContext";
-import { INITIAL_PROFILE_DATA } from "../profile/mockData";
 import { useProfile } from "../profile/ProfileContext";
 import { AppearanceMode } from "../profile/types";
 import { ResolvedScheme, ThemeTokens, tokensFor } from "./tokens";
@@ -47,7 +46,7 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
  */
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const { status } = useAuth();
-  const { profile, updateProfile, isLoading: isProfileLoading } = useProfile();
+  const { profile, updateProfile, isLoading: isProfileLoading, isLoaded: isProfileLoaded, error: profileError } = useProfile();
   const deviceScheme = useColorScheme();
 
   const [mode, setModeState] = useState<AppearanceMode>("system");
@@ -65,18 +64,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // 2) Profil yuklendiginde (login veya mevcut oturumla acilis) backend'deki tercihi esas al.
-  // NOT: GET /api/profile basarisiz olursa ProfileContext hatayi sessizce yutar ve `profile`
-  // INITIAL_PROFILE_DATA referansinda kalir (bkz. ProfileContext.tsx) - bu durumda local/son
-  // bilinen tercihi ezmiyoruz (offline/API erisilemez senaryosu, bkz. AGENTS.md madde 14).
+  // NOT: GET /api/profile basarisiz olursa ProfileContext `error` doldurur ve `profile` bos/son
+  // basarili haliyle kalir (bkz. ProfileContext.tsx) - bu durumda local/son bilinen tercihi ezmiyoruz (offline/API erisilemez senaryosu, bkz. AGENTS.md madde 14).
   useEffect(() => {
     const fetchJustCompleted = status === "signedIn" && wasProfileLoadingRef.current && !isProfileLoading;
-    const fetchSucceeded = (profile as typeof INITIAL_PROFILE_DATA) !== INITIAL_PROFILE_DATA;
+    const fetchSucceeded = isProfileLoaded && profileError === null;
     if (fetchJustCompleted && fetchSucceeded) {
       setModeState(profile.appearance);
       themeStorage.setStoredThemeMode(profile.appearance);
     }
     wasProfileLoadingRef.current = isProfileLoading;
-  }, [status, isProfileLoading, profile]);
+  }, [status, isProfileLoading, isProfileLoaded, profileError, profile]);
 
   // 4) Logout: bir sonraki kullaniciya onceki tercih tasinmasin.
   useEffect(() => {

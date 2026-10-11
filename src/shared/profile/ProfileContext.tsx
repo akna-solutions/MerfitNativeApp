@@ -5,19 +5,28 @@ import {
     useContext,
     useEffect,
     useMemo,
+    useRef,
     useState,
 } from "react";
 
 import { useAuth } from "../auth/AuthContext";
+import { ApiError } from "../../services/api/client";
 import * as profileApi from "../../services/api/profile";
 import { ProfileResponse, UpdateProfileRequest as ApiUpdateProfileRequest } from "../../services/api/types";
-import { INITIAL_PROFILE_DATA } from "./mockData";
-import { ProfileData } from "./types";
+import { EMPTY_PROFILE_DATA } from "./mockData";
+import { ProfileData, TrainingLocation, Weekday, WEEKDAYS } from "./types";
 
 type ProfileContextValue = {
   profile: ProfileData;
   updateProfile: (patch: Partial<ProfileData>) => void;
+  /** GET /api/profile su an calisiyor mu. */
   isLoading: boolean;
+  /** Bu oturumda profil en az bir kez basariyla yuklendi mi. false iken `profile` bos veridir. */
+  isLoaded: boolean;
+  /** Son yukleme hatasi (kullaniciya gosterilecek metin), yoksa null. */
+  error: string | null;
+  /** Profili sunucudan yeniden yukler (orn. Profil sekmesine her donuste). */
+  reload: () => void;
 };
 
 const ProfileContext = createContext<ProfileContextValue | null>(null);
@@ -37,8 +46,12 @@ function mapToProfileData(response: ProfileResponse): ProfileData {
     goal: response.goal as ProfileData["goal"],
     experienceLevel: response.experienceLevel as ProfileData["experienceLevel"],
     equipment: response.equipment as ProfileData["equipment"],
+    trainingLocation: (response.trainingLocation ?? null) as TrainingLocation | null,
     workoutDurationMin: response.workoutDurationMin,
-    trainingDays: response.trainingDays as ProfileData["trainingDays"],
+    trainingDaysPerWeek: response.trainingDaysPerWeek ?? 0,
+    trainingDays: (response.trainingDays ?? []).filter((day): day is Weekday =>
+      WEEKDAYS.includes(day as Weekday),
+    ),
     unitSystem: response.unitSystem as ProfileData["unitSystem"],
     appearance: response.appearance as ProfileData["appearance"],
     notifications: response.notifications,
@@ -55,14 +68,16 @@ function mapToProfileData(response: ProfileResponse): ProfileData {
  */
 function deriveDateOfBirthFromAge(age: number, currentDateOfBirth: string): string {
   const currentYear = new Date().getFullYear();
-  const [, month, day] = currentDateOfBirth.split("-");
-  const mm = month ?? "01";
-  const dd = day ?? "01";
+  const [, month, day] = currentDateOfBirth ? currentDateOfBirth.split("-") : [];
+  const mm = month || "01";
+  const dd = day || "01";
   return `${currentYear - age}-${mm}-${dd}`;
 }
 
 function mapPatchToApiRequest(patch: Partial<ProfileData>, current: ProfileData): ApiUpdateProfileRequest {
-  const { age, ...rest } = patch;
+  // trainingDays ve equipment backend'de turetilen salt okunur alanlardir (aktif program /
+  // antrenman yeri); geri gonderilmezler.
+  const { age, trainingDays: _days, equipment: _equipment, ...rest } = patch;
   const request: ApiUpdateProfileRequest = { ...rest };
 
   if (age !== undefined && patch.dateOfBirth === undefined) {
@@ -84,53 +99,100 @@ function mapPatchToApiRequest(patch: Partial<ProfileData>, current: ProfileData)
  * hiç değişmeden aynı şekilde çalışmaya devam eder.
  */
 export function ProfileProvider({ children }: { children: ReactNode }) {
-  const { status } = useAuth();
-  const [profile, setProfile] = useState<ProfileData>(INITIAL_PROFILE_DATA);
+  const { status, sessionVersion, forceSignOut } = useAuth();
+  const [profile, setProfile] = useState<ProfileData>(EMPTY_PROFILE_DATA);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  // Yalnizca en son baslatilan istegin sonucu state'e yazilir (oturum degisimi / hizli yeniden
+  // yukleme sirasinda eski bir yanitin yeni kullanicinin profilini ezmemesi icin).
+  const requestIdRef = useRef(0);
+  // Devam eden PUT sayisi. Kaydet + geri don akisinda sekmeye donus reload'u PUT'tan once
+  // eski veriyi getirip kaydedilen degeri ezmesin diye, PUT bitene kadar reload atlanir
+  // (PUT yaniti zaten guncel profili dondurur).
+  const pendingWritesRef = useRef(0);
 
-  useEffect(() => {
-    if (status !== "signedIn") {
-      // Kullanici cikis yaptiginda (veya henuz giris yapmadiginda) onceki kullanicinin profilini
-      // bellekte tutmaya devam etmeyiz - aksi halde User A cikis yapip User B ayni oturumda giris
-      // yaptiginda, B'nin gercek profili GET /api/profile'dan donene kadar kisa bir sure A'nin
-      // (veya varsayilan mock) verisi gorunebilir (bkz. Faz raporu - "logout/login veri sizintisi").
-      setProfile(INITIAL_PROFILE_DATA);
-      return;
-    }
-
-    let isMounted = true;
+  const load = useCallback(() => {
+    const requestId = ++requestIdRef.current;
     setIsLoading(true);
+    setError(null);
     profileApi
       .getProfile()
       .then((response) => {
-        if (isMounted) setProfile(mapToProfileData(response));
+        if (requestId !== requestIdRef.current) return;
+        setProfile(mapToProfileData(response));
+        setIsLoaded(true);
       })
-      .catch((error) => {
-        // Sessizce yut - ekranlar INITIAL_PROFILE_DATA ile calismaya devam eder,
-        // kullanici bir sonraki ziyarette tekrar denenir. Yine de debug icin logla.
-        console.warn("Profil yuklenemedi:", error);
+      .catch((err) => {
+        if (requestId !== requestIdRef.current) return;
+        if (err instanceof ApiError && err.isUnauthorized) {
+          // Token suresi dolmus/gecersiz: client.ts token'lari temizledi; oturumu da kapat ki
+          // kullanici tekrar giris yapinca profil yeniden yuklensin.
+          forceSignOut();
+          return;
+        }
+        console.warn("Profil yuklenemedi:", err);
+        setError(
+          err instanceof Error && err.message
+            ? err.message
+            : "Profil bilgilerin yüklenemedi. Lütfen tekrar dene.",
+        );
       })
       .finally(() => {
-        if (isMounted) setIsLoading(false);
+        if (requestId === requestIdRef.current) setIsLoading(false);
       });
-    return () => {
-      isMounted = false;
-    };
-  }, [status]);
+  }, [forceSignOut]);
+
+  useEffect(() => {
+    // Her oturum degisiminde (login/register/logout) onceki kullanicinin profili hemen silinir;
+    // yeni oturumun gercek profili gelene kadar ekranlar yukleniyor durumunu gosterir.
+    requestIdRef.current++;
+    setProfile(EMPTY_PROFILE_DATA);
+    setIsLoaded(false);
+    setError(null);
+    setIsLoading(false);
+
+    if (status !== "signedIn") return;
+    load();
+  }, [status, sessionVersion, load]);
+
+  const reload = useCallback(() => {
+    if (status !== "signedIn" || pendingWritesRef.current > 0) return;
+    load();
+  }, [status, load]);
+
+  const profileRef = useRef(profile);
+  profileRef.current = profile;
 
   const updateProfile = useCallback((patch: Partial<ProfileData>) => {
-    setProfile((prev) => {
-      const next = { ...prev, ...patch };
-      profileApi.updateProfile(mapPatchToApiRequest(patch, prev)).catch(() => {
-        // Sessizce yut - bir sonraki GET /api/profile'da gercek durum senkronize olur.
+    const prev = profileRef.current;
+    const next = { ...prev, ...patch };
+    profileRef.current = next;
+    setProfile(next);
+
+    const requestId = requestIdRef.current;
+    pendingWritesRef.current++;
+    profileApi
+      .updateProfile(mapPatchToApiRequest(patch, prev))
+      .then((response) => {
+        // Sunucunun hesapladigi alanlar (yas, ekipman kategorisi, ...) icin yaniti esas al;
+        // arada oturum degistiyse veya profil yeniden yuklendiyse eski yaniti yok say.
+        if (requestId === requestIdRef.current) setProfile(mapToProfileData(response));
+      })
+      .catch((err) => {
+        console.warn("Profil kaydedilemedi:", err);
+        if (requestId === requestIdRef.current) {
+          setError("Değişikliklerin kaydedilemedi. Lütfen tekrar dene.");
+        }
+      })
+      .finally(() => {
+        pendingWritesRef.current--;
       });
-      return next;
-    });
   }, []);
 
   const value = useMemo(
-    () => ({ profile, updateProfile, isLoading }),
-    [profile, updateProfile, isLoading],
+    () => ({ profile, updateProfile, isLoading, isLoaded, error, reload }),
+    [profile, updateProfile, isLoading, isLoaded, error, reload],
   );
 
   return (

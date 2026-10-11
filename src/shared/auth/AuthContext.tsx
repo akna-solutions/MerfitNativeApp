@@ -24,6 +24,12 @@ type AuthContextValue = {
   logout: () => Promise<void>;
   /** 401 gibi durumlarda (bkz. services/api/client.ts) token'lar client tarafinda temizlendiginde cagirilir. */
   forceSignOut: () => void;
+  /**
+   * Her login/register/logout'ta artar. Status zaten "signedIn" iken (orn. suresi dolmus token ile
+   * acilip tekrar giris yapildiginda) status degismedigi icin, kullaniciya bagli veriyi yukleyen
+   * provider'lar (bkz. ProfileContext) bu sayaci da dinleyerek yeni oturumun verisini ceker.
+   */
+  sessionVersion: number;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -37,6 +43,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>("loading");
   const [userName, setUserName] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
+  const [sessionVersion, setSessionVersion] = useState(0);
+  const bumpSession = useCallback(() => setSessionVersion((v) => v + 1), []);
 
   useEffect(() => {
     let isMounted = true;
@@ -54,31 +62,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUserName(result.name || result.email);
     setUsername(result.username || null);
     setStatus("signedIn");
-  }, []);
+    bumpSession();
+  }, [bumpSession]);
 
   const register = useCallback(async (request: RegisterRequest) => {
     const result = await authApi.register(request);
     setUserName(result.name || result.email);
     setUsername(result.username || null);
     setStatus("signedIn");
-  }, []);
+    bumpSession();
+  }, [bumpSession]);
 
   const logout = useCallback(async () => {
     await authApi.logout();
     setUserName(null);
     setUsername(null);
     setStatus("signedOut");
-  }, []);
+    bumpSession();
+  }, [bumpSession]);
 
   const forceSignOut = useCallback(() => {
     setUserName(null);
     setUsername(null);
     setStatus("signedOut");
-  }, []);
+    bumpSession();
+  }, [bumpSession]);
 
   const value = useMemo(
-    () => ({ status, userName, username, login, register, logout, forceSignOut }),
-    [status, userName, username, login, register, logout, forceSignOut],
+    () => ({ status, userName, username, login, register, logout, forceSignOut, sessionVersion }),
+    [status, userName, username, login, register, logout, forceSignOut, sessionVersion],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

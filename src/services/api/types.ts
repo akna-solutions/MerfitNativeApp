@@ -628,7 +628,9 @@ export type ProfileResponse = {
   goal: string;
   experienceLevel: string;
   equipment: string;
+  trainingLocation: string | null;
   workoutDurationMin: number;
+  trainingDaysPerWeek: number;
   trainingDays: string[];
   unitSystem: string;
   appearance: string;
