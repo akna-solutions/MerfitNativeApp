@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { PremiumFeature } from "../../../shared/plus/components/PremiumFeature";
@@ -200,6 +201,21 @@ export function WorkoutsScreen() {
               <WorkoutEmptyState onClearFilters={clearAllFilters} />
             ) : (
               <>
+                <Pressable
+                  onPress={() => router.push("/pages/workout/plan" as never)}
+                  style={[styles.planLink, { backgroundColor: colors.card, borderColor: colors.border }]}
+                  accessibilityRole="button"
+                >
+                  <Ionicons name="calendar-outline" size={20} color={colors.primary} />
+                  <View style={styles.planLinkText}>
+                    <Text style={[styles.planLinkTitle, { color: colors.text }]}>Antrenman Programım</Text>
+                    <Text style={[styles.planLinkMeta, { color: colors.textSecondary }]}>
+                      Sana özel haftalık programını gör
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+                </Pressable>
+
                 {featured ? (
                   <FeaturedWorkout
                     workout={featured}
@@ -251,6 +267,18 @@ export function WorkoutsScreen() {
 }
 
 const styles = StyleSheet.create({
+  planLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: 16,
+    marginBottom: 20,
+  },
+  planLinkText: { flex: 1 },
+  planLinkTitle: { fontSize: 15, fontWeight: "700" },
+  planLinkMeta: { fontSize: 12, marginTop: 2 },
   root: { flex: 1 },
   flex: { flex: 1 },
   scrollContent: { paddingTop: 16, paddingBottom: 156 },

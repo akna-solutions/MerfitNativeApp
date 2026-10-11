@@ -16,7 +16,7 @@ import { usePlus } from "../../../shared/plus/PlusContext";
 import { useProfile } from "../../../shared/profile/ProfileContext";
 import { SettingsRow } from "../../../shared/profile/components/SettingsRow";
 import { SettingsSection } from "../../../shared/profile/components/SettingsSection";
-import { GOAL_LABELS, ProfileData } from "../../../shared/profile/types";
+import { GOAL_LABELS, ProfileData, WEEKDAY_SHORT_LABELS } from "../../../shared/profile/types";
 import { APPEARANCE_LABELS } from "../../../shared/theme/labels";
 import { useTheme } from "../../../shared/theme/ThemeContext";
 import { LogOutButton } from "./components/LogOutButton";
@@ -171,6 +171,16 @@ export function ProfileScreen() {
                 onPress={() =>
                   router.push("/pages/profile/body-measurements" as never)
                 }
+              />
+              <SettingsRow
+                icon="calendar-outline"
+                title="Antrenman Programım"
+                subtitle={
+                  profile.trainingDays.length > 0
+                    ? profile.trainingDays.map((day) => WEEKDAY_SHORT_LABELS[day]).join(" · ")
+                    : "Haftalık kişisel programın"
+                }
+                onPress={() => router.push("/pages/workout/plan" as never)}
               />
               <SettingsRow
                 icon="barbell-outline"
