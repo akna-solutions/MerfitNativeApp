@@ -17,7 +17,7 @@ import { SuccessScreen } from "./components/SuccessScreen";
 import { AccountStep } from "./steps/AccountStep";
 import { ActivityStep } from "./steps/ActivityStep";
 import { AgeStep } from "./steps/AgeStep";
-import { EquipmentStep } from "./steps/EquipmentStep";
+import { EquipmentLoadStatus, EquipmentStep } from "./steps/EquipmentStep";
 import { ExperienceStep } from "./steps/ExperienceStep";
 import { FrequencyStep } from "./steps/FrequencyStep";
 import { GenderStep } from "./steps/GenderStep";
@@ -31,52 +31,10 @@ import { initialOnboardingData, OnboardingData } from "./types";
 const TOTAL_STEPS = 12;
 
 /**
- * EquipmentStep'te secilen slug'lari (orn. "dumbbells") GET /api/equipment'ten gelen
- * slug->id listesiyle eslestirir. "none" (ekipman yok) yerel bir secenektir, backend'de
- * karsiligi olmadigindan gonderilmez.
- *
- * Eslesme normalize edilmis (trim + lowercase) slug'lar uzerinden yapilir: admin panelinden
- * girilen Equipment.Slug degerleri buyuk/kucuk harf veya bosluk bakimindan burada sabitlenen
- * degerlerden (dumbbells, barbell, ...) farkli olursa, birebir string karsilastirmasi TUM
- * kullanicilarin ekipman secimini sessizce bos ("[]") gonderirdi - bu da programin her zaman
- * "hic ekipman yok" varsayimiyla uretilmesine (ve kullaniciya yanilti bir "ekipman yetersiz"
- * izlenimine) yol acabilirdi. Yine de listeye eslenmeyen ogeler register'i BLOKLAMAZ (EquipmentIds
- * backend'de opsiyoneldir); yalnizca debug icin loglanir.
- */
-function mapEquipmentSlugsToIds(
-  slugs: OnboardingData["equipment"],
-  equipmentList: EquipmentListItem[],
-): number[] {
-  if (equipmentList.length === 0) return [];
-
-  const normalize = (value: string) => value.trim().toLowerCase();
-  const idBySlug = new Map(equipmentList.map((item) => [normalize(item.slug), item.id]));
-
-  const selected = slugs.filter((slug) => slug !== "none");
-  const ids = selected
-    .map((slug) => idBySlug.get(normalize(slug)))
-    .filter((id): id is number => id !== undefined);
-
-  if (ids.length < selected.length) {
-    console.warn(
-      "Bazi secilen ekipmanlar GET /api/equipment listesiyle eslesmedi (slug uyusmazligi olabilir):",
-      selected,
-      "mevcut slug'lar:",
-      equipmentList.map((item) => item.slug),
-    );
-  }
-
-  return ids;
-}
-
-/**
  * OnboardingData (RN state) -> RegisterRequest (backend DTO). Sayisal alanlar backend'de
  * decimal/int oldugundan bos string'ler yerine null gonderiyoruz.
  */
-function toRegisterRequest(
-  data: OnboardingData,
-  equipmentList: EquipmentListItem[],
-): RegisterRequest {
+function toRegisterRequest(data: OnboardingData): RegisterRequest {
   const age = parseInt(data.age, 10);
   const heightCm = data.height ? parseFloat(data.height) : null;
   const heightFeet = data.heightFeet ? parseInt(data.heightFeet, 10) : null;
@@ -105,7 +63,8 @@ function toRegisterRequest(
     trainingExperience: data.trainingExperience,
     trainingDays: data.trainingDays,
     trainingLocation: data.trainingLocation,
-    equipmentIds: mapEquipmentSlugsToIds(data.equipment, equipmentList),
+    // "none" yalnizca istemci secenegidir; backend'e yalnizca gercek Equipment.Id'leri gider.
+    equipmentIds: data.equipment.filter((item): item is number => item !== "none"),
   };
 }
 
@@ -118,23 +77,28 @@ export function OnboardingContainer() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [equipmentList, setEquipmentList] = useState<EquipmentListItem[]>([]);
+  const [equipmentStatus, setEquipmentStatus] = useState<EquipmentLoadStatus>("loading");
+  const [equipmentAttempt, setEquipmentAttempt] = useState(0);
 
-  // Ekipman listesini akisin basinda, arka planda cekiyoruz; boylece kullanici EquipmentStep'e
-  // (adim 10) geldiginde ve daha onemlisi "Hesap oluştur"a bastiginda liste zaten hazir olur.
-  // Cekme basarisiz olursa sessizce yutuyoruz - equipmentIds bos gider, register yine de calisir.
+  // Ekipman listesini akisin basinda cekiyoruz; EquipmentStep secenekleri bu listeden uretir
+  // (sabit kodlanmis slug'lar yok). Basarisiz olursa kullanici adimda tekrar deneyebilir.
   useEffect(() => {
     let isMounted = true;
+    setEquipmentStatus("loading");
     getEquipmentList()
       .then((list) => {
-        if (isMounted) setEquipmentList(list);
+        if (!isMounted) return;
+        setEquipmentList(list);
+        setEquipmentStatus("ready");
       })
       .catch((error) => {
         console.warn("Ekipman listesi alinamadi:", error);
+        if (isMounted) setEquipmentStatus("error");
       });
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [equipmentAttempt]);
 
   const update = <K extends keyof OnboardingData>(
     key: K,
@@ -164,22 +128,7 @@ export function OnboardingContainer() {
     setSubmitError(null);
     setIsSubmitting(true);
     try {
-      // Ekipman listesi mount'ta cekilirken basarisiz olduysa (orn. gecici ag hatasi) ve kullanici
-      // "Ekipman yok" disinda bir sey sectiyse, mapEquipmentSlugsToIds bos liste yuzunden secimi
-      // sessizce yok sayardi (bkz. dosya basindaki not) - bu da kullanicinin gercekte sectigi
-      // ekipmanin veritabanina hic kaydedilmemesine yol acardi. Gonderimden hemen once bir kez
-      // daha denemek, bu veri kaybini buyuk olcude onler.
-      let effectiveEquipmentList = equipmentList;
-      if (effectiveEquipmentList.length === 0 && data.equipment.some((slug) => slug !== "none")) {
-        try {
-          effectiveEquipmentList = await getEquipmentList();
-          setEquipmentList(effectiveEquipmentList);
-        } catch (error) {
-          console.warn("Ekipman listesi (gonderim oncesi tekrar deneme) alinamadi:", error);
-        }
-      }
-
-      await register(toRegisterRequest(data, effectiveEquipmentList));
+      await register(toRegisterRequest(data));
       setShowSuccess(true);
     } catch (error) {
       console.error("Kayıt hatası:", error);
@@ -425,11 +374,19 @@ export function OnboardingContainer() {
           title="Nerede antrenman yapıyorsun?"
           onBack={goBack}
           onContinue={goNext}
-          continueDisabled={!data.trainingLocation}
+          continueDisabled={
+            !data.trainingLocation ||
+            equipmentStatus === "loading" ||
+            // Liste alinamadiysa gercek secim yapilamaz; yalnizca "Ekipman yok" ile devam edilebilir.
+            (equipmentStatus === "error" && !data.equipment.includes("none"))
+          }
         >
           <EquipmentStep
             location={data.trainingLocation}
             onLocationChange={(value) => update("trainingLocation", value)}
+            options={equipmentList}
+            status={equipmentStatus}
+            onRetry={() => setEquipmentAttempt((n) => n + 1)}
             equipment={data.equipment}
             onEquipmentChange={(value) => update("equipment", value)}
           />

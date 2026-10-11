@@ -89,15 +89,14 @@ export type RegisterRequest = {
   trainingExperience?: string | null;
   trainingDays?: number | null;
   trainingLocation?: string | null;
-  /** Backend'de Equipment tablosunun sayisal Id'lerini bekler; EquipmentStep'te secilen
-   * slug'lar GET /api/equipment listesiyle eslestirilip buraya doldurulur (bkz.
-   * OnboardingContainer.tsx::mapEquipmentSlugsToIds). */
+  /** Backend'de Equipment tablosunun sayisal Id'lerini bekler; EquipmentStep, secenekleri
+   * GET /api/equipment'ten urettigi icin secilen Id'ler dogrudan buraya konur. */
   equipmentIds?: number[] | null;
 };
 
 // ---- Equipment ----
-/** GET /api/equipment - onboarding'deki EquipmentStep slug'larini (dumbbells, barbell, ...)
- * backend'in sayisal Equipment.Id'lerine eslemek icin kullanilir. */
+/** GET /api/equipment - onboarding'deki EquipmentStep secenekleri bu listeden uretilir;
+ * secilen ogelerin `id` degerleri register isteginde equipmentIds olarak gonderilir. */
 export type EquipmentListItem = {
   id: number;
   name: string;
