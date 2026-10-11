@@ -35,7 +35,7 @@ import { WorkoutComplete } from "./components/WorkoutComplete";
 import { WorkoutProgress } from "./components/WorkoutProgress";
 import { WorkoutTopBar } from "./components/WorkoutTopBar";
 import { useTheme } from "../../../shared/theme/ThemeContext";
-import { formatKg } from "../../../shared/workoutHistory/format";
+import { estimateWorkoutCalories, formatKg } from "../../../shared/workoutHistory/format";
 import { Exercise, ExerciseProgress, WorkoutPhase, WorkoutSession } from "./types";
 import { WorkoutSummary } from "./WorkoutSummary";
 
@@ -298,6 +298,8 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
       await flushSetLogs(sessionId);
       const summary = await completeWorkoutSession(sessionId, {
         durationSeconds: Math.max(1, elapsedSec),
+        // Ozet ekranindaki tahminle ayni deger; gonderilmezse dashboard'daki kalori hep 0 kaliyordu.
+        caloriesBurned: estimateWorkoutCalories(setLogs.current.size),
       });
       setPersonalRecords(
         summary.newPersonalRecords.map((pr) => ({

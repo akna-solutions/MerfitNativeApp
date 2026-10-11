@@ -16,12 +16,13 @@ export function ProgressCard({ progress }: Props) {
 
   return (
     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-      <Text style={[styles.title, { color: colors.text }]}>Bugünkü İlerleme</Text>
+      {/* Sayac haftaliktir: bu hafta antrenman yapilan gun / haftalik hedef gun sayisi. */}
+      <Text style={[styles.title, { color: colors.text }]}>Bu Haftaki İlerleme</Text>
 
       <Text style={[styles.count, { color: colors.text }]}>
         {progress.workoutsCompleted}{" "}
         <Text style={[styles.countMuted, { color: colors.textSecondary }]}>
-          / {progress.workoutsTarget} antrenman
+          / {progress.workoutsTarget} gün
         </Text>
       </Text>
 
@@ -32,7 +33,7 @@ export function ProgressCard({ progress }: Props) {
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
           <Text style={[styles.statValue, { color: colors.text }]}>{progress.calories}</Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>kcal</Text>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>kcal bugün</Text>
         </View>
       </View>
     </View>
