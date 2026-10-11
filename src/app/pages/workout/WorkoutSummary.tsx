@@ -3,6 +3,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { OnboardingButton } from "../onboarding/components/OnboardingButton";
 import { useTheme } from "../../../shared/theme/ThemeContext";
+import type { SaveStatus } from "./ActiveWorkout";
 import { Exercise, ExerciseProgress } from "./types";
 
 type Props = {
@@ -11,7 +12,10 @@ type Props = {
   exercises: Exercise[];
   progress: Record<string, ExerciseProgress>;
   personalRecords: { exerciseName: string; weight: number; reps: number }[];
+  saveStatus: SaveStatus;
   onDone: () => void;
+  /** Kayıt tamamlandıysa antrenman geçmişine götürür. */
+  onViewHistory?: () => void;
 };
 
 export function WorkoutSummary({
@@ -20,7 +24,9 @@ export function WorkoutSummary({
   exercises,
   progress,
   personalRecords,
+  saveStatus,
   onDone,
+  onViewHistory,
 }: Props) {
   const { colors } = useTheme();
   const setCount = Object.values(progress).reduce(
@@ -67,7 +73,12 @@ export function WorkoutSummary({
       ) : null}
 
       <View style={styles.footer}>
-        <OnboardingButton label="Bitti" onPress={onDone} />
+        <OnboardingButton label="Bitti" onPress={onDone} isLoading={saveStatus === "saving"} />
+        {onViewHistory ? (
+          <View style={styles.historyGap}>
+            <OnboardingButton label="Antrenman Geçmişi" onPress={onViewHistory} variant="text" />
+          </View>
+        ) : null}
       </View>
     </SafeAreaView>
   );
@@ -141,4 +152,5 @@ const styles = StyleSheet.create({
   },
   prValue: { fontSize: 12, marginTop: 3 },
   footer: { marginTop: "auto", paddingBottom: 16 },
+  historyGap: { marginTop: 8 },
 });

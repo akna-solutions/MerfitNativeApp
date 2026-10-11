@@ -1,14 +1,18 @@
 import { Ionicons } from "@expo/vector-icons";
-import { StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { OnboardingButton } from "../../onboarding/components/OnboardingButton";
 import { useTheme } from "../../../../shared/theme/ThemeContext";
+import type { SaveStatus } from "../ActiveWorkout";
 
 type Props = {
   durationLabel: string;
   exerciseCount: number;
   setCount: number;
+  saveStatus: SaveStatus;
+  saveError?: string | null;
+  onRetrySave: () => void;
   onViewSummary: () => void;
   onDone: () => void;
 };
@@ -17,6 +21,9 @@ export function WorkoutComplete({
   durationLabel,
   exerciseCount,
   setCount,
+  saveStatus,
+  saveError,
+  onRetrySave,
   onViewSummary,
   onDone,
 }: Props) {
@@ -38,12 +45,42 @@ export function WorkoutComplete({
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <Stat value={`${setCount}`} label="Set" />
         </View>
+
+        <View style={styles.saveRow}>
+          {saveStatus === "saving" ? (
+            <>
+              <ActivityIndicator size="small" color={colors.textSecondary} />
+              <Text style={[styles.saveText, { color: colors.textSecondary }]}>Kaydediliyor…</Text>
+            </>
+          ) : saveStatus === "saved" ? (
+            <>
+              <Ionicons name="cloud-done-outline" size={16} color={colors.textSecondary} />
+              <Text style={[styles.saveText, { color: colors.textSecondary }]}>
+                Antrenman geçmişine kaydedildi
+              </Text>
+            </>
+          ) : saveStatus === "error" ? (
+            <View style={styles.saveErrorBlock}>
+              <Text style={[styles.saveText, styles.centerText, { color: colors.danger }]}>
+                {saveError ?? "Antrenman kaydedilemedi."}
+              </Text>
+              <Pressable onPress={onRetrySave} hitSlop={8}>
+                <Text style={[styles.retry, { color: colors.primary }]}>Tekrar dene</Text>
+              </Pressable>
+            </View>
+          ) : null}
+        </View>
       </View>
 
       <View style={styles.footer}>
         <OnboardingButton label="Özeti Gör" onPress={onViewSummary} />
         <View style={styles.doneGap}>
-          <OnboardingButton label="Bitti" onPress={onDone} variant="text" />
+          <OnboardingButton
+            label="Bitti"
+            onPress={onDone}
+            variant="text"
+            disabled={saveStatus === "saving"}
+          />
         </View>
       </View>
     </SafeAreaView>
@@ -80,6 +117,11 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   subtitle: { fontSize: 14, marginTop: 8 },
+  saveRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 28, minHeight: 20 },
+  saveText: { fontSize: 13 },
+  saveErrorBlock: { alignItems: "center", gap: 8, paddingHorizontal: 12 },
+  centerText: { textAlign: "center" },
+  retry: { fontSize: 14, fontWeight: "700" },
   statsRow: {
     flexDirection: "row",
     alignItems: "center",

@@ -10,7 +10,22 @@ type Props = {
   onWeightChange: (value: string) => void;
   reps: string;
   onRepsChange: (value: string) => void;
+  /** Vücut ağırlığı egzersizi: ağırlık alanı opsiyoneldir (ek ağırlık). */
+  weightOptional?: boolean;
+  /** "Geçen sefer" referansı (örn. "40 kg × 10"); yoksa gösterilmez. */
+  lastSetLabel?: string | null;
+  /** Kişisel rekor (örn. "50 kg × 5"); yoksa gösterilmez. */
+  bestLabel?: string | null;
+  error?: string | null;
 };
+
+/** Türkçe klavyede ondalık ayırıcı virgül gelir; "42,5" -> "42.5" ve tek bir nokta bırakır. */
+function sanitizeWeight(text: string) {
+  const normalized = text.replace(/,/g, ".").replace(/[^0-9.]/g, "");
+  const [whole, ...rest] = normalized.split(".");
+  const decimals = rest.join("").slice(0, 2);
+  return rest.length > 0 ? `${whole.slice(0, 4)}.${decimals}` : whole.slice(0, 4);
+}
 
 export function SetInput({
   setNumber,
@@ -19,6 +34,10 @@ export function SetInput({
   onWeightChange,
   reps,
   onRepsChange,
+  weightOptional = false,
+  lastSetLabel,
+  bestLabel,
+  error,
 }: Props) {
   const { colors } = useTheme();
   return (
@@ -29,14 +48,14 @@ export function SetInput({
 
       <View style={styles.row}>
         <View style={styles.field}>
-          <Text style={[styles.label, { color: colors.textSecondary }]}>Ağırlık (kg)</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>
+            {weightOptional ? "Ek ağırlık (kg)" : "Ağırlık (kg)"}
+          </Text>
           <OnboardingInput
             value={weight}
-            onChangeText={(text) =>
-              onWeightChange(text.replace(/[^0-9.]/g, ""))
-            }
+            onChangeText={(text) => onWeightChange(sanitizeWeight(text))}
             keyboardType="decimal-pad"
-            placeholder="0"
+            placeholder={weightOptional ? "Yok" : "kg"}
             style={styles.input}
           />
         </View>
@@ -53,6 +72,27 @@ export function SetInput({
           />
         </View>
       </View>
+
+      {error ? (
+        <Text style={[styles.error, { color: colors.danger }]} accessibilityRole="alert">
+          {error}
+        </Text>
+      ) : null}
+
+      {lastSetLabel || bestLabel ? (
+        <View style={styles.history}>
+          {lastSetLabel ? (
+            <Text style={[styles.historyText, { color: colors.textSecondary }]}>
+              Geçen sefer: <Text style={{ color: colors.text }}>{lastSetLabel}</Text>
+            </Text>
+          ) : null}
+          {bestLabel ? (
+            <Text style={[styles.historyText, { color: colors.textSecondary }]}>
+              Rekorun: <Text style={{ color: colors.text }}>{bestLabel}</Text>
+            </Text>
+          ) : null}
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -79,4 +119,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   input: { textAlign: "center", fontSize: 22 },
+  error: { fontSize: 12, fontWeight: "600", textAlign: "center", marginTop: 12 },
+  history: { marginTop: 14, gap: 4, alignItems: "center" },
+  historyText: { fontSize: 12 },
 });

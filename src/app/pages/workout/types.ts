@@ -9,6 +9,11 @@ export type Exercise = {
   // ExerciseVideo görsel + "Egzersiz gösterimi" fallback gösterir.
   video: number | string | null;
   imageUrl: string;
+  /** false ise vucut agirligi egzersizi: agirlik opsiyoneldir. */
+  requiresWeight: boolean;
+  /** En son tamamlanan oturumdaki setler (set sirasina gore); hic yapilmadiysa bos. */
+  lastSets: { weight: number | null; reps: number | null }[];
+  previousBest: { weight: number; reps: number } | null;
 };
 
 export type WorkoutSession = {

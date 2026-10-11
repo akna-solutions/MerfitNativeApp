@@ -8,6 +8,8 @@ import { WorkoutAttributeBars } from "../../../../shared/workoutAttributes/Worko
 
 type Props = {
   day: MyPlanDay;
+  /** Bugunun plan antrenmani zaten tamamlandiysa kart "tamamlandi" durumunu gosterir. */
+  isCompletedToday?: boolean;
   onPress: () => void;
 };
 
@@ -16,7 +18,7 @@ type Props = {
  * gercek kisisel planindan (GET /api/my-plan/today) gelen veriyle gosterir. Faz 2 gereksinimi:
  * "Bugünün antrenmanı gerçek kişisel plan üzerinden gelmeli."
  */
-export function TodayPersonalWorkoutCard({ day, onPress }: Props) {
+export function TodayPersonalWorkoutCard({ day, isCompletedToday = false, onPress }: Props) {
   const { colors } = useTheme();
   // Puanlar yalnizca bu gunun antrenmanina (day.workout) aittir; backend gondermiyorsa bos kalir.
   const attributeScores = useMemo(
@@ -29,10 +31,16 @@ export function TodayPersonalWorkoutCard({ day, onPress }: Props) {
       style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`Bugünün antrenmanı: ${day.workout.title}. Antrenmana başla`}
+      accessibilityLabel={
+        isCompletedToday
+          ? `Bugünün antrenmanı tamamlandı: ${day.workout.title}. Tekrar başla`
+          : `Bugünün antrenmanı: ${day.workout.title}. Antrenmana başla`
+      }
     >
       <View style={[styles.badge, { backgroundColor: colors.cardActive }]}>
-        <Text style={[styles.badgeLabel, { color: colors.primary }]}>Bugün</Text>
+        <Text style={[styles.badgeLabel, { color: colors.primary }]}>
+          {isCompletedToday ? "Bugün · Tamamlandı ✓" : "Bugün"}
+        </Text>
       </View>
       <Text style={[styles.title, { color: colors.text }]}>{day.workout.title}</Text>
       <Text style={[styles.meta, { color: colors.textSecondary }]}>
@@ -46,9 +54,15 @@ export function TodayPersonalWorkoutCard({ day, onPress }: Props) {
           <WorkoutAttributeBars scores={attributeScores} compact />
         </View>
       ) : null}
-      <View style={[styles.button, { backgroundColor: colors.primary }]}>
-        <Text style={styles.buttonLabel}>Antrenmana Başla</Text>
-      </View>
+      {isCompletedToday ? (
+        <View style={[styles.button, styles.buttonDone, { borderColor: colors.border }]}>
+          <Text style={[styles.buttonLabel, { color: colors.text }]}>Tekrar Başla</Text>
+        </View>
+      ) : (
+        <View style={[styles.button, { backgroundColor: colors.primary }]}>
+          <Text style={styles.buttonLabel}>Antrenmana Başla</Text>
+        </View>
+      )}
     </Pressable>
   );
 }
@@ -77,5 +91,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: "center",
   },
+  buttonDone: { borderWidth: StyleSheet.hairlineWidth },
   buttonLabel: { color: "#FFFFFF", fontSize: 14, fontWeight: "700" },
 });
