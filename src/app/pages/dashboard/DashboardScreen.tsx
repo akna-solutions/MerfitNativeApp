@@ -178,6 +178,10 @@ export function DashboardScreen() {
     } as never);
   };
 
+  const goToWorkoutPlan = () => {
+    router.push("/pages/workout/plan" as never);
+  };
+
   const goToWorkoutHistory = () => {
     router.push("/pages/workout/history" as never);
   };
@@ -263,6 +267,19 @@ export function DashboardScreen() {
                 onPress={goToPersonalWorkout}
               />
             </Animated.View>
+          ) : null}
+
+          {todayPlan?.hasActivePlan ? (
+            <View style={[styles.padded, styles.gapTop]}>
+              <Pressable
+                onPress={goToWorkoutPlan}
+                style={[styles.historyLink, { backgroundColor: colors.card, borderColor: colors.border }]}
+                accessibilityRole="button"
+              >
+                <Text style={[styles.historyLinkTitle, { color: colors.text }]}>Antrenman Programım</Text>
+                <Text style={[styles.historyLinkMeta, { color: colors.primary }]}>Haftayı gör</Text>
+              </Pressable>
+            </View>
           ) : null}
 
           {data.hasCompletedFirstWorkout ? (
