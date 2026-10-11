@@ -2,6 +2,8 @@ import { apiRequest } from "./client";
 import {
   CompleteWorkoutSessionRequest,
   LogWorkoutSetRequest,
+  PagedResult,
+  WorkoutHistoryItem,
   WorkoutSession,
   WorkoutSessionExercise,
   WorkoutSessionSummary,
@@ -19,9 +21,21 @@ export async function startWorkoutSession(
   });
 }
 
+/** GET /api/workout-sessions - tamamlanan antrenmanlarin gecmisi (en yeniden eskiye, sayfali). */
+export async function getWorkoutHistory(
+  page = 1,
+  pageSize = 20,
+  signal?: AbortSignal,
+): Promise<PagedResult<WorkoutHistoryItem>> {
+  return apiRequest<PagedResult<WorkoutHistoryItem>>("/api/workout-sessions", {
+    query: { page, pageSize },
+    signal,
+  });
+}
+
 /** GET /api/workout-sessions/{id} - oturumun guncel durumunu getirir (ekran yeniden acildiginda senkronize etmek icin). */
-export async function getWorkoutSession(sessionId: number): Promise<WorkoutSession> {
-  return apiRequest<WorkoutSession>(`/api/workout-sessions/${sessionId}`);
+export async function getWorkoutSession(sessionId: number, signal?: AbortSignal): Promise<WorkoutSession> {
+  return apiRequest<WorkoutSession>(`/api/workout-sessions/${sessionId}`, { signal });
 }
 
 /** POST /api/workout-sessions/{id}/exercises/{sessionExerciseId}/sets - tek bir seti loglar. */

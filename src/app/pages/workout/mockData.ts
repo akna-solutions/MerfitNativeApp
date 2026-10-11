@@ -26,6 +26,9 @@ function exercise(
     restSec,
     video: null,
     imageUrl: IMAGES[imageIndex % IMAGES.length],
+    requiresWeight: true,
+    lastSets: [],
+    previousBest: null,
   };
 }
 

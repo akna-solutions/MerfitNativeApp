@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Animated, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -69,6 +69,7 @@ export function ProgressScreen() {
       setData(mapToProgressData(response));
       setScore(response.score);
     } catch (error) {
+      if (signal?.aborted) return;
       if (error instanceof ApiError && error.isUnauthorized) {
         router.replace("/pages/login");
         return;
@@ -83,12 +84,15 @@ export function ProgressScreen() {
     }
   }, [router]);
 
-  useEffect(() => {
-    setIsLoading(true);
-    const controller = new AbortController();
-    loadProgress(timeRange, controller.signal);
-    return () => controller.abort();
-  }, [timeRange, loadProgress]);
+  // Sekme yeniden mount edilmedigi icin her odaklanmada (orn. antrenman bittikten sonra) veriyi
+  // tazeliyoruz; ilk yukleme disinda tam ekran spinner gosterilmez.
+  useFocusEffect(
+    useCallback(() => {
+      const controller = new AbortController();
+      loadProgress(timeRange, controller.signal);
+      return () => controller.abort();
+    }, [timeRange, loadProgress]),
+  );
 
   const chartData = useMemo(() => data?.weightHistory ?? [], [data]);
 
@@ -267,7 +271,13 @@ export function ProgressScreen() {
               </View>
 
               <View style={[styles.padded, styles.sectionGap]}>
-                <RecentActivity items={data.recentActivity} />
+                <RecentActivity
+                  items={data.recentActivity}
+                  onSelect={(id) =>
+                    router.push({ pathname: "/pages/workout/history/[id]", params: { id } } as never)
+                  }
+                  onViewAll={() => router.push("/pages/workout/history" as never)}
+                />
               </View>
 
               <View style={[styles.padded, styles.sectionGap]}>

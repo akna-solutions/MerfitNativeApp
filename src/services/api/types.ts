@@ -206,6 +206,8 @@ export type MyTodayWorkoutPlanResponse = {
   hasActivePlan: boolean;
   day: MyPlanDay | null;
   workoutPlanDayId: number | null;
+  /** Bugunun plan antrenmani bugun zaten tamamlandiysa true (eski backend gondermiyorsa undefined). */
+  isCompletedToday?: boolean;
 };
 
 // ---- My Nutrition Plan (kisisel beslenme programi - Faz 2) ----
@@ -351,6 +353,31 @@ export type WorkoutSessionExercise = {
   imageUrl: string | null;
   completedSets: WorkoutSetLogEntry[];
   previousBest: PreviousBest | null;
+  /** true: harici agirlik gerektirir, 0/bos agirlik kabul edilmez. false: vucut agirligi (agirlik opsiyonel). */
+  requiresWeight: boolean;
+  /** Bu egzersizin en son tamamlanan oturumdaki setleri ("Geçen sefer"); hic yapilmadiysa null. */
+  lastPerformance: LastPerformance | null;
+};
+
+export type LastPerformance = {
+  sessionId: number;
+  completedAt: string;
+  sets: WorkoutSetLogEntry[];
+};
+
+/** GET /api/workout-sessions - antrenman gecmisi listesindeki tek bir tamamlanmis oturum. */
+export type WorkoutHistoryItem = {
+  id: number;
+  workoutId: number;
+  title: string;
+  startedAt: string;
+  completedAt: string;
+  durationSeconds: number | null;
+  caloriesBurned: number | null;
+  exerciseCount: number;
+  setCount: number;
+  totalVolumeKg: number;
+  maxWeightKg: number | null;
 };
 
 export type WorkoutSession = {

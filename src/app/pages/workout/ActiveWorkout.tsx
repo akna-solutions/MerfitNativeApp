@@ -13,7 +13,10 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ApiError } from "../../../services/api/client";
-import { WorkoutSession as ApiWorkoutSession } from "../../../services/api/types";
+import {
+  LogWorkoutSetRequest,
+  WorkoutSession as ApiWorkoutSession,
+} from "../../../services/api/types";
 import {
     cancelWorkoutSession,
     completeWorkoutSession,
@@ -32,6 +35,7 @@ import { WorkoutComplete } from "./components/WorkoutComplete";
 import { WorkoutProgress } from "./components/WorkoutProgress";
 import { WorkoutTopBar } from "./components/WorkoutTopBar";
 import { useTheme } from "../../../shared/theme/ThemeContext";
+import { formatKg } from "../../../shared/workoutHistory/format";
 import { Exercise, ExerciseProgress, WorkoutPhase, WorkoutSession } from "./types";
 import { WorkoutSummary } from "./WorkoutSummary";
 
@@ -44,6 +48,32 @@ type Props = {
 };
 
 type PersonalRecord = { exerciseName: string; weight: number; reps: number };
+
+export type SaveStatus = "idle" | "saving" | "saved" | "error";
+
+/** Sunucuya gonderilen (veya gonderilmeye calisilan) tek bir set kaydi. */
+type SetLogEntry = {
+  sessionExerciseId: number;
+  request: LogWorkoutSetRequest;
+  status: "pending" | "saved" | "failed";
+  error?: unknown;
+  promise: Promise<void>;
+};
+
+const MAX_WEIGHT_KG = 1000;
+
+/** "Geçen sefer" satırı: aynı set numarasındaki (yoksa son) setin ağırlık/tekrarı. */
+function describeLastSet(exercise: Exercise, setNumber: number): string | null {
+  const last = exercise.lastSets[setNumber - 1] ?? exercise.lastSets[exercise.lastSets.length - 1];
+  if (!last) return null;
+  const weightLabel = last.weight && last.weight > 0 ? formatKg(last.weight) : "Vücut ağırlığı";
+  return last.reps ? `${weightLabel} × ${last.reps}` : weightLabel;
+}
+
+function initialWeightFor(exercise: Exercise): string {
+  const weight = exercise.lastSets.find((set) => set.weight && set.weight > 0)?.weight;
+  return weight ? String(weight) : "";
+}
 
 function formatDuration(totalSeconds: number) {
   const minutes = Math.floor(totalSeconds / 60);
@@ -62,8 +92,11 @@ function mapApiSession(api: ApiWorkoutSession): {
     // sessionExerciseId'yi string id olarak kullanıyoruz; set loglarken
     // Number(exercise.id) ile geri backend'in beklediği kimliğe dönüyoruz.
     const id = String(ex.sessionExerciseId);
-    if (ex.previousBest) {
-      previousBest[id] = { weight: ex.previousBest.weightKg, reps: ex.previousBest.reps };
+    const best = ex.previousBest
+      ? { weight: ex.previousBest.weightKg, reps: ex.previousBest.reps }
+      : null;
+    if (best) {
+      previousBest[id] = best;
     }
     return {
       id,
@@ -73,6 +106,13 @@ function mapApiSession(api: ApiWorkoutSession): {
       restSec: ex.restSeconds ?? 60,
       video: ex.videoUrl,
       imageUrl: ex.imageUrl ?? "",
+      // Eski backend alanı göndermiyorsa güvenli taraf: ağırlık zorunlu.
+      requiresWeight: ex.requiresWeight ?? true,
+      lastSets: (ex.lastPerformance?.sets ?? []).map((set) => ({
+        weight: set.weightKg,
+        reps: set.reps,
+      })),
+      previousBest: best,
     };
   });
 
@@ -100,11 +140,17 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
   const [restRemaining, setRestRemaining] = useState(0);
   const [elapsedSec, setElapsedSec] = useState(0);
   const [exitModalVisible, setExitModalVisible] = useState(false);
+  const [inputError, setInputError] = useState<string | null>(null);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const phaseBeforePause = useRef<WorkoutPhase>("exercise");
   const pendingAdvanceExercise = useRef(false);
   const restTotalSec = useRef(0);
-  const hasCompletedOnServer = useRef(false);
+  // Set kayıtları arka planda gönderilir; antrenman tamamlanmadan önce hepsinin
+  // sunucuya ulaştığından emin olmak için burada tutulur (anahtar: "egzersiz:set").
+  const setLogs = useRef(new Map<string, SetLogEntry>());
+  const isSavingRef = useRef(false);
 
   // Antrenmani baslat: workoutId'ye karsilik gelen Workout icin backend'de
   // yeni bir WorkoutSession olusturur ve egzersiz/set sablonunu getirir.
@@ -151,7 +197,11 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
   useEffect(() => {
     if (!currentExercise) return;
     setRepsInput(`${currentExercise.reps}`);
-    setWeightInput("");
+    // Yeni egzersize geçince geçen seferki ağırlıkla başla; setler arasında kullanıcının
+    // girdiği değer korunur (aynı ağırlıkla devam etmek en yaygın durum).
+    setWeightInput(initialWeightFor(currentExercise));
+    setInputError(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentExercise?.id]);
 
   useEffect(() => {
@@ -175,36 +225,6 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, restRemaining]);
-
-  // Oturum tamamlandiginda (phase === "complete") backend'e bir kez bildir:
-  // seri/kisisel rekor hesaplamasi orada yapilir, sonuc summary ekraninda kullanilir.
-  useEffect(() => {
-    if (phase !== "complete" || !sessionId || hasCompletedOnServer.current) return;
-    hasCompletedOnServer.current = true;
-
-    completeWorkoutSession(sessionId, { durationSeconds: elapsedSec })
-      .then((summary) => {
-        setPersonalRecords(
-          summary.newPersonalRecords.map((pr) => ({
-            exerciseName: pr.exerciseName,
-            weight: pr.weightKg,
-            reps: pr.reps,
-          })),
-        );
-      })
-      .catch((error) => {
-        if (error instanceof ApiError && error.isUnauthorized) {
-          router.replace("/pages/login");
-          return;
-        }
-        Alert.alert(
-          "Antrenman kaydedilemedi",
-          error instanceof ApiError
-            ? error.message
-            : "Sonuçlar sunucuya kaydedilirken bir sorun oluştu.",
-        );
-      });
-  }, [phase, sessionId, elapsedSec, router]);
 
   if (isLoading) {
     return (
@@ -233,11 +253,120 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
     0,
   );
 
+  function sendSetLog(entry: SetLogEntry, id: number) {
+    entry.status = "pending";
+    entry.promise = logWorkoutSet(id, entry.sessionExerciseId, entry.request)
+      .then(() => {
+        entry.status = "saved";
+        entry.error = undefined;
+      })
+      .catch((error) => {
+        entry.status = "failed";
+        entry.error = error;
+        if (error instanceof ApiError && error.isUnauthorized) {
+          router.replace("/pages/login");
+        }
+      });
+  }
+
+  /** Bekleyen set kayıtlarını bekler, başarısız olanları bir kez daha dener. */
+  async function flushSetLogs(id: number) {
+    const entries = [...setLogs.current.values()];
+    await Promise.all(entries.map((entry) => entry.promise));
+
+    const failed = entries.filter((entry) => entry.status === "failed");
+    failed.forEach((entry) => sendSetLog(entry, id));
+    await Promise.all(failed.map((entry) => entry.promise));
+
+    const stillFailed = entries.find((entry) => entry.status === "failed");
+    if (stillFailed) {
+      throw stillFailed.error ?? new Error("Set kaydedilemedi.");
+    }
+  }
+
+  /**
+   * Antrenmanı sunucuda tamamlar: önce tüm setlerin kaydedilmesini bekler (aksi halde son set
+   * "tamamla" isteğiyle yarışır ve kaybolur), sonra oturumu tamamlar. Hata olursa kullanıcı
+   * "Tekrar dene" ile aynı işlemi yeniden başlatabilir.
+   */
+  async function finishOnServer() {
+    if (!sessionId || isSavingRef.current || saveStatus === "saved") return;
+    isSavingRef.current = true;
+    setSaveStatus("saving");
+    setSaveError(null);
+    try {
+      await flushSetLogs(sessionId);
+      const summary = await completeWorkoutSession(sessionId, {
+        durationSeconds: Math.max(1, elapsedSec),
+      });
+      setPersonalRecords(
+        summary.newPersonalRecords.map((pr) => ({
+          exerciseName: pr.exerciseName,
+          weight: pr.weightKg,
+          reps: pr.reps,
+        })),
+      );
+      setSaveStatus("saved");
+    } catch (error) {
+      if (error instanceof ApiError && error.isUnauthorized) {
+        router.replace("/pages/login");
+        return;
+      }
+      setSaveStatus("error");
+      setSaveError(
+        error instanceof ApiError
+          ? error.message
+          : "Antrenman sunucuya kaydedilemedi. İnternet bağlantını kontrol edip tekrar dene.",
+      );
+    } finally {
+      isSavingRef.current = false;
+    }
+  }
+
+  function leaveWorkout() {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/pages/dashboard");
+    }
+  }
+
+  function handleDone() {
+    if (saveStatus === "error") {
+      Alert.alert(
+        "Antrenman kaydedilmedi",
+        "Çıkarsan bu antrenman geçmişinde görünmeyecek.",
+        [
+          { text: "Tekrar dene", onPress: () => finishOnServer() },
+          { text: "Yine de çık", style: "destructive", onPress: leaveWorkout },
+        ],
+      );
+      return;
+    }
+    leaveWorkout();
+  }
+
   function handleCompleteSet() {
     if (!currentExercise || !currentProgress || !sessionId) return;
 
-    const weight = parseFloat(weightInput) || 0;
-    const reps = parseInt(repsInput, 10) || currentExercise.reps;
+    const reps = parseInt(repsInput, 10);
+    if (!Number.isFinite(reps) || reps < 1) {
+      setInputError("Tekrar sayısı en az 1 olmalı.");
+      return;
+    }
+
+    const parsedWeight = parseFloat(weightInput);
+    const weight = Number.isFinite(parsedWeight) ? parsedWeight : 0;
+    if (currentExercise.requiresWeight && weight <= 0) {
+      setInputError("Bu sette kaç kg kullandığını gir. Ağırlık 0 olamaz.");
+      return;
+    }
+    if (weight > MAX_WEIGHT_KG) {
+      setInputError(`Ağırlık en fazla ${MAX_WEIGHT_KG} kg olabilir.`);
+      return;
+    }
+    setInputError(null);
+
     const setNumber = currentProgress.currentSet;
 
     setProgress((prev) => {
@@ -251,22 +380,16 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
       };
     });
 
-    // Seti sunucuya kaydet (arka planda) - kullanıcı akışını bloklamıyoruz,
-    // hata olursa sessizce bildiriyoruz ki antrenman akışı kesilmesin.
-    logWorkoutSet(sessionId, Number(currentExercise.id), {
-      setNumber,
-      weightKg: weight > 0 ? weight : null,
-      reps,
-    }).catch((error) => {
-      if (error instanceof ApiError && error.isUnauthorized) {
-        router.replace("/pages/login");
-        return;
-      }
-      Alert.alert(
-        "Set kaydedilemedi",
-        "Bu set sunucuya kaydedilemedi, antrenmana devam edebilirsiniz.",
-      );
-    });
+    // Seti sunucuya kaydet (arka planda) - kullanıcı akışını bloklamıyoruz. Başarısız
+    // kayıtlar antrenman tamamlanırken tekrar denenir (bkz. flushSetLogs).
+    const entry: SetLogEntry = {
+      sessionExerciseId: Number(currentExercise.id),
+      request: { setNumber, weightKg: weight > 0 ? weight : null, reps },
+      status: "pending",
+      promise: Promise.resolve(),
+    };
+    setLogs.current.set(`${currentExercise.id}:${setNumber}`, entry);
+    sendSetLog(entry, sessionId);
 
     const isLastSetOfExercise =
       currentProgress.completedSets.length + 1 >= currentExercise.sets;
@@ -274,6 +397,7 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
 
     if (isLastSetOfExercise && isLastExercise) {
       setPhase("complete");
+      finishOnServer();
       return;
     }
 
@@ -321,14 +445,20 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
 
   function handleSaveAndExit() {
     setExitModalVisible(false);
+    if (totalCompletedSets > 0) {
+      // Yapılan setler kaybolmasın: erken çıkışta da oturum, o ana kadarki setlerle
+      // tamamlanır ve geçmişte görünür.
+      setPhase("complete");
+      finishOnServer();
+      return;
+    }
     if (sessionId) {
-      // Backend henuz "devam et" (resume) akisini desteklemedigi icin erken
-      // cikis oturumu "yarim birakildi" (Abandoned) olarak isaretler.
+      // Hiç set yapılmadıysa kaydedilecek bir şey yok; oturum "yarım bırakıldı" olarak işaretlenir.
       cancelWorkoutSession(sessionId).catch(() => {
         // Sessizce yut - kullanici zaten ekrandan cikiyor.
       });
     }
-    router.back();
+    leaveWorkout();
   }
 
   if (phase === "summary") {
@@ -339,7 +469,11 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
         exercises={session.exercises}
         progress={progress}
         personalRecords={personalRecords}
-        onDone={() => router.replace("/pages/progress")}
+        saveStatus={saveStatus}
+        onDone={handleDone}
+        onViewHistory={
+          saveStatus === "saved" ? () => router.replace("/pages/workout/history") : undefined
+        }
       />
     );
   }
@@ -350,8 +484,11 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
         durationLabel={formatDuration(elapsedSec)}
         exerciseCount={session.exercises.length}
         setCount={totalCompletedSets}
+        saveStatus={saveStatus}
+        saveError={saveError}
+        onRetrySave={finishOnServer}
         onViewSummary={() => setPhase("summary")}
-        onDone={() => router.replace("/pages/workouts")}
+        onDone={handleDone}
       />
     );
   }
@@ -418,9 +555,23 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
                   setNumber={currentProgress.currentSet}
                   totalSets={currentExercise.sets}
                   weight={weightInput}
-                  onWeightChange={setWeightInput}
+                  onWeightChange={(value) => {
+                    setWeightInput(value);
+                    setInputError(null);
+                  }}
                   reps={repsInput}
-                  onRepsChange={setRepsInput}
+                  onRepsChange={(value) => {
+                    setRepsInput(value);
+                    setInputError(null);
+                  }}
+                  weightOptional={!currentExercise.requiresWeight}
+                  lastSetLabel={describeLastSet(currentExercise, currentProgress.currentSet)}
+                  bestLabel={
+                    currentExercise.previousBest
+                      ? `${formatKg(currentExercise.previousBest.weight)} × ${currentExercise.previousBest.reps}`
+                      : null
+                  }
+                  error={inputError}
                 />
               </>
             )}

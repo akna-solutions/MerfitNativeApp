@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
@@ -75,6 +75,8 @@ export function DashboardScreen() {
       const response = await getDashboard(signal);
       setData(mapToDashboardData(response));
     } catch (error) {
+      // Ekrandan ayrilinca (blur) iptal edilen istek bir hata degildir.
+      if (signal?.aborted) return;
       if (error instanceof ApiError && error.isUnauthorized) {
         router.replace("/pages/login");
         return;
@@ -99,12 +101,17 @@ export function DashboardScreen() {
     }
   }, []);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    loadDashboard(controller.signal);
-    loadTodayPlan(controller.signal);
-    return () => controller.abort();
-  }, [loadDashboard, loadTodayPlan]);
+  // Sekme ekranlari antrenmandan donuste yeniden mount edilmez; bu yuzden veriyi yalnizca ilk
+  // acilista degil, ekran her odaga geldiginde yeniden cekiyoruz. Aksi halde ilk antrenman
+  // bittikten sonra da "İlk Antrenmana Başla" gorunmeye devam ediyordu.
+  useFocusEffect(
+    useCallback(() => {
+      const controller = new AbortController();
+      loadDashboard(controller.signal);
+      loadTodayPlan(controller.signal);
+      return () => controller.abort();
+    }, [loadDashboard, loadTodayPlan]),
+  );
 
   // PersonalizationJob Pending/Processing -> Completed'e gectiginde, artik gercek kisisel
   // plan hazir demektir: dashboard'u ve bugunun planini yeniden cek.
@@ -171,6 +178,21 @@ export function DashboardScreen() {
     } as never);
   };
 
+  const goToWorkoutHistory = () => {
+    router.push("/pages/workout/history" as never);
+  };
+
+  // Ilk antrenman icin backend'in "bugunun antrenmani" onerisini kullan (recommended[0] aslinda
+  // ikinci oneridir); hicbiri yoksa kullaniciyi antrenman katalogu sekmesine yonlendir.
+  const startFirstWorkout = () => {
+    const first = data?.todayWorkout ?? data?.recommended[0];
+    if (first) {
+      goToWorkout(first);
+    } else {
+      router.push("/pages/workouts");
+    }
+  };
+
   const goToPersonalWorkout = () => {
     if (!todayPlan?.day) return;
     router.push({
@@ -235,13 +257,19 @@ export function DashboardScreen() {
 
           {todayPlan?.hasWorkoutToday && todayPlan.day ? (
             <Animated.View style={[styles.padded, styles.gapTop, fadeUp(workoutAnim)]}>
-              <TodayPersonalWorkoutCard day={todayPlan.day} onPress={goToPersonalWorkout} />
+              <TodayPersonalWorkoutCard
+                day={todayPlan.day}
+                isCompletedToday={todayPlan.isCompletedToday ?? false}
+                onPress={goToPersonalWorkout}
+              />
             </Animated.View>
           ) : null}
 
-          {data.hasCompletedFirstWorkout && data.todayWorkout ? (
+          {data.hasCompletedFirstWorkout ? (
             <>
-              {!todayPlan?.hasWorkoutToday ? (
+              {/* Bugun zaten antrenman yapildiysa backend todayWorkout'u null doner; bu durumda
+                  kart gizlenir ama dashboard'un geri kalani (ilerleme, gecmis) gosterilmeye devam eder. */}
+              {!todayPlan?.hasWorkoutToday && data.todayWorkout ? (
                 <Animated.View style={[styles.padded, fadeUp(workoutAnim)]}>
                   <WorkoutCard
                     workout={data.todayWorkout}
@@ -255,6 +283,17 @@ export function DashboardScreen() {
               <Animated.View style={[styles.padded, fadeUp(progressAnim)]}>
                 <ProgressCard progress={data.todayProgress} />
               </Animated.View>
+
+              <View style={[styles.padded, styles.historyLinkGap]}>
+                <Pressable
+                  onPress={goToWorkoutHistory}
+                  style={[styles.historyLink, { backgroundColor: colors.card, borderColor: colors.border }]}
+                  accessibilityRole="button"
+                >
+                  <Text style={[styles.historyLinkTitle, { color: colors.text }]}>Antrenman Geçmişi</Text>
+                  <Text style={[styles.historyLinkMeta, { color: colors.primary }]}>Gör</Text>
+                </Pressable>
+              </View>
 
               <Animated.View style={[styles.padded, fadeUp(statsAnim)]}>
                 <QuickStats stats={data.quickStats} />
@@ -276,11 +315,7 @@ export function DashboardScreen() {
             </>
           ) : !todayPlan?.hasWorkoutToday && !personalization.isPending ? (
             <Animated.View style={[styles.padded, fadeUp(workoutAnim)]}>
-              <EmptyState
-                onStartFirstWorkout={() =>
-                  data.recommended[0] && goToWorkout(data.recommended[0])
-                }
-              />
+              <EmptyState onStartFirstWorkout={startFirstWorkout} />
             </Animated.View>
           ) : null}
         </ScrollView>
@@ -303,4 +338,16 @@ const styles = StyleSheet.create({
   scrollContent: { paddingTop: 16, paddingBottom: 156 },
   padded: { paddingHorizontal: 24 },
   gapTop: { marginTop: 28 },
+  historyLinkGap: { marginTop: 16 },
+  historyLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+  },
+  historyLinkTitle: { fontSize: 14, fontWeight: "700" },
+  historyLinkMeta: { fontSize: 13, fontWeight: "700" },
 });

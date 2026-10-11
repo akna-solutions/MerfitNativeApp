@@ -1,15 +1,28 @@
-import { FlatList, StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { RecentActivityItem } from "../types";
 
-type Props = { items: RecentActivityItem[] };
+type Props = {
+  items: RecentActivityItem[];
+  /** Satira dokununca o antrenmanin detayina (egzersiz/set/kilo) gider. */
+  onSelect?: (id: string) => void;
+  onViewAll?: () => void;
+};
 
-export function RecentActivity({ items }: Props) {
+export function RecentActivity({ items, onSelect, onViewAll }: Props) {
   const { colors } = useTheme();
   return (
     <View>
-      <Text style={[styles.sectionTitle, { color: colors.text }]}>Son Aktiviteler</Text>
+      <View style={styles.headerRow}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Son Aktiviteler</Text>
+        {onViewAll ? (
+          <Pressable onPress={onViewAll} hitSlop={8} accessibilityRole="button">
+            <Text style={[styles.viewAll, { color: colors.primary }]}>Tümünü gör</Text>
+          </Pressable>
+        ) : null}
+      </View>
 
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <FlatList
@@ -18,7 +31,12 @@ export function RecentActivity({ items }: Props) {
           scrollEnabled={false}
           ItemSeparatorComponent={() => <View style={[styles.separator, { backgroundColor: colors.border }]} />}
           renderItem={({ item }) => (
-            <View style={styles.row}>
+            <Pressable
+              style={styles.row}
+              onPress={onSelect ? () => onSelect(item.id) : undefined}
+              disabled={!onSelect}
+              accessibilityRole={onSelect ? "button" : undefined}
+            >
               <View style={[styles.dot, { backgroundColor: colors.primary }]} />
               <View style={styles.textBlock}>
                 <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
@@ -27,7 +45,10 @@ export function RecentActivity({ items }: Props) {
                 <Text style={[styles.duration, { color: colors.textSecondary }]}>{item.durationMin} dk</Text>
               </View>
               <Text style={[styles.date, { color: colors.textSecondary }]}>{item.dateLabel}</Text>
-            </View>
+              {onSelect ? (
+                <Ionicons name="chevron-forward" size={14} color={colors.textSecondary} style={styles.chevron} />
+              ) : null}
+            </Pressable>
           )}
         />
       </View>
@@ -36,11 +57,18 @@ export function RecentActivity({ items }: Props) {
 }
 
 const styles = StyleSheet.create({
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
   sectionTitle: {
     fontSize: 16,
     fontWeight: "700",
-    marginBottom: 12,
   },
+  viewAll: { fontSize: 13, fontWeight: "700" },
+  chevron: { marginLeft: 6 },
   card: {
     borderRadius: 20,
     paddingHorizontal: 18,
