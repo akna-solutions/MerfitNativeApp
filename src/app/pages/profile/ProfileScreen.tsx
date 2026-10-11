@@ -1,6 +1,14 @@
-import { useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
-import { Animated, ScrollView, StyleSheet, View } from "react-native";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Animated,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../../../shared/auth/AuthContext";
@@ -8,7 +16,7 @@ import { usePlus } from "../../../shared/plus/PlusContext";
 import { useProfile } from "../../../shared/profile/ProfileContext";
 import { SettingsRow } from "../../../shared/profile/components/SettingsRow";
 import { SettingsSection } from "../../../shared/profile/components/SettingsSection";
-import { GOAL_LABELS } from "../../../shared/profile/types";
+import { GOAL_LABELS, ProfileData } from "../../../shared/profile/types";
 import { APPEARANCE_LABELS } from "../../../shared/theme/labels";
 import { useTheme } from "../../../shared/theme/ThemeContext";
 import { LogOutButton } from "./components/LogOutButton";
@@ -18,9 +26,9 @@ import { ProfileIdentity } from "./components/ProfileIdentity";
 
 export function ProfileScreen() {
   const router = useRouter();
-  const { logout } = useAuth();
+  const { logout, status } = useAuth();
   const { isPlusUser, openPlusModal } = usePlus();
-  const { profile } = useProfile();
+  const { profile, isLoaded, isLoading, error, reload } = useProfile();
   const { mode, colors } = useTheme();
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
 
@@ -60,8 +68,24 @@ export function ProfileScreen() {
     ],
   });
 
+  // Profil yuklenirken oturumun gecersiz oldugu anlasilirsa (401) ProfileContext oturumu kapatir;
+  // diger ekranlardaki gibi kullaniciyi giris ekranina yonlendiririz.
+  const isLoggingOutRef = useRef(false);
+  useEffect(() => {
+    if (status === "signedOut" && !isLoggingOutRef.current) router.replace("/pages/login");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status]);
+
+  // Tab ekranlari yeniden mount olmadigi icin profil, sekmeye her donuste sunucudan tazelenir.
+  useFocusEffect(
+    useCallback(() => {
+      reload();
+    }, [reload]),
+  );
+
   const handleConfirmLogout = () => {
     setLogoutModalVisible(false);
+    isLoggingOutRef.current = true;
     logout().finally(() => router.replace("/pages/welcome"));
   };
 
@@ -88,12 +112,30 @@ export function ProfileScreen() {
           <Animated.View
             style={[styles.padded, styles.sectionGap, fadeUp(identityAnim)]}
           >
-            <ProfileIdentity
-              firstName={profile.firstName}
-              username={`@${profile.username}`}
-              onEditPress={() => router.push("/pages/profile/edit" as never)}
-              onAvatarPress={() => router.push("/pages/profile/edit" as never)}
-            />
+            {isLoaded ? (
+              <ProfileIdentity
+                fullName={`${profile.firstName} ${profile.lastName}`.trim()}
+                username={profile.username ? `@${profile.username}` : ""}
+                onEditPress={() => router.push("/pages/profile/edit" as never)}
+                onAvatarPress={() => router.push("/pages/profile/edit" as never)}
+              />
+            ) : error && !isLoading ? (
+              <View style={styles.stateBox}>
+                <Text style={[styles.errorText, { color: colors.textSecondary }]}>
+                  {error}
+                </Text>
+                <Pressable
+                  style={[styles.retryButton, { backgroundColor: colors.primary }]}
+                  onPress={reload}
+                >
+                  <Text style={styles.retryLabel}>Tekrar dene</Text>
+                </Pressable>
+              </View>
+            ) : (
+              <View style={styles.stateBox}>
+                <ActivityIndicator color={colors.primary} size="large" />
+              </View>
+            )}
           </Animated.View>
 
           <Animated.View
@@ -105,12 +147,13 @@ export function ProfileScreen() {
             />
           </Animated.View>
 
+          {isLoaded && (
           <View style={[styles.padded, styles.sectionGap]}>
             <SettingsSection title="Fitness Bilgilerin">
               <SettingsRow
                 icon="person-outline"
                 title="Kişisel Bilgiler"
-                subtitle="Ad, yaş ve temel bilgiler"
+                subtitle={personalSubtitle(profile)}
                 onPress={() =>
                   router.push("/pages/profile/personal-information" as never)
                 }
@@ -124,7 +167,7 @@ export function ProfileScreen() {
               <SettingsRow
                 icon="pulse-outline"
                 title="Vücut Ölçümleri"
-                subtitle={`${profile.height} cm · ${profile.weight} kg`}
+                subtitle={bodySubtitle(profile)}
                 onPress={() =>
                   router.push("/pages/profile/body-measurements" as never)
                 }
@@ -132,7 +175,7 @@ export function ProfileScreen() {
               <SettingsRow
                 icon="barbell-outline"
                 title="Antrenman Tercihleri"
-                subtitle={`${profile.trainingDays.length} gün · ${profile.workoutDurationMin} dk`}
+                subtitle={trainingSubtitle(profile)}
                 onPress={() =>
                   router.push("/pages/profile/workout-preferences" as never)
                 }
@@ -140,6 +183,7 @@ export function ProfileScreen() {
               />
             </SettingsSection>
           </View>
+          )}
 
           <View style={[styles.padded, styles.sectionGap]}>
             <SettingsSection title="Üyelik">
@@ -238,10 +282,46 @@ export function ProfileScreen() {
   );
 }
 
+function personalSubtitle(profile: ProfileData): string {
+  const parts: string[] = [];
+  if (profile.age > 0) parts.push(`${profile.age} yaş`);
+  if (profile.gender !== "Belirtmek istemiyorum") parts.push(profile.gender);
+  return parts.length > 0 ? parts.join(" · ") : "Ad, yaş ve temel bilgiler";
+}
+
+function bodySubtitle(profile: ProfileData): string {
+  const parts: string[] = [];
+  if (profile.height > 0) parts.push(`${profile.height} cm`);
+  if (profile.weight > 0) parts.push(`${profile.weight} kg`);
+  return parts.length > 0 ? parts.join(" · ") : "Boy ve kilonu ekle";
+}
+
+function trainingSubtitle(profile: ProfileData): string {
+  const parts: string[] = [];
+  if (profile.trainingDaysPerWeek > 0) {
+    parts.push(`Haftada ${profile.trainingDaysPerWeek} gün`);
+  }
+  if (profile.workoutDurationMin > 0) parts.push(`${profile.workoutDurationMin} dk`);
+  return parts.length > 0 ? parts.join(" · ") : "Antrenman sıklığı ve süresi";
+}
+
 const styles = StyleSheet.create({
   root: { flex: 1 },
   flex: { flex: 1 },
   scrollContent: { paddingTop: 16, paddingBottom: 156 },
   padded: { paddingHorizontal: 24 },
   sectionGap: { marginTop: 24 },
+  stateBox: {
+    minHeight: 180,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 16,
+  },
+  errorText: { fontSize: 14, textAlign: "center" },
+  retryButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 19,
+  },
+  retryLabel: { color: "#FFFFFF", fontSize: 14, fontWeight: "700" },
 });

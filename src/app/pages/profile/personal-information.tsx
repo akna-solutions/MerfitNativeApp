@@ -23,7 +23,7 @@ export default function PersonalInformationRoute() {
   const { colors } = useTheme();
 
   const [firstName, setFirstName] = useState(profile.firstName);
-  const [age, setAge] = useState(`${profile.age}`);
+  const [age, setAge] = useState(profile.age > 0 ? `${profile.age}` : "");
   const [gender, setGender] = useState<Gender>(profile.gender);
 
   // bkz. edit.tsx - ekran, gercek profil yuklenmeden once mount olduysa formu gercek verilerle
@@ -31,13 +31,18 @@ export default function PersonalInformationRoute() {
   useEffect(() => {
     if (isLoading) return;
     setFirstName(profile.firstName);
-    setAge(`${profile.age}`);
+    setAge(profile.age > 0 ? `${profile.age}` : "");
     setGender(profile.gender);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading]);
 
   const handleSave = () => {
-    updateProfile({ firstName, age: parseInt(age, 10) || profile.age, gender });
+    const parsedAge = parseInt(age, 10);
+    updateProfile({
+      firstName,
+      ...(parsedAge > 0 && parsedAge !== profile.age ? { age: parsedAge } : {}),
+      gender,
+    });
     router.back();
   };
 

@@ -1,33 +1,35 @@
 import { ProfileData } from "./types";
 
-// GET /api/profile tamamlanana kadar (ProfileProvider bkz. ProfileContext.tsx) veya kullanici
-// cikis yapmisken gosterilen gecici varsayilan durum. Kimlik alanlari (firstName/username/email)
-// BILINCLI OLARAK BOS BIRAKILIR - sabit/gercekci gorunen bir isim (orn. "Mert") burada durursa,
-// profil yuklemesi basarisiz oldugunda veya geciktiginde kullaniciya BASKA BIR KISININ gercek
-// verisiymis gibi gorunebilir (bkz. Faz raporu - hard-coded kullanici bilgisi bug'i).
-export const INITIAL_PROFILE_DATA: ProfileData = {
+// GET /api/profile tamamlanana kadar (bkz. ProfileContext.tsx) veya kullanici cikis yapmisken
+// kullanilan BOS durum. Burada gercekci gorunen hicbir deger (yas, kilo, antrenman gunleri,
+// istatistik) TUTULMAZ: profil yuklenemezse ekran bunlari kullanicinin kendi verisiymis gibi
+// gosterirdi. Ekranlar `isLoaded` false iken bu objeyi gostermez (bkz. ProfileScreen).
+export const EMPTY_PROFILE_DATA: ProfileData = {
   firstName: "",
   lastName: "",
   username: "",
   email: "",
-  dateOfBirth: "1994-03-12",
-  gender: "Erkek",
+  dateOfBirth: "",
+  gender: "Belirtmek istemiyorum",
 
-  age: 31,
-  height: 180,
-  weight: 78,
-  targetWeight: 75,
+  age: 0,
+  height: 0,
+  weight: 0,
+  targetWeight: 0,
 
-  goal: "BUILD_MUSCLE",
+  goal: "GENERAL_FITNESS",
 
-  experienceLevel: "INTERMEDIATE",
-  equipment: "FULL_GYM",
-  workoutDurationMin: 60,
-  trainingDays: ["Mon", "Tue", "Thu", "Fri"],
+  experienceLevel: "BEGINNER",
+  equipment: "BODYWEIGHT",
+  trainingLocation: null,
+  workoutDurationMin: 0,
+  trainingDaysPerWeek: 0,
+  trainingDays: [],
 
   unitSystem: "metric",
   appearance: "system",
 
+  // Backend'in, kullanici hic ayar kaydetmemisken dondurdugu varsayilanlarla ayni.
   notifications: {
     workoutReminders: true,
     dailyGoalReminder: true,
@@ -43,7 +45,7 @@ export const INITIAL_PROFILE_DATA: ProfileData = {
   },
 
   stats: {
-    workouts: 18,
-    streak: 12,
+    workouts: 0,
+    streak: 0,
   },
 };

@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { StyleSheet, Text } from "react-native";
 
 import { ProfileDetailShell } from "../../../shared/profile/components/ProfileDetailShell";
@@ -10,22 +10,37 @@ import { useTheme } from "../../../shared/theme/ThemeContext";
 
 export default function BodyMeasurementsRoute() {
   const router = useRouter();
-  const { profile, updateProfile } = useProfile();
+  const { profile, updateProfile, isLoading } = useProfile();
   const { colors } = useTheme();
 
-  const [height, setHeight] = useState(`${profile.height}`);
-  const [weight, setWeight] = useState(`${profile.weight}`);
-  const [targetWeight, setTargetWeight] = useState(`${profile.targetWeight}`);
+  // 0 = backend'de kayitli deger yok; kutuyu bos gosteririz (sahte "0" yerine).
+  const toInput = (value: number) => (value > 0 ? `${value}` : "");
+  const [height, setHeight] = useState(toInput(profile.height));
+  const [weight, setWeight] = useState(toInput(profile.weight));
+  const [targetWeight, setTargetWeight] = useState(toInput(profile.targetWeight));
+
+  // bkz. edit.tsx - ekran profil yuklenmeden once acildiysa formu gercek verilerle senkronize et.
+  useEffect(() => {
+    if (isLoading) return;
+    setHeight(toInput(profile.height));
+    setWeight(toInput(profile.weight));
+    setTargetWeight(toInput(profile.targetWeight));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading]);
 
   const heightUnit = profile.unitSystem === "metric" ? "cm" : "ft";
   const weightUnit = profile.unitSystem === "metric" ? "kg" : "lb";
 
   const handleSave = () => {
-    updateProfile({
-      height: parseFloat(height) || profile.height,
-      weight: parseFloat(weight) || profile.weight,
-      targetWeight: parseFloat(targetWeight) || profile.targetWeight,
-    });
+    // Yalnizca gecerli (pozitif) degerler gonderilir; bos birakilan alan degistirilmez.
+    const patch: { height?: number; weight?: number; targetWeight?: number } = {};
+    const h = parseFloat(height);
+    const w = parseFloat(weight);
+    const t = parseFloat(targetWeight);
+    if (h > 0) patch.height = h;
+    if (w > 0) patch.weight = w;
+    if (t > 0) patch.targetWeight = t;
+    updateProfile(patch);
     router.back();
   };
 
@@ -56,6 +71,7 @@ export default function BodyMeasurementsRoute() {
       <OnboardingInput
         value={targetWeight}
         onChangeText={(text) => setTargetWeight(text.replace(/[^0-9.]/g, ""))}
+        placeholder="Belirlenmedi"
         keyboardType="decimal-pad"
         style={styles.input}
       />

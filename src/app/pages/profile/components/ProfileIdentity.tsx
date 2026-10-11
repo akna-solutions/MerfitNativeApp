@@ -4,20 +4,21 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
-  firstName: string;
+  fullName: string;
+  /** "@kullaniciadi" ya da bos. */
   username: string;
   onEditPress: () => void;
   onAvatarPress: () => void;
 };
 
 export function ProfileIdentity({
-  firstName,
+  fullName,
   username,
   onEditPress,
   onAvatarPress,
 }: Props) {
   const { colors } = useTheme();
-  const initial = firstName.trim().charAt(0).toUpperCase() || "M";
+  const initial = fullName.trim().charAt(0).toLocaleUpperCase("tr-TR") || "M";
 
   return (
     <View style={styles.wrapper}>
@@ -37,8 +38,10 @@ export function ProfileIdentity({
         </View>
       </Pressable>
 
-      <Text style={[styles.name, { color: colors.text }]}>{firstName}</Text>
-      <Text style={[styles.username, { color: colors.textSecondary }]}>{username}</Text>
+      <Text style={[styles.name, { color: colors.text }]}>{fullName}</Text>
+      {username ? (
+        <Text style={[styles.username, { color: colors.textSecondary }]}>{username}</Text>
+      ) : null}
 
       <Pressable
         onPress={onEditPress}

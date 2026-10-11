@@ -16,6 +16,8 @@ export type Equipment =
   | "BODYWEIGHT"
   | "MINIMAL_EQUIPMENT";
 
+export type TrainingLocation = "gym" | "home" | "outdoor";
+
 export type Weekday = "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun";
 
 export type UnitSystem = "metric" | "imperial";
@@ -55,7 +57,12 @@ export type ProfileData = {
 
   experienceLevel: ExperienceLevel;
   equipment: Equipment;
+  /** Kayitta secilen antrenman yeri; secilmediyse null. */
+  trainingLocation: TrainingLocation | null;
   workoutDurationMin: number;
+  /** Kayitta secilen haftalik antrenman gunu sayisi. */
+  trainingDaysPerWeek: number;
+  /** Aktif programdaki gunler (backend WorkoutPlanDay). Program yoksa bos. */
   trainingDays: Weekday[];
 
   unitSystem: UnitSystem;
@@ -90,6 +97,22 @@ export const EQUIPMENT_LABELS: Record<Equipment, string> = {
   HOME_GYM: "Ev Salonu",
   BODYWEIGHT: "Vücut Ağırlığı",
   MINIMAL_EQUIPMENT: "Minimal Ekipman",
+};
+
+export const TRAINING_LOCATION_LABELS: Record<TrainingLocation, string> = {
+  gym: "Spor salonu",
+  home: "Ev",
+  outdoor: "Açık alan",
+};
+
+export const WEEKDAY_SHORT_LABELS: Record<Weekday, string> = {
+  Mon: "Pzt",
+  Tue: "Sal",
+  Wed: "Çar",
+  Thu: "Per",
+  Fri: "Cum",
+  Sat: "Cmt",
+  Sun: "Paz",
 };
 
 export const WEEKDAYS: Weekday[] = [
