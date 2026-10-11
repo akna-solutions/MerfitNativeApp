@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { OnboardingButton } from "../onboarding/components/OnboardingButton";
 import { useTheme } from "../../../shared/theme/ThemeContext";
 import type { SaveStatus } from "./ActiveWorkout";
+import { estimateWorkoutCalories } from "../../../shared/workoutHistory/format";
 import { Exercise, ExerciseProgress } from "./types";
 
 type Props = {
@@ -38,8 +39,7 @@ export function WorkoutSummary({
       sum + item.completedSets.reduce((s, set) => s + set.weight * set.reps, 0),
     0,
   );
-  // Basit mock kalori tahmini - gerçek hesaplama backend'e taşınacak.
-  const estimatedCalories = Math.round(setCount * 17.5);
+  const estimatedCalories = estimateWorkoutCalories(setCount);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={["top", "bottom"]}>

@@ -18,6 +18,14 @@ export function formatMinutes(seconds: number | null | undefined) {
   return `${Math.max(1, Math.round(seconds / 60))} dk`;
 }
 
+/**
+ * Basit kalori tahmini (set basina ~17,5 kcal). Ozet ekraninda gosterilen deger ile sunucuya
+ * kaydedilen deger ayni olsun diye tek yerde tutulur; daha iyi bir hesap backend'e tasinabilir.
+ */
+export function estimateWorkoutCalories(setCount: number) {
+  return Math.round(setCount * 17.5);
+}
+
 export function formatKg(weight: number) {
   const rounded = Math.round(weight * 10) / 10;
   return `${rounded.toLocaleString("tr-TR")} kg`;
