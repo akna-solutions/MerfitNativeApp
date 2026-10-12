@@ -59,15 +59,18 @@ export function NutritionScreen() {
     setErrorMessage(null);
     try {
       const response = await getDailyNutrition(toDateParam(date), signal);
+      if (signal?.aborted) return;
       setData(mapToNutritionData(response));
     } catch (error) {
+      // Gun hizla degistirildiginde iptal edilen eski istek, yeni gunun durumunu ezmemeli.
+      if (signal?.aborted) return;
       setErrorMessage(
         error instanceof ApiError
           ? error.message
           : "Beslenme verisi yüklenemedi. Lütfen tekrar deneyin.",
       );
     } finally {
-      setIsLoading(false);
+      if (!signal?.aborted) setIsLoading(false);
     }
   }, []);
 
@@ -87,14 +90,21 @@ export function NutritionScreen() {
   const calorieCardAnim = useRef(new Animated.Value(0)).current;
   const macrosAnim = useRef(new Animated.Value(0)).current;
 
+  // Baslik ve tarih secici yalnizca ilk acilista animasyonla gelir; gun degisince yerinde kalir.
+  useEffect(() => {
+    Animated.timing(headerAnim, {
+      toValue: 1,
+      duration: 420,
+      useNativeDriver: true,
+    }).start();
+  }, [headerAnim]);
+
+  // Tarih secicinin altindaki icerik her yeni gun verisinde yeniden animasyonla gelir.
   useEffect(() => {
     if (!data) return;
+    calorieCardAnim.setValue(0);
+    macrosAnim.setValue(0);
     Animated.stagger(110, [
-      Animated.timing(headerAnim, {
-        toValue: 1,
-        duration: 420,
-        useNativeDriver: true,
-      }),
       Animated.timing(calorieCardAnim, {
         toValue: 1,
         duration: 420,
@@ -106,7 +116,7 @@ export function NutritionScreen() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, [data, headerAnim, calorieCardAnim, macrosAnim]);
+  }, [data, calorieCardAnim, macrosAnim]);
 
   const fadeUp = (anim: Animated.Value, distance = 14) => ({
     opacity: anim,
@@ -148,31 +158,6 @@ export function NutritionScreen() {
 
   const hasLoggedFirstMeal = (data?.meals.length ?? 0) > 0;
 
-  if (isLoading) {
-    return (
-      <View style={[styles.root, styles.centered, { backgroundColor: colors.background }]}>
-        <ActivityIndicator color={colors.primary} size="large" />
-      </View>
-    );
-  }
-
-  if (errorMessage || !data) {
-    return (
-      <View style={[styles.root, styles.centered, { backgroundColor: colors.background }]}>
-        <Text style={[styles.errorText, { color: colors.textSecondary }]}>{errorMessage ?? "Beslenme verisi yüklenemedi."}</Text>
-        <Pressable
-          style={[styles.retryButton, { backgroundColor: colors.primary }]}
-          onPress={() => {
-            setIsLoading(true);
-            loadNutrition(selectedDate);
-          }}
-        >
-          <Text style={styles.retryLabel}>Tekrar dene</Text>
-        </Pressable>
-      </View>
-    );
-  }
-
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <SafeAreaView style={styles.flex} edges={["top"]}>
@@ -197,7 +182,26 @@ export function NutritionScreen() {
             <TodayNutritionPlanCard />
           </View>
 
-          {hasLoggedFirstMeal ? (
+          {isLoading ? (
+            <View style={[styles.padded, styles.sectionGap, styles.dayState]}>
+              <ActivityIndicator color={colors.primary} size="large" />
+            </View>
+          ) : errorMessage || !data ? (
+            <View style={[styles.padded, styles.sectionGap, styles.dayState]}>
+              <Text style={[styles.errorText, { color: colors.textSecondary }]}>
+                {errorMessage ?? "Beslenme verisi yüklenemedi."}
+              </Text>
+              <Pressable
+                style={[styles.retryButton, { backgroundColor: colors.primary }]}
+                onPress={() => {
+                  setIsLoading(true);
+                  loadNutrition(selectedDate);
+                }}
+              >
+                <Text style={styles.retryLabel}>Tekrar dene</Text>
+              </Pressable>
+            </View>
+          ) : hasLoggedFirstMeal ? (
             <>
               <Animated.View
                 style={[
@@ -284,7 +288,7 @@ export function NutritionScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   flex: { flex: 1 },
-  centered: { alignItems: "center", justifyContent: "center", gap: 16, paddingHorizontal: 32 },
+  dayState: { alignItems: "center", justifyContent: "center", gap: 16, minHeight: 240 },
   errorText: { fontSize: 14, textAlign: "center" },
   retryButton: {
     paddingHorizontal: 20,
