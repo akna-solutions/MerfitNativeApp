@@ -1,22 +1,26 @@
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Animated,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Animated,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { PremiumFeature } from "../../../shared/plus/components/PremiumFeature";
-import { usePersonalizationStatus } from "../../../shared/personalization/usePersonalizationStatus";
 import { ApiError } from "../../../services/api/client";
 import { getDashboard } from "../../../services/api/dashboard";
 import { getTodayPlan } from "../../../services/api/myPlan";
-import { DashboardResponse, MyTodayWorkoutPlanResponse } from "../../../services/api/types";
+import {
+  DashboardResponse,
+  MyTodayWorkoutPlanResponse,
+} from "../../../services/api/types";
+import { usePersonalizationStatus } from "../../../shared/personalization/usePersonalizationStatus";
+import { PremiumFeature } from "../../../shared/plus/components/PremiumFeature";
+import { useTheme } from "../../../shared/theme/ThemeContext";
 import { AiWorkoutCard } from "./components/AiWorkoutCard";
 import { DashboardHeader } from "./components/DashboardHeader";
 import { EmptyState } from "./components/EmptyState";
@@ -28,11 +32,12 @@ import { RecommendedWorkouts } from "./components/RecommendedWorkouts";
 import { TodayPersonalWorkoutCard } from "./components/TodayPersonalWorkoutCard";
 import { WorkoutCard } from "./components/WorkoutCard";
 import { DashboardData, WorkoutSummary } from "./types";
-import { useTheme } from "../../../shared/theme/ThemeContext";
 
 /** Backend'in CustomerDashboardResponse'unu (services/api/types.ts) ekranin bekledigi DashboardData sekline cevirir. */
 function mapToDashboardData(response: DashboardResponse): DashboardData {
-  const mapWorkout = (workout: DashboardResponse["todayWorkout"]): WorkoutSummary | null =>
+  const mapWorkout = (
+    workout: DashboardResponse["todayWorkout"],
+  ): WorkoutSummary | null =>
     workout
       ? {
           id: String(workout.id),
@@ -64,32 +69,37 @@ export function DashboardScreen() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [todayPlan, setTodayPlan] = useState<MyTodayWorkoutPlanResponse | null>(null);
+  const [todayPlan, setTodayPlan] = useState<MyTodayWorkoutPlanResponse | null>(
+    null,
+  );
 
   const personalization = usePersonalizationStatus(true);
   const previousPersonalizationStatus = useRef(personalization.status);
 
-  const loadDashboard = useCallback(async (signal?: AbortSignal) => {
-    setErrorMessage(null);
-    try {
-      const response = await getDashboard(signal);
-      setData(mapToDashboardData(response));
-    } catch (error) {
-      // Ekrandan ayrilinca (blur) iptal edilen istek bir hata degildir.
-      if (signal?.aborted) return;
-      if (error instanceof ApiError && error.isUnauthorized) {
-        router.replace("/pages/login");
-        return;
+  const loadDashboard = useCallback(
+    async (signal?: AbortSignal) => {
+      setErrorMessage(null);
+      try {
+        const response = await getDashboard(signal);
+        setData(mapToDashboardData(response));
+      } catch (error) {
+        // Ekrandan ayrilinca (blur) iptal edilen istek bir hata degildir.
+        if (signal?.aborted) return;
+        if (error instanceof ApiError && error.isUnauthorized) {
+          router.replace("/pages/login");
+          return;
+        }
+        setErrorMessage(
+          error instanceof ApiError
+            ? error.message
+            : "Dashboard yüklenemedi. Lütfen tekrar deneyin.",
+        );
+      } finally {
+        setIsLoading(false);
       }
-      setErrorMessage(
-        error instanceof ApiError
-          ? error.message
-          : "Dashboard yüklenemedi. Lütfen tekrar deneyin.",
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, [router]);
+    },
+    [router],
+  );
 
   const loadTodayPlan = useCallback(async (signal?: AbortSignal) => {
     try {
@@ -116,8 +126,9 @@ export function DashboardScreen() {
   // PersonalizationJob Pending/Processing -> Completed'e gectiginde, artik gercek kisisel
   // plan hazir demektir: dashboard'u ve bugunun planini yeniden cek.
   useEffect(() => {
-    const wasPending = previousPersonalizationStatus.current === "Pending"
-      || previousPersonalizationStatus.current === "Processing";
+    const wasPending =
+      previousPersonalizationStatus.current === "Pending" ||
+      previousPersonalizationStatus.current === "Processing";
     const isNowCompleted = personalization.status === "Completed";
 
     if (wasPending && isNowCompleted) {
@@ -204,14 +215,22 @@ export function DashboardScreen() {
       params: {
         id: String(todayPlan.day.workout.id),
         title: todayPlan.day.workout.title,
-        workoutPlanDayId: todayPlan.workoutPlanDayId ? String(todayPlan.workoutPlanDayId) : undefined,
+        workoutPlanDayId: todayPlan.workoutPlanDayId
+          ? String(todayPlan.workoutPlanDayId)
+          : undefined,
       },
     } as never);
   };
 
   if (isLoading) {
     return (
-      <View style={[styles.root, styles.centered, { backgroundColor: colors.background }]}>
+      <View
+        style={[
+          styles.root,
+          styles.centered,
+          { backgroundColor: colors.background },
+        ]}
+      >
         <ActivityIndicator color={colors.primary} size="large" />
       </View>
     );
@@ -219,7 +238,13 @@ export function DashboardScreen() {
 
   if (errorMessage || !data) {
     return (
-      <View style={[styles.root, styles.centered, { backgroundColor: colors.background }]}>
+      <View
+        style={[
+          styles.root,
+          styles.centered,
+          { backgroundColor: colors.background },
+        ]}
+      >
         <Text style={[styles.errorText, { color: colors.textSecondary }]}>
           {errorMessage ?? "Dashboard yüklenemedi."}
         </Text>
@@ -260,7 +285,9 @@ export function DashboardScreen() {
           ) : null}
 
           {todayPlan?.hasWorkoutToday && todayPlan.day ? (
-            <Animated.View style={[styles.padded, styles.gapTop, fadeUp(workoutAnim)]}>
+            <Animated.View
+              style={[styles.padded, styles.gapTop, fadeUp(workoutAnim)]}
+            >
               <TodayPersonalWorkoutCard
                 day={todayPlan.day}
                 isCompletedToday={todayPlan.isCompletedToday ?? false}
@@ -273,11 +300,24 @@ export function DashboardScreen() {
             <View style={[styles.padded, styles.gapTop]}>
               <Pressable
                 onPress={goToWorkoutPlan}
-                style={[styles.historyLink, { backgroundColor: colors.card, borderColor: colors.border }]}
+                style={[
+                  styles.historyLink,
+                  {
+                    backgroundColor: colors.card,
+                    borderColor: colors.border,
+                    marginBottom: 16,
+                  },
+                ]}
                 accessibilityRole="button"
               >
-                <Text style={[styles.historyLinkTitle, { color: colors.text }]}>Antrenman Programım</Text>
-                <Text style={[styles.historyLinkMeta, { color: colors.primary }]}>Haftayı gör</Text>
+                <Text style={[styles.historyLinkTitle, { color: colors.text }]}>
+                  Antrenman Programım
+                </Text>
+                <Text
+                  style={[styles.historyLinkMeta, { color: colors.primary }]}
+                >
+                  Haftayı gör
+                </Text>
               </Pressable>
             </View>
           ) : null}
@@ -304,11 +344,25 @@ export function DashboardScreen() {
               <View style={[styles.padded, styles.historyLinkGap]}>
                 <Pressable
                   onPress={goToWorkoutHistory}
-                  style={[styles.historyLink, { backgroundColor: colors.card, borderColor: colors.border }]}
+                  style={[
+                    styles.historyLink,
+                    {
+                      backgroundColor: colors.card,
+                      borderColor: colors.border,
+                    },
+                  ]}
                   accessibilityRole="button"
                 >
-                  <Text style={[styles.historyLinkTitle, { color: colors.text }]}>Antrenman Geçmişi</Text>
-                  <Text style={[styles.historyLinkMeta, { color: colors.primary }]}>Gör</Text>
+                  <Text
+                    style={[styles.historyLinkTitle, { color: colors.text }]}
+                  >
+                    Antrenman Geçmişi
+                  </Text>
+                  <Text
+                    style={[styles.historyLinkMeta, { color: colors.primary }]}
+                  >
+                    Gör
+                  </Text>
                 </Pressable>
               </View>
 
@@ -344,7 +398,12 @@ export function DashboardScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   flex: { flex: 1 },
-  centered: { alignItems: "center", justifyContent: "center", gap: 16, paddingHorizontal: 32 },
+  centered: {
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 16,
+    paddingHorizontal: 32,
+  },
   errorText: { fontSize: 14, textAlign: "center" },
   retryButton: {
     paddingHorizontal: 20,
