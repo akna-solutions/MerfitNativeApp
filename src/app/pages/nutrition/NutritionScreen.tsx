@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Animated, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -45,6 +46,7 @@ function mapToNutritionData(response: NutritionResponse): NutritionData {
 }
 
 export function NutritionScreen() {
+  const router = useRouter();
   const { colors } = useTheme();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [data, setData] = useState<NutritionData | null>(null);
@@ -180,7 +182,11 @@ export function NutritionScreen() {
           showsVerticalScrollIndicator={false}
         >
           <Animated.View style={[styles.padded, fadeUp(headerAnim, -8)]}>
-            <NutritionHeader onNotificationsPress={() => {}} />
+            <NutritionHeader
+              onNotificationsPress={() =>
+                router.push({ pathname: "/pages/notifications", params: { category: "nutrition" } } as never)
+              }
+            />
           </Animated.View>
 
           <View style={styles.sectionGap}>

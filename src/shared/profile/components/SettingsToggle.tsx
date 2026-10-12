@@ -10,6 +10,7 @@ type Props = {
   value: boolean;
   onValueChange: (value: boolean) => void;
   isLast?: boolean;
+  disabled?: boolean;
 };
 
 export function SettingsToggle({
@@ -19,6 +20,7 @@ export function SettingsToggle({
   value,
   onValueChange,
   isLast,
+  disabled,
 }: Props) {
   const { colors } = useTheme();
   return (
@@ -37,6 +39,7 @@ export function SettingsToggle({
       <Switch
         value={value}
         onValueChange={onValueChange}
+        disabled={disabled}
         trackColor={{
           false: colors.inputBackground,
           true: colors.primaryPressed,

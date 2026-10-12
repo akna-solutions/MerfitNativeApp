@@ -1,10 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
   name: string;
+  /** Okunmamis bildirim sayisi; 0 ise zildeki nokta gosterilmez. */
+  unreadCount?: number;
+  onNotificationsPress: () => void;
 };
 
 function getGreeting() {
@@ -14,7 +17,7 @@ function getGreeting() {
   return "İyi akşamlar";
 }
 
-export function DashboardHeader({ name }: Props) {
+export function DashboardHeader({ name, unreadCount = 0, onNotificationsPress }: Props) {
   const { colors } = useTheme();
   const initial = name.trim().charAt(0).toUpperCase() || "M";
 
@@ -28,14 +31,20 @@ export function DashboardHeader({ name }: Props) {
       </View>
 
       <View style={styles.actions}>
-        <View style={[styles.bellButton, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
+        <Pressable
+          onPress={onNotificationsPress}
+          hitSlop={8}
+          style={[styles.bellButton, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
+          accessibilityRole="button"
+          accessibilityLabel={unreadCount > 0 ? `Bildirimler, ${unreadCount} okunmamış` : "Bildirimler"}
+        >
           <Ionicons
             name="notifications-outline"
             size={19}
             color={colors.text}
           />
-          <View style={[styles.dot, { backgroundColor: colors.primary }]} />
-        </View>
+          {unreadCount > 0 ? <View style={[styles.dot, { backgroundColor: colors.primary }]} /> : null}
+        </Pressable>
         <View style={[styles.avatar, { backgroundColor: colors.primaryPressed }]}>
           <Text style={styles.avatarLabel}>{initial}</Text>
         </View>
