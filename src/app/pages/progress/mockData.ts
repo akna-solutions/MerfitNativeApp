@@ -12,6 +12,8 @@ export const MOCK_PROGRESS_DATA: ProgressData = {
   currentWeight: 78.4,
   startingWeight: 82,
   targetWeight: 75,
+  todayWeight: null,
+  weightDirection: "lose",
   monthlyChange: -2.6,
 
   workouts: 18,

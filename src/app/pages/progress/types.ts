@@ -8,6 +8,8 @@ export type GoalType =
 
 export type WeightPoint = { date: string; weight: number };
 
+export type WeightDirection = "lose" | "gain" | "maintain";
+
 export type TimeRange = "week" | "month" | "3months" | "year";
 
 export type RecentActivityItem = {
@@ -31,15 +33,18 @@ export type ProgressData = {
 
   goalType: GoalType;
   goalLabel: string;
-  // build_muscle / get_stronger / improve_endurance için:
+  // Kilo hedeflerinde (lose_weight / build_muscle / get_stronger / maintain_weight) başlangıçtan
+  // hedefe kat edilen yol (0-100):
   goalPercent?: number;
-  // improve_fitness için:
+  weightDirection: WeightDirection;
+  // improve_fitness / improve_endurance için:
   workoutsCompleted?: number;
   workoutsGoal?: number;
 
   currentWeight: number;
   startingWeight: number;
   targetWeight: number;
+  todayWeight: number | null;
   monthlyChange: number;
 
   workouts: number;

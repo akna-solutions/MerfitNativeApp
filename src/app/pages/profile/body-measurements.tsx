@@ -75,6 +75,10 @@ export default function BodyMeasurementsRoute() {
         keyboardType="decimal-pad"
         style={styles.input}
       />
+      <Text style={[styles.hint, { color: colors.textSecondary }]}>
+        Hedef kilon, hedefine (kilo verme, kas kazanma...) ve boyuna göre otomatik hesaplanır. Hedefini
+        değiştirince yeniden hesaplanır; istersen buradan kendin de belirleyebilirsin.
+      </Text>
     </ProfileDetailShell>
   );
 }
@@ -86,5 +90,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   gapTop: { marginTop: 20 },
+  hint: { fontSize: 12, marginTop: 8, lineHeight: 17 },
   input: { fontSize: 20, fontWeight: "700" },
 });
