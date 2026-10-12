@@ -207,38 +207,42 @@ export function AddMealModal({
             </>
           ) : (
             <>
-              <View style={[styles.searchWrapper, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <Ionicons
-                  name="search-outline"
-                  size={16}
-                  color={colors.textSecondary}
-                />
-                <TextInput
-                  value={query}
-                  onChangeText={setQuery}
-                  placeholder="Yiyecek ara..."
-                  placeholderTextColor={colors.textSecondary}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  keyboardAppearance={isDark ? "dark" : "light"}
-                  style={[styles.searchInput, { color: colors.text }]}
-                />
-              </View>
+              <View style={styles.searchRow}>
+                <View style={[styles.searchWrapper, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <Ionicons
+                    name="search-outline"
+                    size={16}
+                    color={colors.textSecondary}
+                  />
+                  <TextInput
+                    value={query}
+                    onChangeText={setQuery}
+                    placeholder="Yiyecek ara..."
+                    placeholderTextColor={colors.textSecondary}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    keyboardAppearance={isDark ? "dark" : "light"}
+                    style={[styles.searchInput, { color: colors.text }]}
+                  />
+                </View>
 
-              <Pressable
-                style={styles.scanRow}
-                onPress={() => {
-                  setErrorMessage(null);
-                  setStep("scan");
-                }}
-              >
-                <Ionicons
-                  name="barcode-outline"
-                  size={16}
-                  color={colors.primary}
-                />
-                <Text style={[styles.scanLabel, { color: colors.primary }]}>Barkod tara</Text>
-              </Pressable>
+                <Pressable
+                  style={[styles.scanButton, { backgroundColor: colors.card, borderColor: colors.primary }]}
+                  onPress={() => {
+                    setErrorMessage(null);
+                    setStep("scan");
+                  }}
+                  hitSlop={6}
+                  accessibilityRole="button"
+                  accessibilityLabel="Barkod tara"
+                >
+                  <Ionicons
+                    name="barcode-outline"
+                    size={26}
+                    color={colors.primary}
+                  />
+                </Pressable>
+              </View>
 
               {errorMessage ? (
                 <Text style={styles.errorText}>{errorMessage}</Text>
@@ -304,24 +308,31 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  searchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 18,
+  },
   searchWrapper: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     height: 46,
     borderRadius: 14,
     paddingHorizontal: 14,
     gap: 10,
-    marginTop: 18,
     borderWidth: StyleSheet.hairlineWidth,
   },
   searchInput: { flex: 1, fontSize: 13, padding: 0 },
-  scanRow: {
-    flexDirection: "row",
+  scanButton: {
+    width: 46,
+    height: 46,
+    borderRadius: 14,
+    borderWidth: 1,
     alignItems: "center",
-    gap: 8,
-    marginTop: 14,
+    justifyContent: "center",
   },
-  scanLabel: { fontSize: 12, fontWeight: "600" },
   errorText: { color: "#FF6B6B", fontSize: 12, fontWeight: "600", marginTop: 12 },
   loadingIndicator: { marginTop: 24 },
   lookupBox: { alignItems: "center", gap: 10, paddingVertical: 40 },
