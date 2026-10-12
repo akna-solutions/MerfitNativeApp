@@ -646,3 +646,30 @@ export type UpdateProfileRequest = Partial<
   notifications?: Partial<ProfileNotificationSettings>;
   privacy?: Partial<ProfilePrivacySettings>;
 };
+
+// ---- Notifications ----
+export type NotificationCategory = "workout" | "nutrition" | "general";
+
+/** GET /api/notifications listesindeki tek bildirim. */
+export type NotificationItem = {
+  id: number;
+  /** Backend NotificationType adi (orn. "WorkoutReminder"). */
+  type: string;
+  category: NotificationCategory;
+  title: string;
+  body: string;
+  imageUrl: string | null;
+  isRead: boolean;
+  createdAt: string;
+};
+
+/** GET /api/notifications/settings - backend'deki her NotificationType icin bir satir. */
+export type NotificationTypeSetting = {
+  type: string;
+  title: string;
+  description: string;
+  category: NotificationCategory;
+  isEnabled: boolean;
+  /** true ise kullanici kapatamaz. */
+  isLocked: boolean;
+};

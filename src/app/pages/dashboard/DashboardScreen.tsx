@@ -14,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ApiError } from "../../../services/api/client";
 import { getDashboard } from "../../../services/api/dashboard";
 import { getTodayPlan } from "../../../services/api/myPlan";
+import { getUnreadNotificationCount } from "../../../services/api/notifications";
 import {
   DashboardResponse,
   MyTodayWorkoutPlanResponse,
@@ -72,6 +73,7 @@ export function DashboardScreen() {
   const [todayPlan, setTodayPlan] = useState<MyTodayWorkoutPlanResponse | null>(
     null,
   );
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const personalization = usePersonalizationStatus(true);
   const previousPersonalizationStatus = useRef(personalization.status);
@@ -119,6 +121,11 @@ export function DashboardScreen() {
       const controller = new AbortController();
       loadDashboard(controller.signal);
       loadTodayPlan(controller.signal);
+      getUnreadNotificationCount(undefined, controller.signal)
+        .then(setUnreadCount)
+        .catch(() => {
+          // Sayi alinamazsa zil noktasiz gosterilir.
+        });
       return () => controller.abort();
     }, [loadDashboard, loadTodayPlan]),
   );
@@ -270,7 +277,11 @@ export function DashboardScreen() {
           showsVerticalScrollIndicator={false}
         >
           <Animated.View style={[styles.padded, fadeUp(headerAnim, -8)]}>
-            <DashboardHeader name={data.userName} />
+            <DashboardHeader
+              name={data.userName}
+              unreadCount={unreadCount}
+              onNotificationsPress={() => router.push("/pages/notifications" as never)}
+            />
           </Animated.View>
 
           {personalization.isPending || personalization.isFailed ? (

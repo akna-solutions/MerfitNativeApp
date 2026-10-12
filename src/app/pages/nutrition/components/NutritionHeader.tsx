@@ -17,6 +17,8 @@ export function NutritionHeader({ onNotificationsPress }: Props) {
       <Pressable
         onPress={onNotificationsPress}
         hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel="Beslenme bildirimleri"
         style={[styles.iconButton, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
       >
         <Ionicons
