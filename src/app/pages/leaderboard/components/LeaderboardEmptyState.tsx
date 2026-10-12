@@ -9,9 +9,9 @@ export function LeaderboardEmptyState({ onStartWorkout }: Props) {
   const { colors } = useTheme();
   return (
     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-      <Text style={[styles.title, { color: colors.text }]}>Sıralama tablosu hazırlanıyor.</Text>
+      <Text style={[styles.title, { color: colors.text }]}>Bu dönemde henüz puan kazanan yok.</Text>
       <Text style={[styles.description, { color: colors.textSecondary }]}>
-        MB FIT Puanı kazanmaya başlamak için ilk antrenmanını tamamla.
+        Antrenman tamamla, kişisel rekor kır, öğün ve su kaydı gir; MB FIT Puanı kazanıp sıralamada ilk yerini al.
       </Text>
       <View style={styles.button}>
         <OnboardingButton label="Antrenmana Başla" onPress={onStartWorkout} />

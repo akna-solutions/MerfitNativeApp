@@ -46,4 +46,6 @@ export type Reward = {
   title: string;
   description: string;
   icon: RewardIcon;
+  imageUrl?: string | null;
+  value?: string | null;
 };

@@ -5,7 +5,8 @@ import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
   onBack: () => void;
-  currentRank: number;
+  /** Secili donemde henuz puani yoksa null. */
+  currentRank: number | null;
   points: number;
   topPercent: number;
   league: string;
@@ -38,8 +39,10 @@ export function LeaderboardHeader({
 
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <Text style={[styles.country, { color: colors.textSecondary }]}>Türkiye</Text>
-        <Text style={[styles.rank, { color: colors.text }]}>#{currentRank}</Text>
-        <Text style={[styles.rankLabel, { color: colors.textSecondary }]}>Mevcut sıralaman</Text>
+        <Text style={[styles.rank, { color: colors.text }]}>{currentRank ? `#${currentRank}` : "—"}</Text>
+        <Text style={[styles.rankLabel, { color: colors.textSecondary }]}>
+          {currentRank ? "Mevcut sıralaman" : "Bu dönemde henüz puanın yok"}
+        </Text>
 
         <View style={styles.statsRow}>
           <View style={styles.stat}>
@@ -53,7 +56,7 @@ export function LeaderboardHeader({
           </View>
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <View style={styles.stat}>
-            <Text style={[styles.statValue, { color: colors.primary }]}>#{bestRank}</Text>
+            <Text style={[styles.statValue, { color: colors.primary }]}>{bestRank > 0 ? `#${bestRank}` : "—"}</Text>
             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>En İyi · {bestRankMonthLabel}</Text>
           </View>
         </View>

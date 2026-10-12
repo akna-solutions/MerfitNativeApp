@@ -23,10 +23,12 @@ export function RewardDetailModal({ reward, onClose }: Props) {
 
         {reward ? (
           <View style={[styles.dialog, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <RewardImage icon={reward.icon} size="large" />
+            <RewardImage icon={reward.icon} imageUrl={reward.imageUrl} size="large" />
             <Text style={[styles.rankLabel, { color: colors.primary }]}>#{reward.rank}. Sıra Ödülü</Text>
             <Text style={[styles.title, { color: colors.text }]}>{reward.title}</Text>
-            <Text style={[styles.description, { color: colors.textSecondary }]}>{reward.description}</Text>
+            {reward.description ? (
+              <Text style={[styles.description, { color: colors.textSecondary }]}>{reward.description}</Text>
+            ) : null}
 
             <Pressable onPress={onClose} style={[styles.closeButton, { backgroundColor: colors.inputBackground }]}>
               <Text style={[styles.closeLabel, { color: colors.text }]}>Kapat</Text>
