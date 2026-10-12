@@ -702,7 +702,41 @@ export type NotificationItem = {
   imageUrl: string | null;
   isRead: boolean;
   createdAt: string;
+  /** Yonlendirme verisi (orn. { screen: "nutrition" }); yalnizca izinli ekranlara gidilir. */
+  data?: Record<string, string>;
 };
+
+/** GET/PUT /api/notifications/preferences - push ana anahtari, sessiz saatler ve saat dilimi. */
+export type NotificationPreferences = {
+  pushEnabled: boolean;
+  /** "SS:dd" (kullanicinin yerel saati) veya null. */
+  quietHoursStart: string | null;
+  quietHoursEnd: string | null;
+  /** Kayitli IANA saat dilimi; null ise backend varsayilani kullanilir. */
+  timeZone: string | null;
+  /** Zamanlamada fiilen kullanilan saat dilimi. */
+  effectiveTimeZone: string;
+};
+
+export type UpdateNotificationPreferencesRequest = {
+  pushEnabled: boolean;
+  quietHoursStart: string | null;
+  quietHoursEnd: string | null;
+  timeZone?: string | null;
+};
+
+/** PUT /api/notifications/devices - kullanici kimligi backend'de JWT'den alinir, govdede gonderilmez. */
+export type RegisterDeviceRequest = {
+  token: string;
+  platform: "ios" | "android";
+  installationId?: string | null;
+  deviceName?: string | null;
+  appVersion?: string | null;
+  osVersion?: string | null;
+  timeZone?: string | null;
+};
+
+export type DeviceDeactivationReason = "Logout" | "PermissionRevoked";
 
 /** GET /api/notifications/settings - backend'deki her NotificationType icin bir satir. */
 export type NotificationTypeSetting = {

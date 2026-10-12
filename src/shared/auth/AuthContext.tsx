@@ -11,6 +11,7 @@ import {
 import * as authApi from "../../services/api/auth";
 import { getStoredTokens } from "../../services/api/tokenStorage";
 import { LoginRequest, RegisterRequest } from "../../services/api/types";
+import { deactivateStoredPushToken } from "../notifications/pushRegistration";
 
 type AuthStatus = "loading" | "signedIn" | "signedOut";
 
@@ -74,6 +75,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [bumpSession]);
 
   const logout = useCallback(async () => {
+    // Token'lar silinmeden once bu cihazin push kaydi pasiflestirilir (kimlik dogrulamali istek);
+    // backend'e ulasilamazsa cikis yine de tamamlanir.
+    await deactivateStoredPushToken("Logout");
     await authApi.logout();
     setUserName(null);
     setUsername(null);

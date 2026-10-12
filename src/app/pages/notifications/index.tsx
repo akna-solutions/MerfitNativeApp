@@ -13,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ApiError } from "../../../services/api/client";
 import { getNotifications, markAllNotificationsRead } from "../../../services/api/notifications";
+import { resolveNotificationRoute } from "../../../shared/notifications/navigation";
 import { NotificationCategory, NotificationItem } from "../../../services/api/types";
 import {
   formatNotificationTime,
@@ -41,6 +42,8 @@ const TYPE_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   Marketing: "megaphone-outline",
   NutritionReminder: "restaurant-outline",
   WaterReminder: "water-outline",
+  DailyMotivation: "sunny-outline",
+  Announcement: "megaphone-outline",
 };
 
 /**
@@ -181,7 +184,17 @@ export default function NotificationsScreen() {
             renderSectionHeader={({ section }) => (
               <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{section.title}</Text>
             )}
-            renderItem={({ item }) => <NotificationRow item={item} />}
+            renderItem={({ item }) => {
+              // Yalnizca izinli ekranlara yonlendirilir; bu ekrana isaret eden veya hedefsiz satirlara dokunulamaz.
+              const route = resolveNotificationRoute(item.data);
+              const target = route && route !== "/pages/notifications" ? route : null;
+              return (
+                <NotificationRow
+                  item={item}
+                  onPress={target ? () => router.push(target as never) : undefined}
+                />
+              );
+            }}
             ListFooterComponent={
               isLoadingMore ? <ActivityIndicator color={colors.primary} style={styles.footer} /> : null
             }
@@ -192,11 +205,15 @@ export default function NotificationsScreen() {
   );
 }
 
-function NotificationRow({ item }: { item: NotificationItem }) {
+function NotificationRow({ item, onPress }: { item: NotificationItem; onPress?: () => void }) {
   const { colors } = useTheme();
   return (
-    <View
-      style={[
+    <Pressable
+      onPress={onPress}
+      disabled={!onPress}
+      accessibilityRole={onPress ? "button" : undefined}
+      style={({ pressed }) => [
+        pressed && styles.cardPressed,
         styles.card,
         { backgroundColor: item.isRead ? colors.card : colors.cardActive, borderColor: colors.border },
       ]}
@@ -215,8 +232,9 @@ function NotificationRow({ item }: { item: NotificationItem }) {
         </View>
         <Text style={[styles.cardBody, { color: colors.textSecondary }]}>{item.body}</Text>
       </View>
+      {onPress ? <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} style={styles.chevron} /> : null}
       {!item.isRead ? <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} /> : null}
-    </View>
+    </Pressable>
   );
 }
 
@@ -249,5 +267,7 @@ const styles = StyleSheet.create({
   cardTitle: { flex: 1, fontSize: 14, fontWeight: "700" },
   cardTime: { fontSize: 11 },
   cardBody: { fontSize: 13, lineHeight: 18, marginTop: 3 },
+  cardPressed: { opacity: 0.7 },
+  chevron: { marginTop: 10 },
   unreadDot: { width: 8, height: 8, borderRadius: 4, marginTop: 6 },
 });

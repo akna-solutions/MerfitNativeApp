@@ -5,6 +5,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-nati
 import { ApiError } from "../../../services/api/client";
 import { getNotificationSettings, updateNotificationSettings } from "../../../services/api/notifications";
 import { NotificationCategory, NotificationTypeSetting } from "../../../services/api/types";
+import { PushPreferencesSection } from "../../../shared/notifications/PushPreferencesSection";
 import { ProfileDetailShell } from "../../../shared/profile/components/ProfileDetailShell";
 import { SettingsSection } from "../../../shared/profile/components/SettingsSection";
 import { SettingsToggle } from "../../../shared/profile/components/SettingsToggle";
@@ -84,6 +85,7 @@ export default function NotificationsRoute() {
         </View>
       ) : (
         <>
+          <PushPreferencesSection />
           {saveError ? (
             <Text style={[styles.saveError, { color: colors.textSecondary }]}>{saveError}</Text>
           ) : null}
