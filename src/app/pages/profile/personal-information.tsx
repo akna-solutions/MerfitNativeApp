@@ -4,18 +4,11 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { ProfileDetailShell } from "../../../shared/profile/components/ProfileDetailShell";
 import { useProfile } from "../../../shared/profile/ProfileContext";
-import { Gender } from "../../../shared/profile/types";
+import { Gender, GENDER_OPTIONS } from "../../../shared/profile/types";
 import { OnboardingButton } from "../onboarding/components/OnboardingButton";
 import { OnboardingInput } from "../onboarding/components/OnboardingInput";
 import { OnboardingOption } from "../onboarding/components/OnboardingOption";
 import { useTheme } from "../../../shared/theme/ThemeContext";
-
-const GENDER_OPTIONS: Gender[] = [
-  "Erkek",
-  "Kadın",
-  "Diğer",
-  "Belirtmek istemiyorum",
-];
 
 export default function PersonalInformationRoute() {
   const router = useRouter();

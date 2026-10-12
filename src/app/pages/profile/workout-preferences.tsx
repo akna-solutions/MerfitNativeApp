@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { ProfileDetailShell } from "../../../shared/profile/components/ProfileDetailShell";
 import { useProfile } from "../../../shared/profile/ProfileContext";
@@ -11,14 +11,13 @@ import {
     TrainingLocation,
     WEEKDAY_SHORT_LABELS,
     WEEKDAYS,
+    Weekday,
 } from "../../../shared/profile/types";
 import { OnboardingButton } from "../onboarding/components/OnboardingButton";
 import { OnboardingOption } from "../onboarding/components/OnboardingOption";
 import { useTheme } from "../../../shared/theme/ThemeContext";
 
-const DURATION_OPTIONS = [15, 30, 45, 60, 90];
-// Kayittaki FrequencyStep ile ayni secenekler.
-const FREQUENCY_OPTIONS = [2, 3, 4, 5, 6, 7];
+const MIN_TRAINING_DAYS = 2;
 const EXPERIENCE_OPTIONS: ExperienceLevel[] = [
   "BEGINNER",
   "INTERMEDIATE",
@@ -26,13 +25,15 @@ const EXPERIENCE_OPTIONS: ExperienceLevel[] = [
 ];
 const LOCATION_OPTIONS: TrainingLocation[] = ["gym", "home", "outdoor"];
 
+const sameDays = (a: Weekday[], b: Weekday[]) =>
+  a.length === b.length && a.every((day) => b.includes(day));
+
 export default function WorkoutPreferencesRoute() {
   const router = useRouter();
   const { profile, updateProfile, isLoading } = useProfile();
   const { colors } = useTheme();
 
-  const [daysPerWeek, setDaysPerWeek] = useState(profile.trainingDaysPerWeek);
-  const [duration, setDuration] = useState(profile.workoutDurationMin);
+  const [days, setDays] = useState<Weekday[]>(profile.trainingDays);
   const [experience, setExperience] = useState<ExperienceLevel>(
     profile.experienceLevel,
   );
@@ -43,20 +44,30 @@ export default function WorkoutPreferencesRoute() {
   // bkz. edit.tsx - ekran profil yuklenmeden once acildiysa formu gercek verilerle senkronize et.
   useEffect(() => {
     if (isLoading) return;
-    setDaysPerWeek(profile.trainingDaysPerWeek);
-    setDuration(profile.workoutDurationMin);
+    setDays(profile.trainingDays);
     setExperience(profile.experienceLevel);
     setLocation(profile.trainingLocation);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading]);
 
-  // Gunler kullanici tarafindan secilmez; antrenman programi olusturulurken belirlenir.
-  const planDays = WEEKDAYS.filter((day) => profile.trainingDays.includes(day));
+  const toggleDay = (day: Weekday) =>
+    setDays((prev) =>
+      prev.includes(day)
+        ? prev.filter((d) => d !== day)
+        : WEEKDAYS.filter((d) => d === day || prev.includes(d)),
+    );
+
+  const daysChanged = !sameDays(days, profile.trainingDays);
+  const tooFewDays = daysChanged && days.length < MIN_TRAINING_DAYS;
+  const planChanged =
+    daysChanged ||
+    experience !== profile.experienceLevel ||
+    location !== profile.trainingLocation;
 
   const handleSave = () => {
+    if (tooFewDays) return;
     updateProfile({
-      ...(daysPerWeek > 0 ? { trainingDaysPerWeek: daysPerWeek } : {}),
-      ...(duration > 0 ? { workoutDurationMin: duration } : {}),
+      ...(daysChanged ? { trainingDays: days } : {}),
       experienceLevel: experience,
       ...(location ? { trainingLocation: location } : {}),
     });
@@ -66,61 +77,51 @@ export default function WorkoutPreferencesRoute() {
   return (
     <ProfileDetailShell
       title="Antrenman Tercihleri"
-      footer={<OnboardingButton label="Değişiklikleri Kaydet" onPress={handleSave} />}
+      footer={
+        <OnboardingButton
+          label="Değişiklikleri Kaydet"
+          onPress={handleSave}
+          disabled={tooFewDays}
+        />
+      }
     >
-      <Text style={[styles.label, { color: colors.textSecondary }]}>Programındaki Günler</Text>
-      {planDays.length > 0 ? (
-        <View style={styles.daysRow}>
-          {WEEKDAYS.map((day) => {
-            const active = planDays.includes(day);
-            return (
-              <View
-                key={day}
+      <Text style={[styles.label, { color: colors.textSecondary }]}>Antrenman Günleri</Text>
+      <View style={styles.daysRow}>
+        {WEEKDAYS.map((day) => {
+          const active = days.includes(day);
+          return (
+            <Pressable
+              key={day}
+              onPress={() => toggleDay(day)}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: active }}
+              accessibilityLabel={WEEKDAY_SHORT_LABELS[day]}
+              style={[
+                styles.dayPill,
+                { backgroundColor: colors.inputBackground },
+                active && { backgroundColor: colors.primaryPressed },
+              ]}
+            >
+              <Text
                 style={[
-                  styles.dayPill,
-                  { backgroundColor: colors.inputBackground },
-                  active && { backgroundColor: colors.primaryPressed },
+                  styles.dayLabel,
+                  { color: colors.textSecondary },
+                  active && styles.dayLabelActive,
                 ]}
               >
-                <Text
-                  style={[
-                    styles.dayLabel,
-                    { color: colors.textSecondary },
-                    active && styles.dayLabelActive,
-                  ]}
-                >
-                  {WEEKDAY_SHORT_LABELS[day]}
-                </Text>
-              </View>
-            );
-          })}
-        </View>
-      ) : null}
-      <Text style={[styles.hint, { color: colors.textSecondary }]}>
-        {planDays.length > 0
-          ? "Bu günler antrenman programın oluşturulurken belirlendi."
-          : "Antrenman programın hazırlandığında günlerin burada görünecek."}
+                {WEEKDAY_SHORT_LABELS[day]}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      <Text style={[styles.hint, { color: tooFewDays ? colors.danger : colors.textSecondary }]}>
+        {tooFewDays
+          ? `En az ${MIN_TRAINING_DAYS} gün seçmelisin.`
+          : days.length > 0
+            ? `Haftada ${days.length} gün antrenman yapacaksın.`
+            : "Antrenman yapmak istediğin günleri seç."}
       </Text>
-
-      <Text style={[styles.label, styles.gapTop, { color: colors.textSecondary }]}>Haftalık Antrenman Sayısı</Text>
-      {FREQUENCY_OPTIONS.map((count) => (
-        <OnboardingOption
-          key={count}
-          label={count === 7 ? "Her gün" : `Haftada ${count} gün`}
-          selected={daysPerWeek === count}
-          onPress={() => setDaysPerWeek(count)}
-        />
-      ))}
-
-      <Text style={[styles.label, styles.gapTop, { color: colors.textSecondary }]}>Antrenman Süresi</Text>
-      {DURATION_OPTIONS.map((minutes) => (
-        <OnboardingOption
-          key={minutes}
-          label={minutes === 90 ? "90+ dk" : `${minutes} dk`}
-          selected={duration === minutes}
-          onPress={() => setDuration(minutes)}
-        />
-      ))}
 
       <Text style={[styles.label, styles.gapTop, { color: colors.textSecondary }]}>Deneyim Seviyesi</Text>
       {EXPERIENCE_OPTIONS.map((level) => (
@@ -141,6 +142,12 @@ export default function WorkoutPreferencesRoute() {
           onPress={() => setLocation(option)}
         />
       ))}
+
+      {planChanged ? (
+        <Text style={[styles.hint, styles.gapTop, { color: colors.textSecondary }]}>
+          Kaydettiğinde antrenman programın bu tercihlere göre yeniden hazırlanır.
+        </Text>
+      ) : null}
     </ProfileDetailShell>
   );
 }

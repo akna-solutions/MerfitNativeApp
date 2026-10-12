@@ -307,12 +307,11 @@ function bodySubtitle(profile: ProfileData): string {
 }
 
 function trainingSubtitle(profile: ProfileData): string {
-  const parts: string[] = [];
-  if (profile.trainingDaysPerWeek > 0) {
-    parts.push(`Haftada ${profile.trainingDaysPerWeek} gün`);
+  if (profile.trainingDays.length > 0) {
+    return profile.trainingDays.map((day) => WEEKDAY_SHORT_LABELS[day]).join(", ");
   }
-  if (profile.workoutDurationMin > 0) parts.push(`${profile.workoutDurationMin} dk`);
-  return parts.length > 0 ? parts.join(" · ") : "Antrenman sıklığı ve süresi";
+  if (profile.trainingDaysPerWeek > 0) return `Haftada ${profile.trainingDaysPerWeek} gün`;
+  return "Antrenman günleri ve seviyesi";
 }
 
 const styles = StyleSheet.create({
