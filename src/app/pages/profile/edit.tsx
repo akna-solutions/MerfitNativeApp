@@ -4,18 +4,11 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { ProfileDetailShell } from "../../../shared/profile/components/ProfileDetailShell";
 import { useProfile } from "../../../shared/profile/ProfileContext";
-import { Gender } from "../../../shared/profile/types";
+import { Gender, GENDER_OPTIONS } from "../../../shared/profile/types";
 import { OnboardingButton } from "../onboarding/components/OnboardingButton";
 import { OnboardingInput } from "../onboarding/components/OnboardingInput";
 import { OnboardingOption } from "../onboarding/components/OnboardingOption";
 import { useTheme } from "../../../shared/theme/ThemeContext";
-
-const GENDER_OPTIONS: Gender[] = [
-  "Erkek",
-  "Kadın",
-  "Diğer",
-  "Belirtmek istemiyorum",
-];
 
 export default function EditProfileRoute() {
   const router = useRouter();
@@ -26,7 +19,7 @@ export default function EditProfileRoute() {
   const [lastName, setLastName] = useState(profile.lastName);
   const [username, setUsername] = useState(profile.username);
   const [email, setEmail] = useState(profile.email);
-  const [dateOfBirth, setDateOfBirth] = useState(profile.dateOfBirth);
+  const [age, setAge] = useState(profile.age > 0 ? `${profile.age}` : "");
   const [gender, setGender] = useState<Gender>(profile.gender);
 
   // Bu ekran, gercek profil GET /api/profile'dan donmeden ONCE (orn. kullanici cok hizli
@@ -41,7 +34,7 @@ export default function EditProfileRoute() {
     setLastName(profile.lastName);
     setUsername(profile.username);
     setEmail(profile.email);
-    setDateOfBirth(profile.dateOfBirth);
+    setAge(profile.age > 0 ? `${profile.age}` : "");
     setGender(profile.gender);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading]);
@@ -49,12 +42,14 @@ export default function EditProfileRoute() {
   const initial = firstName.trim().charAt(0).toUpperCase() || "M";
 
   const handleSave = () => {
+    // Kayitta dogum tarihi degil yas soruluyor; bu yuzden burada da yas duzenlenir.
+    const parsedAge = parseInt(age, 10);
     updateProfile({
       firstName,
       lastName,
       username,
       email,
-      dateOfBirth,
+      ...(parsedAge > 0 && parsedAge !== profile.age ? { age: parsedAge } : {}),
       gender,
     });
     router.back();
@@ -104,11 +99,11 @@ export default function EditProfileRoute() {
           style={styles.input}
         />
       </Field>
-      <Field label="Doğum Tarihi">
+      <Field label="Yaş">
         <OnboardingInput
-          value={dateOfBirth}
-          onChangeText={setDateOfBirth}
-          placeholder="YYYY-AA-GG"
+          value={age}
+          onChangeText={(text) => setAge(text.replace(/[^0-9]/g, "").slice(0, 3))}
+          keyboardType="number-pad"
           style={styles.input}
         />
       </Field>

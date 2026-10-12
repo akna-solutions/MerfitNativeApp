@@ -1,3 +1,4 @@
+import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppState, AppStateStatus } from "react-native";
 
@@ -121,6 +122,19 @@ export function usePersonalizationStatus(enabled: boolean): UsePersonalizationSt
     setErrorMessage(null);
     setRefetchTick((tick) => tick + 1);
   }, [clearScheduledPoll]);
+
+  // Profilde hedef/gun/seviye degisince backend programi yeniden hazirlar (yeni PersonalizationJob).
+  // Sekme ekranlari yeniden mount edilmedigi icin durum, ekran her tekrar odaga geldiginde tazelenir.
+  const isFirstFocusRef = useRef(true);
+  useFocusEffect(
+    useCallback(() => {
+      if (isFirstFocusRef.current) {
+        isFirstFocusRef.current = false;
+        return;
+      }
+      if (enabled) refetch();
+    }, [enabled, refetch]),
+  );
 
   return {
     status,

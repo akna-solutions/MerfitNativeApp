@@ -673,3 +673,34 @@ export type NotificationTypeSetting = {
   /** true ise kullanici kapatamaz. */
   isLocked: boolean;
 };
+
+// ---- Subscription ----
+/** GET /api/subscription - MerfitCustomerApi.Business.Dtos.Customer.Subscriptions.SubscriptionProductDto */
+export type SubscriptionProductItem = {
+  id: number;
+  code: string;
+  name: string;
+  billingPeriod: "Monthly" | "Yearly";
+  price: number;
+  currency: string;
+  storeProductIdIos: string | null;
+  storeProductIdAndroid: string | null;
+  features: string[];
+};
+
+export type SubscriptionInfo = {
+  status: "Active" | "Expired" | "Cancelled" | "Refunded" | "Paused" | "GracePeriod";
+  provider: "Apple" | "Google";
+  startedAt: string;
+  expiresAt: string | null;
+  autoRenew: boolean;
+  cancelledAt: string | null;
+  product: SubscriptionProductItem | null;
+};
+
+/** GET /api/subscription - kullanicinin Plus uyeligi ve satin alinabilir planlar. */
+export type MySubscriptionResponse = {
+  isPlus: boolean;
+  current: SubscriptionInfo | null;
+  products: SubscriptionProductItem[];
+};

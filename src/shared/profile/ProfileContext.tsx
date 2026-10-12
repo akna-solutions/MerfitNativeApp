@@ -75,9 +75,9 @@ function deriveDateOfBirthFromAge(age: number, currentDateOfBirth: string): stri
 }
 
 function mapPatchToApiRequest(patch: Partial<ProfileData>, current: ProfileData): ApiUpdateProfileRequest {
-  // trainingDays ve equipment backend'de turetilen salt okunur alanlardir (aktif program /
-  // antrenman yeri); geri gonderilmezler.
-  const { age, trainingDays: _days, equipment: _equipment, ...rest } = patch;
+  // equipment backend'de antrenman yerinden turetilen salt okunur bir alandir; geri gonderilmez.
+  // trainingDays kullanicinin sectigi gunlerdir; backend haftalik gun sayisini bu listeden turetir.
+  const { age, equipment: _equipment, ...rest } = patch;
   const request: ApiUpdateProfileRequest = { ...rest };
 
   if (age !== undefined && patch.dateOfBirth === undefined) {

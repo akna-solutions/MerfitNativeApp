@@ -1,5 +1,8 @@
 export type Gender = "Erkek" | "Kadın" | "Diğer" | "Belirtmek istemiyorum";
 
+/** Profilde secilebilen cinsiyetler. "Diğer" / "Belirtmek istemiyorum" yalnizca eski kayitlar icin tipte kalir. */
+export const GENDER_OPTIONS: Gender[] = ["Kadın", "Erkek"];
+
 export type Goal =
   | "LOSE_WEIGHT"
   | "BUILD_MUSCLE"
