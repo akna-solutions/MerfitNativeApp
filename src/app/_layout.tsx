@@ -3,6 +3,7 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { AuthProvider } from "../shared/auth/AuthContext";
+import { PushNotificationsProvider } from "../shared/notifications/PushNotificationsProvider";
 import { PlusProvider } from "../shared/plus/PlusContext";
 import { ProfileProvider } from "../shared/profile/ProfileContext";
 import { ThemeProvider, useTheme } from "../shared/theme/ThemeContext";
@@ -26,7 +27,9 @@ export default function RootLayout() {
         <ProfileProvider>
           <ThemeProvider>
             <PlusProvider>
-              <RootNavigation />
+              <PushNotificationsProvider>
+                <RootNavigation />
+              </PushNotificationsProvider>
             </PlusProvider>
           </ThemeProvider>
         </ProfileProvider>
