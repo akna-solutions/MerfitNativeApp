@@ -281,6 +281,7 @@ export function DashboardScreen() {
               name={data.userName}
               unreadCount={unreadCount}
               onNotificationsPress={() => router.push("/pages/notifications" as never)}
+              onProfilePress={() => router.navigate("/pages/profile" as never)}
             />
           </Animated.View>
 

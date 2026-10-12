@@ -465,7 +465,10 @@ export type LogMealItemRequest = {
   date?: string; // "yyyy-MM-dd"
   mealType: ApiMealType;
   foodId: number;
+  /** Porsiyon carpani (food.servingSize'a gore). amount verilirse kullanilmaz. */
   quantity?: number;
+  /** Besinin kendi biriminde miktar (g veya ml); yalnizca g/ml birimli besinlerde. */
+  amount?: number;
 };
 
 export type LogWaterRequest = {

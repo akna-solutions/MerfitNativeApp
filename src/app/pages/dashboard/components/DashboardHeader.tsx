@@ -8,6 +8,7 @@ type Props = {
   /** Okunmamis bildirim sayisi; 0 ise zildeki nokta gosterilmez. */
   unreadCount?: number;
   onNotificationsPress: () => void;
+  onProfilePress: () => void;
 };
 
 function getGreeting() {
@@ -17,7 +18,7 @@ function getGreeting() {
   return "İyi akşamlar";
 }
 
-export function DashboardHeader({ name, unreadCount = 0, onNotificationsPress }: Props) {
+export function DashboardHeader({ name, unreadCount = 0, onNotificationsPress, onProfilePress }: Props) {
   const { colors } = useTheme();
   const initial = name.trim().charAt(0).toUpperCase() || "M";
 
@@ -45,9 +46,15 @@ export function DashboardHeader({ name, unreadCount = 0, onNotificationsPress }:
           />
           {unreadCount > 0 ? <View style={[styles.dot, { backgroundColor: colors.primary }]} /> : null}
         </Pressable>
-        <View style={[styles.avatar, { backgroundColor: colors.primaryPressed }]}>
+        <Pressable
+          onPress={onProfilePress}
+          hitSlop={8}
+          style={[styles.avatar, { backgroundColor: colors.primaryPressed }]}
+          accessibilityRole="button"
+          accessibilityLabel="Profil"
+        >
           <Text style={styles.avatarLabel}>{initial}</Text>
-        </View>
+        </Pressable>
       </View>
     </View>
   );
