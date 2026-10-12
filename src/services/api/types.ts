@@ -544,6 +544,8 @@ export type LeaderboardCurrentUserSummary = {
   id: string;
   name: string;
   points: number;
+  /** Secili donemdeki sira; donemde hic puani yoksa null. */
+  rank: number | null;
   weeklyChange: number;
   bestRank: number;
   bestRankMonthLabel: string;
@@ -580,6 +582,22 @@ export type LeaderboardReward = {
   title: string;
   description: string;
   icon: string;
+  imageUrl: string | null;
+  value: string | null;
+};
+
+/** Kullanicinin kazandigi hediye (admin donem sonunda dagitir). */
+export type LeaderboardEarnedReward = {
+  id: number;
+  rank: number | null;
+  title: string;
+  description: string;
+  icon: string;
+  imageUrl: string | null;
+  value: string | null;
+  status: "pending" | "claimed" | "expired";
+  earnedAt: string;
+  claimedAt: string | null;
 };
 
 export type LeaderboardResponse = {
@@ -594,6 +612,7 @@ export type LeaderboardResponse = {
   achievements: LeaderboardAchievement[];
   rewards: LeaderboardReward[];
   rewardsResetAt: string | null;
+  earnedRewards: LeaderboardEarnedReward[];
 };
 
 // ---- Profile ----

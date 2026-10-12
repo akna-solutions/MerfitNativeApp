@@ -9,6 +9,7 @@ import { ApiError } from "../../../services/api/client";
 import { getLeaderboard } from "../../../services/api/leaderboard";
 import { LeaderboardResponse } from "../../../services/api/types";
 import { Achievements } from "./components/Achievements";
+import { EarnedRewards } from "./components/EarnedRewards";
 import { AdvancedLeaderboardInsights } from "./components/AdvancedLeaderboardInsights";
 import { LeaderboardEmptyState } from "./components/LeaderboardEmptyState";
 import { LeaderboardHeader } from "./components/LeaderboardHeader";
@@ -77,10 +78,16 @@ export function LeaderboardScreen() {
     );
   }
 
-  const tenthPlacePoints = data?.topEntries[data.topEntries.length - 1]?.points ?? 0;
+  const currentRank = data?.currentUser.rank ?? null;
+  const lastRewardRank = data && data.rewards.length > 0
+    ? Math.max(...data.rewards.map((reward) => reward.rank))
+    : 10;
+  // Odul verilen son siradaki kullanicinin puani; o sira henuz dolmadiysa 1 puan yeterli.
+  const lastRewardRankPoints = data?.topEntries.find((entry) => entry.rank === lastRewardRank)?.points ?? 0;
   const pointsToRewardZone = data
-    ? Math.max(0, tenthPlacePoints - data.currentUser.points)
+    ? Math.max(1, lastRewardRankPoints - data.currentUser.points + 1)
     : 0;
+  const rewardsPeriodLabel = period === "week" ? "Bu Haftanın" : period === "month" ? "Bu Ayın" : "Dönemin";
 
   const currentIndex = data?.nearbyEntries.findIndex((entry) => entry.isCurrentUser) ?? -1;
   const nextUser = data && currentIndex > 0 ? data.nearbyEntries[currentIndex - 1] : null;
@@ -98,7 +105,7 @@ export function LeaderboardScreen() {
             {data ? (
               <LeaderboardHeader
                 onBack={() => router.back()}
-                currentRank={data.currentUser.bestRank}
+                currentRank={currentRank}
                 points={data.currentUser.points}
                 topPercent={data.topPercent}
                 league={data.currentUser.league}
@@ -112,20 +119,22 @@ export function LeaderboardScreen() {
             <View style={styles.padded}>
               <LeaderboardSkeleton />
             </View>
-          ) : !data.hasScoreData ? (
-            <View style={styles.padded}>
-              <LeaderboardEmptyState
-                onStartWorkout={() => router.push("/pages/workouts")}
-              />
-            </View>
           ) : (
             <>
-              {data.rewardsResetAt ? (
+              {data.earnedRewards.length > 0 ? (
+                <View style={[styles.padded, styles.sectionGap]}>
+                  <EarnedRewards rewards={data.earnedRewards} />
+                </View>
+              ) : null}
+
+              {data.rewardsResetAt && data.rewards.length > 0 ? (
                 <View style={[styles.padded, styles.sectionGap]}>
                   <RewardsSection
                     rewards={data.rewards}
                     resetAt={new Date(data.rewardsResetAt)}
-                    currentRank={data.currentUser.bestRank}
+                    periodLabel={rewardsPeriodLabel}
+                    currentRank={currentRank}
+                    lastRewardRank={lastRewardRank}
                     pointsToRewardZone={pointsToRewardZone}
                   />
                 </View>
@@ -135,22 +144,34 @@ export function LeaderboardScreen() {
                 <PeriodFilter value={period} onChange={setPeriod} />
               </View>
 
-              <View style={[styles.padded, styles.sectionGap]}>
-                <LeaderboardList
-                  entries={data.topEntries}
-                  anonymized={anonymized}
-                />
-              </View>
+              {data.topEntries.length === 0 ? (
+                <View style={styles.padded}>
+                  <LeaderboardEmptyState
+                    onStartWorkout={() => router.push("/pages/workouts")}
+                  />
+                </View>
+              ) : (
+                <>
+                  <View style={[styles.padded, styles.sectionGap]}>
+                    <LeaderboardList
+                      entries={data.topEntries}
+                      anonymized={anonymized}
+                    />
+                  </View>
 
-              <View style={[styles.padded, styles.sectionGap]}>
-                <NearbyUsers entries={data.nearbyEntries} anonymized={anonymized} />
-              </View>
+                  {data.nearbyEntries.length > 0 ? (
+                    <View style={[styles.padded, styles.sectionGap]}>
+                      <NearbyUsers entries={data.nearbyEntries} anonymized={anonymized} />
+                    </View>
+                  ) : null}
 
-              <View style={[styles.padded, styles.sectionGap]}>
-                <PremiumFeature feature="ADVANCED_LEADERBOARD">
-                  <AdvancedLeaderboardInsights />
-                </PremiumFeature>
-              </View>
+                  <View style={[styles.padded, styles.sectionGap]}>
+                    <PremiumFeature feature="ADVANCED_LEADERBOARD">
+                      <AdvancedLeaderboardInsights />
+                    </PremiumFeature>
+                  </View>
+                </>
+              )}
 
               {data.scoreBreakdown.length > 0 ? (
                 <View style={[styles.padded, styles.sectionGap]}>
@@ -172,9 +193,11 @@ export function LeaderboardScreen() {
                 </View>
               ) : null}
 
-              <View style={[styles.padded, styles.sectionGap]}>
-                <Achievements achievements={data.achievements} />
-              </View>
+              {data.achievements.length > 0 ? (
+                <View style={[styles.padded, styles.sectionGap]}>
+                  <Achievements achievements={data.achievements} />
+                </View>
+              ) : null}
 
               {nextUser ? (
                 <View style={[styles.padded, styles.sectionGap]}>

@@ -14,7 +14,7 @@ export function RewardCard({ reward, onPress, size = "medium" }: Props) {
   const { colors } = useTheme();
   return (
     <Pressable onPress={onPress} style={styles.card}>
-      <RewardImage icon={reward.icon} size={size} />
+      <RewardImage icon={reward.icon} imageUrl={reward.imageUrl} size={size} />
       <View style={[styles.rankBadge, { backgroundColor: colors.cardActive }]}>
         <Text style={[styles.rankLabel, { color: colors.primary }]}>#{reward.rank}</Text>
       </View>

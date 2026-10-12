@@ -9,7 +9,12 @@ import { RewardDetailModal } from "./RewardDetailModal";
 type Props = {
   rewards: Reward[];
   resetAt: Date;
-  currentRank: number;
+  /** "Bu Haftanın" | "Bu Ayın" | "Dönemin" */
+  periodLabel: string;
+  /** Donemde henuz puani yoksa null. */
+  currentRank: number | null;
+  /** Odul verilen en alt sira (orn. ilk 10). */
+  lastRewardRank: number;
   pointsToRewardZone: number;
 };
 
@@ -41,7 +46,9 @@ function useCountdown(target: Date) {
 export function RewardsSection({
   rewards,
   resetAt,
+  periodLabel,
   currentRank,
+  lastRewardRank,
   pointsToRewardZone,
 }: Props) {
   const { colors } = useTheme();
@@ -49,16 +56,18 @@ export function RewardsSection({
   const countdown = useCountdown(resetAt);
 
   const [first, second, third, ...rest] = rewards;
-  const inRewardZone = currentRank <= 10;
+  const inRewardZone = currentRank !== null && currentRank <= lastRewardRank;
 
   return (
     <View>
       <View style={styles.header}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Bu Ayın Ödülleri</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>{periodLabel} Ödülleri</Text>
         <Text style={[styles.countdown, { color: colors.textSecondary }]}>{countdown} sonra yenilenir</Text>
       </View>
       <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-        İlk 10'a gir ve özel ödüller kazan.
+        {lastRewardRank === 1
+          ? "Birinci ol ve ödülü kazan."
+          : `İlk ${lastRewardRank} sıraya gir ve özel ödüller kazan.`}
       </Text>
 
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -102,17 +111,21 @@ export function RewardsSection({
         ) : null}
 
         <View style={[styles.motivation, { borderTopColor: colors.border }]}>
-          {inRewardZone ? (
+          {currentRank === null ? (
             <Text style={[styles.motivationText, { color: colors.textSecondary }]}>
-              You're #{currentRank} — you're in the reward zone.
+              Antrenman tamamla, öğün ve su kaydı gir; MB FIT puanı kazanıp sıralamaya katıl.
+            </Text>
+          ) : inRewardZone ? (
+            <Text style={[styles.motivationText, { color: colors.textSecondary }]}>
+              #{currentRank} sıradasın, ödül bölgesindesin.
             </Text>
           ) : (
             <Text style={[styles.motivationText, { color: colors.textSecondary }]}>
-              You're #{currentRank}. Only{" "}
+              #{currentRank} sıradasın. Ödül kazanmana sadece{" "}
               <Text style={[styles.motivationAccent, { color: colors.primary }]}>
-                {pointsToRewardZone.toLocaleString()} points
+                {pointsToRewardZone.toLocaleString()} puan
               </Text>{" "}
-              away from a reward.
+              kaldı.
             </Text>
           )}
         </View>

@@ -36,13 +36,24 @@ export function Achievements({ achievements }: Props) {
                 achievement.earned && { backgroundColor: colors.cardActive },
               ]}
             >
-              <Ionicons
-                name={ICONS[achievement.icon]}
-                size={16}
-                color={
-                  achievement.earned ? colors.primary : colors.textSecondary
-                }
-              />
+              {ICONS[achievement.icon] ? (
+                <Ionicons
+                  name={ICONS[achievement.icon]}
+                  size={16}
+                  color={
+                    achievement.earned ? colors.primary : colors.textSecondary
+                  }
+                />
+              ) : achievement.icon ? (
+                // Admin panelinde simge emoji olarak girilir (orn. "🔥").
+                <Text style={styles.emoji}>{achievement.icon}</Text>
+              ) : (
+                <Ionicons
+                  name="ribbon-outline"
+                  size={16}
+                  color={achievement.earned ? colors.primary : colors.textSecondary}
+                />
+              )}
             </View>
             <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
               {achievement.title}
@@ -58,6 +69,7 @@ export function Achievements({ achievements }: Props) {
 }
 
 const styles = StyleSheet.create({
+  emoji: { fontSize: 16 },
   sectionTitle: {
     fontSize: 16,
     fontWeight: "700",

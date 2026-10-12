@@ -6,7 +6,8 @@ import { useTheme } from "../../../../shared/theme/ThemeContext";
 type Props = {
   points: number;
   weeklyChange: number;
-  rank: number;
+  /** Tum zamanlar sirasi; hic puani yoksa null. */
+  rank: number | null;
   onPress: () => void;
 };
 
@@ -17,8 +18,10 @@ export function ScoreCard({ points, weeklyChange, rank, onPress }: Props) {
       <View style={styles.textBlock}>
         <Text style={[styles.title, { color: colors.textSecondary }]}>MB FIT Puanın</Text>
         <Text style={[styles.points, { color: colors.text }]}>{points.toLocaleString()}</Text>
-        <Text style={[styles.change, { color: colors.primary }]}>+{weeklyChange} bu hafta</Text>
-        <Text style={[styles.rank, { color: colors.textSecondary }]}>🇹🇷 Türkiye'de #{rank}</Text>
+        <Text style={[styles.change, { color: colors.primary }]}>+{weeklyChange.toLocaleString()} son 7 günde</Text>
+        <Text style={[styles.rank, { color: colors.textSecondary }]}>
+          {rank ? `🇹🇷 Türkiye'de #${rank}` : "Puan kazan, sıralamaya katıl · Ödülleri gör"}
+        </Text>
       </View>
       <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
     </Pressable>

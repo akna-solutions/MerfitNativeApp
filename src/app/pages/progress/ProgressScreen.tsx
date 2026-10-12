@@ -176,25 +176,21 @@ export function ProgressScreen() {
             <ProgressHeader onSettingsPress={() => {}} />
           </Animated.View>
 
+          {score ? (
+            <Animated.View
+              style={[styles.padded, styles.sectionGap, fadeUp(weightCardAnim)]}
+            >
+              <ScoreCard
+                points={score.points}
+                weeklyChange={score.weeklyChange}
+                rank={score.rank}
+                onPress={() => router.push("/pages/leaderboard")}
+              />
+            </Animated.View>
+          ) : null}
+
           {data.hasCompletedFirstWorkout ? (
             <>
-              {score ? (
-                <Animated.View
-                  style={[
-                    styles.padded,
-                    styles.sectionGap,
-                    fadeUp(weightCardAnim),
-                  ]}
-                >
-                  <ScoreCard
-                    points={score.points}
-                    weeklyChange={score.weeklyChange}
-                    rank={score.rank ?? 0}
-                    onPress={() => router.push("/pages/leaderboard")}
-                  />
-                </Animated.View>
-              ) : null}
-
               <Animated.View
                 style={[
                   styles.padded,
