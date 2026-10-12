@@ -499,7 +499,7 @@ export type FoodListQuery = {
 // ---- Progress ----
 export type ProgressGoalType = FitnessGoalCode;
 
-export type ProgressWeightPoint = { date: string; weight: number };
+export type ProgressWeightPoint = { date: string; isoDate: string; weight: number };
 
 export type ProgressBodyMetric = { id: string; label: string; value: string };
 
@@ -520,12 +520,17 @@ export type ProgressResponse = {
   hasCompletedFirstWorkout: boolean;
   goalType: ProgressGoalType;
   goalLabel: string;
+  /** Kilo hedeflerinde baslangictan hedefe kat edilen yol (0-100); antrenman hedeflerinde null. */
   goalPercent: number | null;
+  /** Hedef kiloya ulasmak icin kilonun gitmesi gereken yon. */
+  weightDirection: WeightDirection;
   workoutsCompleted: number | null;
   workoutsGoal: number | null;
   currentWeight: number;
   startingWeight: number;
   targetWeight: number;
+  /** Bugun girilen kilo; giris yoksa null. */
+  todayWeight: number | null;
   monthlyChange: number;
   workouts: number;
   calories: number;
@@ -539,6 +544,20 @@ export type ProgressResponse = {
 };
 
 export type ProgressRange = "week" | "month" | "3months" | "year";
+
+export type WeightDirection = "lose" | "gain" | "maintain";
+
+/** POST /api/progress/weight - gunluk kilo girisi (ayni gune ikinci giris oncekini gunceller). */
+export type LogWeightRequest = {
+  weightKg: number;
+  date?: string; // "yyyy-MM-dd"
+};
+
+export type LogWeightResponse = {
+  date: string;
+  weightKg: number;
+  targetWeight: number | null;
+};
 
 // ---- Leaderboard ----
 export type LeaderboardPeriod = "week" | "month" | "allTime";

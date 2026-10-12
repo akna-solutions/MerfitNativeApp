@@ -8,14 +8,17 @@ type Props = { goal: GoalProgress };
 export function GoalProgressCard({ goal }: Props) {
   const { colors } = useTheme();
   const { currentWeightKg, goalWeightKg, startWeightKg } = goal;
-  const totalDistance = Math.abs(startWeightKg - goalWeightKg);
-  const covered = Math.abs(startWeightKg - currentWeightKg);
-  const ratio = totalDistance > 0 ? Math.min(1, covered / totalDistance) : 0;
-  const remaining = currentWeightKg - goalWeightKg;
-  const remainingLabel =
-    remaining === 0
-      ? "Hedefine ulaştın"
-      : `${remaining > 0 ? "-" : "+"}${Math.abs(remaining).toFixed(1)} kg hedefe kaldı`;
+  // Ilerleme hedefin yonune gore olculur: kilo vermede kilo almak ilerleme sayilmaz.
+  const totalDistance = goalWeightKg - startWeightKg;
+  const remaining = Math.round((goalWeightKg - currentWeightKg) * 10) / 10;
+  const isMaintain = Math.abs(totalDistance) < 0.5;
+  const ratio = isMaintain
+    ? (Math.abs(remaining) <= 1 ? 1 : 0)
+    : Math.min(1, Math.max(0, (currentWeightKg - startWeightKg) / totalDistance));
+  const reached = isMaintain ? Math.abs(remaining) <= 1 : ratio >= 1;
+  const remainingLabel = reached
+    ? isMaintain ? "Kilonu koruyorsun" : "Hedefine ulaştın"
+    : `${remaining < 0 ? "-" : "+"}${Math.abs(remaining).toFixed(1)} kg hedefe kaldı`;
 
   return (
     <View style={styles.wrapper}>

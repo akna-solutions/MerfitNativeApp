@@ -21,6 +21,7 @@ import { ScoreCard } from "./components/ScoreCard";
 import { TimeRangeSelector } from "./components/TimeRangeSelector";
 import { WeeklyActivity } from "./components/WeeklyActivity";
 import { WeightChart } from "./components/WeightChart";
+import { WeightLogCard } from "./components/WeightLogCard";
 import { useTheme } from "../../../shared/theme/ThemeContext";
 import { ProgressData, TimeRange } from "./types";
 
@@ -30,11 +31,13 @@ function mapToProgressData(response: ProgressResponse): ProgressData {
     goalType: response.goalType,
     goalLabel: response.goalLabel,
     goalPercent: response.goalPercent ?? undefined,
+    weightDirection: response.weightDirection,
     workoutsCompleted: response.workoutsCompleted ?? undefined,
     workoutsGoal: response.workoutsGoal ?? undefined,
     currentWeight: response.currentWeight,
     startingWeight: response.startingWeight,
     targetWeight: response.targetWeight,
+    todayWeight: response.todayWeight,
     monthlyChange: response.monthlyChange,
     workouts: response.workouts,
     calories: response.calories,
@@ -189,21 +192,54 @@ export function ProgressScreen() {
             </Animated.View>
           ) : null}
 
+          {/* Kilo takibi antrenmandan bagimsizdir: ilk antrenmandan once de kilo girilebilir. */}
+          <Animated.View style={[styles.padded, styles.sectionGap, fadeUp(weightCardAnim)]}>
+            <CurrentWeightCard
+              currentWeight={data.currentWeight}
+              monthlyChange={data.monthlyChange}
+            />
+          </Animated.View>
+
+          <View style={[styles.padded, styles.sectionGap]}>
+            <WeightLogCard
+              todayWeight={data.todayWeight}
+              currentWeight={data.currentWeight}
+              onLogged={() => loadProgress(timeRange)}
+            />
+          </View>
+
+          <Animated.View style={[styles.padded, styles.sectionGap, fadeUp(chartAnim)]}>
+            <View style={styles.selectorGap}>
+              <TimeRangeSelector
+                value={timeRange}
+                onChange={setTimeRange}
+              />
+            </View>
+            {chartData.length > 0 ? (
+              <WeightChart data={chartData} />
+            ) : (
+              <Text style={[styles.emptyChartText, { color: colors.textSecondary }]}>
+                Bu aralıkta kilo kaydı yok. Kilonu girdikçe grafik oluşacak.
+              </Text>
+            )}
+          </Animated.View>
+
+          <View style={[styles.padded, styles.sectionGap]}>
+            <GoalProgress
+              goalType={data.goalType}
+              goalLabel={data.goalLabel}
+              goalPercent={data.goalPercent}
+              weightDirection={data.weightDirection}
+              workoutsCompleted={data.workoutsCompleted}
+              workoutsGoal={data.workoutsGoal}
+              currentWeight={data.currentWeight}
+              startingWeight={data.startingWeight}
+              targetWeight={data.targetWeight}
+            />
+          </View>
+
           {data.hasCompletedFirstWorkout ? (
             <>
-              <Animated.View
-                style={[
-                  styles.padded,
-                  styles.sectionGap,
-                  fadeUp(weightCardAnim),
-                ]}
-              >
-                <CurrentWeightCard
-                  currentWeight={data.currentWeight}
-                  monthlyChange={data.monthlyChange}
-                />
-              </Animated.View>
-
               <Animated.View
                 style={[styles.padded, styles.sectionGap, fadeUp(statsAnim)]}
               >
@@ -214,30 +250,6 @@ export function ProgressScreen() {
                   trainingMinutes={data.trainingMinutes}
                 />
               </Animated.View>
-
-              <Animated.View
-                style={[styles.padded, styles.sectionGap, fadeUp(chartAnim)]}
-              >
-                <View style={styles.selectorGap}>
-                  <TimeRangeSelector
-                    value={timeRange}
-                    onChange={setTimeRange}
-                  />
-                </View>
-                <WeightChart data={chartData} />
-              </Animated.View>
-
-              <View style={[styles.padded, styles.sectionGap]}>
-                <GoalProgress
-                  goalType={data.goalType}
-                  goalLabel={data.goalLabel}
-                  goalPercent={data.goalPercent}
-                  workoutsCompleted={data.workoutsCompleted}
-                  workoutsGoal={data.workoutsGoal}
-                  currentWeight={data.currentWeight}
-                  targetWeight={data.targetWeight}
-                />
-              </View>
 
               <View style={[styles.padded, styles.sectionGap]}>
                 <PremiumFeature feature="ADVANCED_ANALYTICS">
@@ -310,4 +322,5 @@ const styles = StyleSheet.create({
   padded: { paddingHorizontal: 24 },
   sectionGap: { marginTop: 28 },
   selectorGap: { marginBottom: 16 },
+  emptyChartText: { fontSize: 13, textAlign: "center", paddingVertical: 24 },
 });

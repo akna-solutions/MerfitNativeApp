@@ -15,16 +15,22 @@ export function CurrentWeightCard({ currentWeight, monthlyChange }: Props) {
   return (
     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
       <Text style={[styles.label, { color: colors.textSecondary }]}>Güncel Kilo</Text>
-      <Text style={[styles.value, { color: colors.text }]}>{currentWeight} kg</Text>
+      <Text style={[styles.value, { color: colors.text }]}>
+        {currentWeight > 0 ? `${currentWeight.toLocaleString("tr-TR", { maximumFractionDigits: 1 })} kg` : "—"}
+      </Text>
 
       <View style={styles.changeRow}>
-        <Ionicons
-          name={improving ? "arrow-down" : "arrow-up"}
-          size={13}
-          color={colors.primary}
-        />
+        {monthlyChange !== 0 ? (
+          <Ionicons
+            name={improving ? "arrow-down" : "arrow-up"}
+            size={13}
+            color={colors.primary}
+          />
+        ) : null}
         <Text style={[styles.changeText, { color: colors.primary }]}>
-          {Math.abs(monthlyChange)} kg bu ay
+          {monthlyChange !== 0
+            ? `${Math.abs(monthlyChange).toLocaleString("tr-TR", { maximumFractionDigits: 1 })} kg son 30 günde`
+            : "Son 30 günde değişim yok"}
         </Text>
       </View>
     </View>
