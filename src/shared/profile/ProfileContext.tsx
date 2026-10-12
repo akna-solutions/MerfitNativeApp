@@ -67,11 +67,20 @@ function mapToProfileData(response: ProfileResponse): ProfileData {
  * dateOfBirth turetiyoruz ki ekran degismeden calismaya devam etsin.
  */
 function deriveDateOfBirthFromAge(age: number, currentDateOfBirth: string): string {
-  const currentYear = new Date().getFullYear();
+  const today = new Date();
   const [, month, day] = currentDateOfBirth ? currentDateOfBirth.split("-") : [];
   const mm = month || "01";
   const dd = day || "01";
-  return `${currentYear - age}-${mm}-${dd}`;
+  // Dogum gunu bu yil henuz gelmediyse bir yil once dogmus olmali; aksi halde backend
+  // girilen yastan bir eksik hesaplar (orn. 27 yazilir, profilde 26 gorunur).
+  const birthdayPassed =
+    today.getMonth() + 1 > Number(mm) ||
+    (today.getMonth() + 1 === Number(mm) && today.getDate() >= Number(dd));
+  const year = today.getFullYear() - age - (birthdayPassed ? 0 : 1);
+  // 29 Subat artik olmayan bir yila dusmesin (backend gecersiz tarihi yok sayar).
+  const isLeap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+  const safeDay = mm === "02" && dd === "29" && !isLeap ? "28" : dd;
+  return `${year}-${mm}-${safeDay}`;
 }
 
 function mapPatchToApiRequest(patch: Partial<ProfileData>, current: ProfileData): ApiUpdateProfileRequest {
