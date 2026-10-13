@@ -36,8 +36,10 @@ type Props = {
 // Navbar'in ekranin altindan uzakligi ve kapsul yuksekligi.
 const NAV_BOTTOM_GAP = 6;
 const NAV_HEIGHT = 68;
-// Blur, icerik navbar'a degmeden bu kadar yukarida yavas yavas baslar.
-const BLUR_FADE_HEIGHT = 64;
+// Blur, navbar'in ust kenarindan bu kadar yukarida yavas yavas baslar.
+const BLUR_START_ABOVE_NAV = 16;
+// Gecis navbar'in ortasinda tamamlanir; kapsul opak oldugu icin gecisin cogu onun arkasinda kalir.
+const BLUR_FADE_HEIGHT = BLUR_START_ABOVE_NAV + NAV_HEIGHT / 2;
 const BLUR_INTENSITY = 40;
 // Gecis bolgesi ince seritlere bolunur; her seridin blur'u bir oncekinden biraz fazladir.
 // Adimlar cok kucuk oldugu icin blur'un basladigi yerde gorunur bir cizgi olusmaz.
@@ -53,8 +55,8 @@ export function BottomNavigation({ active, onChange }: Props) {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const navBottom = insets.bottom + NAV_BOTTOM_GAP;
-  const blurHeight = navBottom + NAV_HEIGHT + BLUR_FADE_HEIGHT;
-  // Renk gradyaninin tam opakliga ulastigi nokta: navbar'in ust kenari.
+  const blurHeight = navBottom + NAV_HEIGHT + BLUR_START_ABOVE_NAV;
+  // Renk gradyaninin tam opakliga ulastigi nokta: navbar'in ortasi.
   const fadeEnd = BLUR_FADE_HEIGHT / blurHeight;
   const blurTint = isDark ? "dark" : "light";
 
