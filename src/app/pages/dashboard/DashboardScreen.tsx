@@ -30,6 +30,7 @@ import { PersonalizationPendingState } from "./components/PersonalizationPending
 import { ProgressCard } from "./components/ProgressCard";
 import { QuickStats } from "./components/QuickStats";
 import { RecommendedWorkouts } from "./components/RecommendedWorkouts";
+import { RestDayCard } from "./components/RestDayCard";
 import { TodayPersonalWorkoutCard } from "./components/TodayPersonalWorkoutCard";
 import { WorkoutCard } from "./components/WorkoutCard";
 import { DashboardData, WorkoutSummary } from "./types";
@@ -196,6 +197,9 @@ export function DashboardScreen() {
     } as never);
   };
 
+  // Aktif program var ama bugun antrenman gunu degil: dinlenme gunu.
+  const isRestDay = todayPlan?.hasActivePlan === true && !todayPlan.hasWorkoutToday;
+
   const goToWorkoutPlan = () => {
     router.push("/pages/workout/plan" as never);
   };
@@ -308,6 +312,12 @@ export function DashboardScreen() {
             </Animated.View>
           ) : null}
 
+          {isRestDay ? (
+            <Animated.View style={[styles.padded, styles.gapTop, fadeUp(workoutAnim)]}>
+              <RestDayCard />
+            </Animated.View>
+          ) : null}
+
           {todayPlan?.hasActivePlan ? (
             <View style={[styles.padded, styles.gapTop]}>
               <Pressable
@@ -338,7 +348,8 @@ export function DashboardScreen() {
             <>
               {/* Bugun zaten antrenman yapildiysa backend todayWorkout'u null doner; bu durumda
                   kart gizlenir ama dashboard'un geri kalani (ilerleme, gecmis) gosterilmeye devam eder. */}
-              {!todayPlan?.hasWorkoutToday && data.todayWorkout ? (
+              {/* Dinlenme gununde genel "Bugünkü Antrenman" onerisi gosterilmez; karisiklik yaratiyordu. */}
+              {!todayPlan?.hasWorkoutToday && !isRestDay && data.todayWorkout ? (
                 <Animated.View style={[styles.padded, fadeUp(workoutAnim)]}>
                   <WorkoutCard
                     workout={data.todayWorkout}

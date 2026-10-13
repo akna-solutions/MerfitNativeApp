@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { PremiumFeature } from "../../../shared/plus/components/PremiumFeature";
 import { ApiError } from "../../../services/api/client";
+import { getMyPlan } from "../../../services/api/myPlan";
 import { getProgress } from "../../../services/api/progress";
 import { ProgressResponse } from "../../../services/api/types";
 import { BodyMetrics } from "./components/BodyMetrics";
@@ -23,6 +24,7 @@ import { WeeklyActivity } from "./components/WeeklyActivity";
 import { WeightChart } from "./components/WeightChart";
 import { WeightLogCard } from "./components/WeightLogCard";
 import { useTheme } from "../../../shared/theme/ThemeContext";
+import { planRestDays } from "../../../shared/workout/planDays";
 import { ProgressData, TimeRange } from "./types";
 
 function mapToProgressData(response: ProgressResponse): ProgressData {
@@ -62,11 +64,18 @@ export function ProgressScreen() {
 
   const [data, setData] = useState<ProgressData | null>(null);
   const [score, setScore] = useState<ProgressResponse["score"]>(null);
+  const [restDays, setRestDays] = useState<boolean[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const loadProgress = useCallback(async (range: TimeRange, signal?: AbortSignal) => {
     setErrorMessage(null);
+    // Dinlenme gunleri yalnizca "Bu Hafta" gorunumu icin; program alinamazsa ekran eskisi gibi calisir.
+    getMyPlan(signal)
+      .then((plan) => setRestDays(planRestDays(plan)))
+      .catch(() => {
+        if (!signal?.aborted) setRestDays(null);
+      });
     try {
       const response = await getProgress(range, signal);
       setData(mapToProgressData(response));
@@ -275,7 +284,7 @@ export function ProgressScreen() {
               ) : null}
 
               <View style={[styles.padded, styles.sectionGap]}>
-                <WeeklyActivity days={data.weeklyWorkouts} />
+                <WeeklyActivity days={data.weeklyWorkouts} restDays={restDays} />
               </View>
 
               <View style={[styles.padded, styles.sectionGap]}>
