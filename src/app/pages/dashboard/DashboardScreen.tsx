@@ -314,7 +314,7 @@ export function DashboardScreen() {
 
           {isRestDay ? (
             <Animated.View style={[styles.padded, styles.gapTop, fadeUp(workoutAnim)]}>
-              <RestDayCard />
+              <RestDayCard onRewardGranted={() => void loadDashboard()} />
             </Animated.View>
           ) : null}
 
