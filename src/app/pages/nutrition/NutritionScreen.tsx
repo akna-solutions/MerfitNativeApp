@@ -184,6 +184,7 @@ export function NutritionScreen() {
         >
           <Animated.View style={[styles.padded, fadeUp(headerAnim, -8)]}>
             <NutritionHeader
+              onAssistantPress={() => setAssistantOpen(true)}
               onNotificationsPress={() =>
                 router.push({ pathname: "/pages/notifications", params: { category: "nutrition" } } as never)
               }
@@ -239,6 +240,10 @@ export function NutritionScreen() {
               </Animated.View>
 
               <View style={[styles.padded, styles.sectionGap]}>
+                <NutritionInsight insight={data.insight} onViewSuggestions={() => setAssistantOpen(true)} />
+              </View>
+
+              <View style={[styles.padded, styles.sectionGap]}>
                 <PremiumFeature feature="AI_NUTRITION" borderRadius={18}>
                   <AiNutritionPlanCard />
                 </PremiumFeature>
@@ -264,10 +269,6 @@ export function NutritionScreen() {
 
               <View style={[styles.padded, styles.sectionGap]}>
                 <CalorieBreakdown meals={data.meals} />
-              </View>
-
-              <View style={[styles.padded, styles.sectionGap]}>
-                <NutritionInsight insight={data.insight} onViewSuggestions={() => setAssistantOpen(true)} />
               </View>
             </>
           ) : (
