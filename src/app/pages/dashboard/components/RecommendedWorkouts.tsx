@@ -21,9 +21,12 @@ export function RecommendedWorkouts({ workouts, onSelect }: Props) {
     <View style={styles.wrapper}>
       <Text style={[styles.sectionTitle, { color: colors.text }]}>Senin için önerilenler</Text>
 
+      {/* Kartlar kaydirilirken sayfanin diger icerigiyle ayni kenar boslugunda kirpilir;
+          ekranin sag/sol kenarina tasmaz. */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
+        style={styles.scroller}
         contentContainerStyle={styles.list}
       >
         {workouts.map((workout) => (
@@ -58,7 +61,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingHorizontal: 24,
   },
-  list: { paddingHorizontal: 24, gap: 12 },
+  scroller: { marginHorizontal: 24, overflow: "hidden" },
+  list: { gap: 12 },
   card: {
     width: CARD_WIDTH,
     borderRadius: 16,
