@@ -1,5 +1,4 @@
 import { Ionicons } from "@expo/vector-icons";
-import MaskedView from "@react-native-masked-view/masked-view";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRef } from "react";
@@ -38,16 +37,26 @@ type Props = {
 const NAV_BOTTOM_GAP = 6;
 const NAV_HEIGHT = 68;
 // Blur, icerik navbar'a degmeden bu kadar yukarida yavas yavas baslar.
-const BLUR_FADE_HEIGHT = 56;
+const BLUR_FADE_HEIGHT = 64;
 const BLUR_INTENSITY = 40;
+// Gecis bolgesi ince seritlere bolunur; her seridin blur'u bir oncekinden biraz fazladir.
+// Adimlar cok kucuk oldugu icin blur'un basladigi yerde gorunur bir cizgi olusmaz.
+const BLUR_STEPS = 16;
+const BLUR_STEP_HEIGHT = BLUR_FADE_HEIGHT / BLUR_STEPS;
+const BLUR_STEP_INTENSITIES = Array.from({ length: BLUR_STEPS }, (_, index) => {
+  const t = (index + 1) / (BLUR_STEPS + 1);
+  // Ease-in: ust kisimda neredeyse hic blur yok, navbar'a yaklastikca hizlanir.
+  return Math.max(1, Math.round(BLUR_INTENSITY * t * t));
+});
 
 export function BottomNavigation({ active, onChange }: Props) {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const navBottom = insets.bottom + NAV_BOTTOM_GAP;
   const blurHeight = navBottom + NAV_HEIGHT + BLUR_FADE_HEIGHT;
-  // Gradyanin tam opakliga ulastigi nokta: navbar'in ust kenari.
+  // Renk gradyaninin tam opakliga ulastigi nokta: navbar'in ust kenari.
   const fadeEnd = BLUR_FADE_HEIGHT / blurHeight;
+  const blurTint = isDark ? "dark" : "light";
 
   // Her tab için ayrı bir scale değeri - basılan/aktif olan ikon hafifçe
   // "pulse" yapar. Navigation'ın kendisi sürekli hareket etmiyor,
@@ -77,24 +86,22 @@ export function BottomNavigation({ active, onChange }: Props) {
   return (
     <>
       <View pointerEvents="none" style={[styles.blurArea, { height: blurHeight }]}>
-        {/* Tek bir blur katmani, yukaridan asagi seffaftan opaga giden bir gradyanla
-            maskelenir; boylece bulaniklik keskin bir kenar olmadan yavasca artar. */}
-        <MaskedView
-          style={StyleSheet.absoluteFill}
-          maskElement={
-            <LinearGradient
-              colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.6)", "rgba(0,0,0,1)"]}
-              locations={[0, fadeEnd / 2, fadeEnd]}
-              style={StyleSheet.absoluteFill}
-            />
-          }
-        >
+        {BLUR_STEP_INTENSITIES.map((intensity, index) => (
           <BlurView
-            intensity={BLUR_INTENSITY}
-            tint={isDark ? "dark" : "light"}
-            style={StyleSheet.absoluteFill}
+            key={index}
+            intensity={intensity}
+            tint={blurTint}
+            style={[
+              styles.blurStep,
+              { top: index * BLUR_STEP_HEIGHT, height: BLUR_STEP_HEIGHT },
+            ]}
           />
-        </MaskedView>
+        ))}
+        <BlurView
+          intensity={BLUR_INTENSITY}
+          tint={blurTint}
+          style={[styles.blurStep, { top: BLUR_FADE_HEIGHT, bottom: 0 }]}
+        />
         <LinearGradient
           colors={[`${colors.background}00`, `${colors.background}73`]}
           locations={[0, fadeEnd]}
@@ -148,6 +155,11 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+  },
+  blurStep: {
+    position: "absolute",
+    left: 0,
+    right: 0,
   },
   // Ekranın altına yapışık değil - kenarlardan içeride, yüzen bir kapsül.
   wrapper: {
