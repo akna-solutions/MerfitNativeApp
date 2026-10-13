@@ -1,5 +1,4 @@
 import { Ionicons } from "@expo/vector-icons";
-import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRef } from "react";
 import {
@@ -36,29 +35,30 @@ type Props = {
 // Navbar'in ekranin altindan uzakligi ve kapsul yuksekligi.
 const NAV_BOTTOM_GAP = 6;
 const NAV_HEIGHT = 68;
-// Blur, navbar'in ust kenarindan bu kadar yukarida yavas yavas baslar.
-const BLUR_START_ABOVE_NAV = 16;
-// Gecis navbar'in ortasinda tamamlanir; kapsul opak oldugu icin gecisin cogu onun arkasinda kalir.
-const BLUR_FADE_HEIGHT = BLUR_START_ABOVE_NAV + NAV_HEIGHT / 2;
-const BLUR_INTENSITY = 40;
-// Gecis bolgesi ince seritlere bolunur; her seridin blur'u bir oncekinden biraz fazladir.
-// Adimlar cok kucuk oldugu icin blur'un basladigi yerde gorunur bir cizgi olusmaz.
-const BLUR_STEPS = 16;
-const BLUR_STEP_HEIGHT = BLUR_FADE_HEIGHT / BLUR_STEPS;
-const BLUR_STEP_INTENSITIES = Array.from({ length: BLUR_STEPS }, (_, index) => {
-  const t = (index + 1) / (BLUR_STEPS + 1);
-  // Ease-in: ust kisimda neredeyse hic blur yok, navbar'a yaklastikca hizlanir.
-  return Math.max(1, Math.round(BLUR_INTENSITY * t * t));
-});
+// Navbar'in arkasindaki icerik, navbar'in ust kenarindan bu kadar yukarida solmaya baslar.
+const FADE_START_ABOVE_NAV = 16;
+// Solma navbar'in ortasinda tamamlanir; kapsul opak oldugu icin gecisin cogu onun arkasinda kalir.
+const FADE_HEIGHT = FADE_START_ABOVE_NAV + NAV_HEIGHT / 2;
+// Tek parca gradyan, ease-in egrisiyle opaklasir; seritli blur gibi bant/cizgi olusturmaz.
+const FADE_STOPS: { alpha: number; at: number }[] = [
+  { alpha: 0, at: 0 },
+  { alpha: 0.12, at: 0.25 },
+  { alpha: 0.35, at: 0.5 },
+  { alpha: 0.65, at: 0.75 },
+  { alpha: 1, at: 1 },
+];
+
+function withAlpha(hex: string, alpha: number) {
+  return `${hex}${Math.round(alpha * 255).toString(16).padStart(2, "0")}`;
+}
 
 export function BottomNavigation({ active, onChange }: Props) {
   const insets = useSafeAreaInsets();
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const navBottom = insets.bottom + NAV_BOTTOM_GAP;
-  const blurHeight = navBottom + NAV_HEIGHT + BLUR_START_ABOVE_NAV;
-  // Renk gradyaninin tam opakliga ulastigi nokta: navbar'in ortasi.
-  const fadeEnd = BLUR_FADE_HEIGHT / blurHeight;
-  const blurTint = isDark ? "dark" : "light";
+  const fadeAreaHeight = navBottom + NAV_HEIGHT + FADE_START_ABOVE_NAV;
+  // Gradyanin tam opakliga ulastigi nokta: navbar'in ortasi.
+  const fadeEnd = FADE_HEIGHT / fadeAreaHeight;
 
   // Her tab için ayrı bir scale değeri - basılan/aktif olan ikon hafifçe
   // "pulse" yapar. Navigation'ın kendisi sürekli hareket etmiyor,
@@ -87,26 +87,10 @@ export function BottomNavigation({ active, onChange }: Props) {
 
   return (
     <>
-      <View pointerEvents="none" style={[styles.blurArea, { height: blurHeight }]}>
-        {BLUR_STEP_INTENSITIES.map((intensity, index) => (
-          <BlurView
-            key={index}
-            intensity={intensity}
-            tint={blurTint}
-            style={[
-              styles.blurStep,
-              { top: index * BLUR_STEP_HEIGHT, height: BLUR_STEP_HEIGHT },
-            ]}
-          />
-        ))}
-        <BlurView
-          intensity={BLUR_INTENSITY}
-          tint={blurTint}
-          style={[styles.blurStep, { top: BLUR_FADE_HEIGHT, bottom: 0 }]}
-        />
+      <View pointerEvents="none" style={[styles.fadeArea, { height: fadeAreaHeight }]}>
         <LinearGradient
-          colors={[`${colors.background}00`, `${colors.background}73`]}
-          locations={[0, fadeEnd]}
+          colors={FADE_STOPS.map((stop) => withAlpha(colors.background, stop.alpha)) as [string, string, ...string[]]}
+          locations={FADE_STOPS.map((stop) => stop.at * fadeEnd) as [number, number, ...number[]]}
           style={StyleSheet.absoluteFill}
         />
       </View>
@@ -151,17 +135,12 @@ export function BottomNavigation({ active, onChange }: Props) {
 }
 
 const styles = StyleSheet.create({
-  // Navbar'in arkasinda kalan sayfa icerigini bulaniklastiran alan.
-  blurArea: {
+  // Navbar'in arkasinda kalan sayfa icerigini arka plan rengine dogru soldurur.
+  fadeArea: {
     position: "absolute",
     left: 0,
     right: 0,
     bottom: 0,
-  },
-  blurStep: {
-    position: "absolute",
-    left: 0,
-    right: 0,
   },
   // Ekranın altına yapışık değil - kenarlardan içeride, yüzen bir kapsül.
   wrapper: {
