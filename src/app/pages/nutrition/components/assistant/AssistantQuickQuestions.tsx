@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { useTheme } from "../../../../../shared/theme/ThemeContext";
 
@@ -8,19 +8,16 @@ type Props = {
   onSelect: (question: string) => void;
 };
 
-/** Kullanicinin guncel durumuna gore sunucunun onerdigi hizli sorular (yatay kaydirilabilir). */
+/**
+ * Kullanicinin guncel durumuna gore sunucunun onerdigi hizli sorular. Pencere genisligine gore alt satira
+ * sarilir; kaydirilmaz, boylece pencerenin disina tasmaz.
+ */
 export function AssistantQuickQuestions({ questions, disabled, onSelect }: Props) {
   const { colors } = useTheme();
   if (questions.length === 0) return null;
 
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      keyboardShouldPersistTaps="handled"
-      contentContainerStyle={styles.content}
-      testID="assistant-quick-questions"
-    >
+    <View style={styles.content} testID="assistant-quick-questions">
       {questions.map((question) => (
         <Pressable
           key={question}
@@ -34,18 +31,18 @@ export function AssistantQuickQuestions({ questions, disabled, onSelect }: Props
             disabled && styles.disabled,
           ]}
         >
-          <Text style={[styles.label, { color: colors.text }]} numberOfLines={1}>
+          <Text style={[styles.label, { color: colors.text }]} numberOfLines={2}>
             {question}
           </Text>
         </Pressable>
       ))}
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { gap: 8, paddingHorizontal: 16, paddingVertical: 8 },
-  chip: { borderRadius: 16, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8, maxWidth: 280 },
+  content: { flexDirection: "row", flexWrap: "wrap", gap: 8, paddingHorizontal: 16, paddingVertical: 8 },
+  chip: { borderRadius: 16, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8, maxWidth: "100%" },
   label: { fontSize: 13, fontWeight: "600" },
   disabled: { opacity: 0.5 },
 });

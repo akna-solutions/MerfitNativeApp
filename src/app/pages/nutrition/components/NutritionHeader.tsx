@@ -3,9 +3,9 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { useTheme } from "../../../../shared/theme/ThemeContext";
 
-type Props = { onNotificationsPress: () => void };
+type Props = { onAssistantPress: () => void; onNotificationsPress: () => void };
 
-export function NutritionHeader({ onNotificationsPress }: Props) {
+export function NutritionHeader({ onAssistantPress, onNotificationsPress }: Props) {
   const { colors } = useTheme();
   return (
     <View style={styles.row}>
@@ -14,19 +14,32 @@ export function NutritionHeader({ onNotificationsPress }: Props) {
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Gelişimini besle.</Text>
       </View>
 
-      <Pressable
-        onPress={onNotificationsPress}
-        hitSlop={8}
-        accessibilityRole="button"
-        accessibilityLabel="Beslenme bildirimleri"
-        style={[styles.iconButton, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
-      >
-        <Ionicons
-          name="notifications-outline"
-          size={18}
-          color={colors.text}
-        />
-      </Pressable>
+      <View style={styles.actions}>
+        <Pressable
+          testID="nutrition-assistant-button"
+          onPress={onAssistantPress}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Mbfit Beslenme Asistanı"
+          style={[styles.iconButton, { backgroundColor: colors.cardActive, borderColor: colors.borderActive }]}
+        >
+          <Ionicons name="sparkles" size={18} color={colors.primary} />
+        </Pressable>
+
+        <Pressable
+          onPress={onNotificationsPress}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Beslenme bildirimleri"
+          style={[styles.iconButton, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
+        >
+          <Ionicons
+            name="notifications-outline"
+            size={18}
+            color={colors.text}
+          />
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -38,6 +51,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   textBlock: { flex: 1, paddingRight: 12 },
+  actions: { flexDirection: "row", gap: 10 },
   title: { fontSize: 24, fontWeight: "700" },
   subtitle: { fontSize: 13, marginTop: 4 },
   iconButton: {

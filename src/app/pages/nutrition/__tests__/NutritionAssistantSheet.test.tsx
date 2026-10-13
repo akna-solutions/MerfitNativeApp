@@ -7,7 +7,8 @@ import { deleteAssistantConversation, getAssistantConversation, sendAssistantMes
 import { useNutritionAssistant } from "../../../../shared/nutritionAssistant/useNutritionAssistant";
 import { mockThemeValue } from "../../../../test/mockTheme";
 import { chatReply, conversation, deferred, msg } from "../../../../test/nutritionAssistantFixtures";
-import { ASSISTANT_TITLE, NutritionAssistantSheet } from "../components/assistant/NutritionAssistantSheet";
+import { ASSISTANT_TITLE, dragReleaseAction, NutritionAssistantSheet } from "../components/assistant/NutritionAssistantSheet";
+import { NutritionHeader } from "../components/NutritionHeader";
 import { INSIGHT_FALLBACK_MESSAGE, NutritionInsight } from "../components/NutritionInsight";
 
 jest.mock("../../../../shared/theme/ThemeContext", () => ({ useTheme: () => mockThemeValue }));
@@ -64,6 +65,31 @@ describe("NutritionInsight", () => {
 
     rerender(<NutritionInsight onViewSuggestions={jest.fn()} />);
     expect(screen.getByText(INSIGHT_FALLBACK_MESSAGE)).toBeTruthy();
+  });
+});
+
+describe("NutritionHeader", () => {
+  it("sag ustteki asistan butonu asistani acar", () => {
+    const onAssistantPress = jest.fn();
+    const onNotificationsPress = jest.fn();
+    render(<NutritionHeader onAssistantPress={onAssistantPress} onNotificationsPress={onNotificationsPress} />);
+    fireEvent.press(screen.getByTestId("nutrition-assistant-button"));
+    expect(onAssistantPress).toHaveBeenCalledTimes(1);
+    expect(onNotificationsPress).not.toHaveBeenCalled();
+  });
+});
+
+describe("dragReleaseAction", () => {
+  it("basliktan asagi cekince pencere tam ekrandayken de kapanir", () => {
+    expect(dragReleaseAction(150, 0.2, "collapsed")).toBe("close");
+    expect(dragReleaseAction(150, 0.2, "expanded")).toBe("close");
+    expect(dragReleaseAction(30, 1.5, "expanded")).toBe("close");
+  });
+
+  it("kisa surukleme pencereyi boyutlandirir, cok kisa surukleme yerinde birakir", () => {
+    expect(dragReleaseAction(80, 0.1, "expanded")).toBe("collapsed");
+    expect(dragReleaseAction(-80, -0.1, "collapsed")).toBe("expanded");
+    expect(dragReleaseAction(10, 0.1, "expanded")).toBe("expanded");
   });
 });
 

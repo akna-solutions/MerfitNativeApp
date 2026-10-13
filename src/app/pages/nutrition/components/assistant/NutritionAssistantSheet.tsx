@@ -29,9 +29,21 @@ export const ASSISTANT_TITLE = "Mbfit Beslenme Asistanı";
 
 /** Pencere acildiginda ekran yuksekliginin bu orani kadar yer kaplar; yukari surukleyince tam ekrana genisler. */
 const COLLAPSED_RATIO = 0.8;
-/** Bu kadar asagi surukleme (veya hizli bir asagi kaydirma) pencereyi kapatir. */
+/** Basliktan bu kadar asagi surukleme (veya hizli bir asagi kaydirma) pencereyi kapatir; tam ekrandayken de. */
 const CLOSE_DISTANCE = 120;
 const SNAP_DISTANCE = 60;
+
+/** Baslik birakildiginda pencerenin ne yapacagi: kapanir, tam ekrana acilir ya da varsayilan boyuna doner. */
+export function dragReleaseAction(
+  dy: number,
+  vy: number,
+  current: "collapsed" | "expanded",
+): "close" | "collapsed" | "expanded" {
+  if (dy > CLOSE_DISTANCE || vy > 1.2) return "close";
+  if (dy < -SNAP_DISTANCE || vy < -0.8) return "expanded";
+  if (dy > SNAP_DISTANCE || vy > 0.8) return "collapsed";
+  return current;
+}
 
 type Props = {
   visible: boolean;
@@ -143,7 +155,11 @@ export function NutritionAssistantSheet({ visible, onClose, controller }: Props)
   const panResponder = useMemo(
     () =>
       PanResponder.create({
+        // Baslik alaninin bos yerine dokunus hemen yakalanir (butonlar kendi dokunusunu once alir); boylece
+        // Android'de surukleme baska bir goruntuye kaptirilmaz.
+        onStartShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 4 && Math.abs(g.dy) > Math.abs(g.dx),
+        onPanResponderTerminationRequest: () => false,
         onPanResponderMove: (_, g) => {
           const { collapsedHeight: min, expandedHeight: max } = dims.current;
           const base = snap.current === "expanded" ? max : min;
@@ -157,18 +173,9 @@ export function NutritionAssistantSheet({ visible, onClose, controller }: Props)
           }
         },
         onPanResponderRelease: (_, g) => {
-          const { collapsedHeight: min, expandedHeight: max } = dims.current;
-          const base = snap.current === "expanded" ? max : min;
-          const pulledBelowCollapsed = min - (base - g.dy);
-          if (pulledBelowCollapsed > CLOSE_DISTANCE || (g.vy > 1.2 && snap.current === "collapsed")) {
-            onClose();
-          } else if (g.dy < -SNAP_DISTANCE || g.vy < -0.8) {
-            animateTo("expanded");
-          } else if (g.dy > SNAP_DISTANCE || g.vy > 0.8) {
-            animateTo("collapsed");
-          } else {
-            animateTo(snap.current);
-          }
+          const action = dragReleaseAction(g.dy, g.vy, snap.current);
+          if (action === "close") onClose();
+          else animateTo(action);
         },
         onPanResponderTerminate: () => animateTo(snap.current),
       }),
