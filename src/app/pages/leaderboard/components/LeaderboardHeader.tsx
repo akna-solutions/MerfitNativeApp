@@ -41,13 +41,13 @@ export function LeaderboardHeader({
         <Text style={[styles.country, { color: colors.textSecondary }]}>Türkiye</Text>
         <Text style={[styles.rank, { color: colors.text }]}>{currentRank ? `#${currentRank}` : "—"}</Text>
         <Text style={[styles.rankLabel, { color: colors.textSecondary }]}>
-          {currentRank ? "Mevcut sıralaman" : "Bu dönemde henüz puanın yok"}
+          {currentRank ? "Bu ayki sıralaman" : "Bu ay henüz puanın yok"}
         </Text>
 
         <View style={styles.statsRow}>
           <View style={styles.stat}>
             <Text style={[styles.statValue, { color: colors.primary }]}>{points.toLocaleString()}</Text>
-            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>MB FIT Puanı</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Bu Ayki Puanın</Text>
           </View>
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <View style={styles.stat}>
