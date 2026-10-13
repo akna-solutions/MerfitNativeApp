@@ -28,7 +28,7 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 20,
     paddingVertical: 0,
-    fontSize: 26,
-    fontWeight: "700",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });
