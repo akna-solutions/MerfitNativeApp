@@ -9,7 +9,6 @@ import {
   View,
 } from "react-native";
 
-import { useTheme } from "../../theme/ThemeContext";
 import { DumbbellObstacle } from "./components/DumbbellObstacle";
 import { Mascot } from "./components/Mascot";
 import {
@@ -43,6 +42,8 @@ type Props = {
   pauseSignal?: number;
   /** Duraklama ekraninda gosterilecek aciklama. */
   pausedHint?: string;
+  /** Oyun baslatilamiyorsa (canStart=false) "Hazırlanıyor…" yerine gosterilecek aciklama. */
+  readyHint?: string;
   onGameOver: (result: GameOverResult) => void;
   onRunningChange?: (running: boolean) => void;
 };
@@ -72,11 +73,10 @@ export function DumbbellDashGame({
   suspended = false,
   pauseSignal,
   pausedHint,
+  readyHint,
   onGameOver,
   onRunningChange,
 }: Props) {
-  const { colors } = useTheme();
-
   const [status, setStatus] = useState<Status>("ready");
   const [score, setScore] = useState(0);
   const [boardWidth, setBoardWidth] = useState(0);
@@ -334,7 +334,7 @@ export function DumbbellDashGame({
 
           {status !== "running" ? (
             <View style={styles.overlay} pointerEvents="none">
-              <Text style={styles.overlayTitle}>{overlayTitle(status, canStart, suspended, pausedHint)}</Text>
+              <Text style={styles.overlayTitle}>{overlayTitle(status, canStart, suspended, pausedHint, readyHint)}</Text>
               {status === "ready" && canStart ? (
                 <Text style={styles.overlayHint}>Dambıllara ve kenarlara çarpma</Text>
               ) : null}
@@ -347,8 +347,14 @@ export function DumbbellDashGame({
   );
 }
 
-function overlayTitle(status: Status, canStart: boolean, suspended: boolean, pausedHint?: string): string {
-  if (status === "ready") return canStart ? "Başlamak için dokun" : "Hazırlanıyor…";
+function overlayTitle(
+  status: Status,
+  canStart: boolean,
+  suspended: boolean,
+  pausedHint?: string,
+  readyHint?: string,
+): string {
+  if (status === "ready") return canStart ? "Başlamak için dokun" : (readyHint ?? "Hazırlanıyor…");
   if (status === "paused") return pausedHint ?? (suspended ? "Duraklatıldı" : "Oyun duraklatıldı");
   return "Oyun bitti";
 }

@@ -604,6 +604,12 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
                     pauseSignal={restTimeUp ? 1 : 0}
                     pausedHint={restRemaining === 0 ? "Dinlenme bitti" : undefined}
                     onRunningChange={setIsGamePlaying}
+                    // Dinlenme bittiyse devam eden tur bitirilebilir ama yeni tur baslatilamaz: kullanici sete doner.
+                    replayBlocked={
+                      restTimeUp
+                        ? { message: "Dinlenme bitti, sete devam", actionLabel: "Sonraki Sete Geç", onAction: handleRestEnd }
+                        : null
+                    }
                   />
                 ) : null}
               </>
