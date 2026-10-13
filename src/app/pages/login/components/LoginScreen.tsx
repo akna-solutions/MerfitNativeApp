@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../../../../shared/auth/AuthContext";
+import { goToDashboardAfterAuth } from "../../../../shared/auth/navigation";
 import { ApiError, isApiError, NetworkError } from "../../../../services/api/client";
 import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { OnboardingButton } from "../../onboarding/components/OnboardingButton";
@@ -41,7 +42,7 @@ export function LoginScreen() {
     setIsSubmitting(true);
     try {
       await login({ emailOrUsername: emailOrUsername.trim(), password });
-      router.replace("/pages/dashboard");
+      goToDashboardAfterAuth(router);
     } catch (error) {
       console.error("Login hatası:", error);
       if (isApiError(error)) {
