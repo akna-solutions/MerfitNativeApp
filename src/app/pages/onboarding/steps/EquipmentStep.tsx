@@ -58,7 +58,20 @@ export function EquipmentStep({
         />
       ))}
 
-      {location ? (
+      {location === "gym" ? (
+        <View style={styles.equipmentBlock}>
+          <Text style={[styles.gymNote, { color: colors.text }]}>
+            Spor salonunda tüm ekipmanlara erişimin olduğunu varsayıyoruz.
+          </Text>
+          {status === "error" ? (
+            <Pressable onPress={onRetry}>
+              <Text style={{ color: colors.text }}>
+                Ekipman listesi alınamadı. Tekrar denemek için dokun.
+              </Text>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : location ? (
         <View style={styles.equipmentBlock}>
           <Text style={[styles.equipmentTitle, { color: colors.text }]}>Hangi ekipmanlara sahipsin?</Text>
           {status === "loading" ? (
@@ -94,6 +107,7 @@ export function EquipmentStep({
 
 const styles = StyleSheet.create({
   equipmentBlock: { marginTop: 24 },
+  gymNote: { fontSize: 14, lineHeight: 20 },
   equipmentTitle: {
     fontSize: 15,
     fontWeight: "700",
