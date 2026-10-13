@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import MaskedView from "@react-native-masked-view/masked-view";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRef } from "react";
@@ -37,17 +38,16 @@ type Props = {
 const NAV_BOTTOM_GAP = 6;
 const NAV_HEIGHT = 68;
 // Blur, icerik navbar'a degmeden bu kadar yukarida yavas yavas baslar.
-const BLUR_FADE_HEIGHT = 36;
-// Ust uste binen blur katmanlari: alt kisimda daha cok katman ust uste geldigi icin
-// bulaniklik yukaridan asagiya dogru kademeli olarak artar.
-const BLUR_LAYERS = 5;
-const BLUR_LAYER_INTENSITY = 9;
+const BLUR_FADE_HEIGHT = 56;
+const BLUR_INTENSITY = 40;
 
 export function BottomNavigation({ active, onChange }: Props) {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const navBottom = insets.bottom + NAV_BOTTOM_GAP;
   const blurHeight = navBottom + NAV_HEIGHT + BLUR_FADE_HEIGHT;
+  // Gradyanin tam opakliga ulastigi nokta: navbar'in ust kenari.
+  const fadeEnd = BLUR_FADE_HEIGHT / blurHeight;
 
   // Her tab için ayrı bir scale değeri - basılan/aktif olan ikon hafifçe
   // "pulse" yapar. Navigation'ın kendisi sürekli hareket etmiyor,
@@ -77,20 +77,27 @@ export function BottomNavigation({ active, onChange }: Props) {
   return (
     <>
       <View pointerEvents="none" style={[styles.blurArea, { height: blurHeight }]}>
-        {Array.from({ length: BLUR_LAYERS }, (_, index) => (
+        {/* Tek bir blur katmani, yukaridan asagi seffaftan opaga giden bir gradyanla
+            maskelenir; boylece bulaniklik keskin bir kenar olmadan yavasca artar. */}
+        <MaskedView
+          style={StyleSheet.absoluteFill}
+          maskElement={
+            <LinearGradient
+              colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.6)", "rgba(0,0,0,1)"]}
+              locations={[0, fadeEnd / 2, fadeEnd]}
+              style={StyleSheet.absoluteFill}
+            />
+          }
+        >
           <BlurView
-            key={index}
-            intensity={BLUR_LAYER_INTENSITY}
+            intensity={BLUR_INTENSITY}
             tint={isDark ? "dark" : "light"}
-            style={[
-              styles.blurLayer,
-              { top: (BLUR_FADE_HEIGHT * index) / BLUR_LAYERS },
-            ]}
+            style={StyleSheet.absoluteFill}
           />
-        ))}
+        </MaskedView>
         <LinearGradient
-          colors={[`${colors.background}00`, `${colors.background}8C`]}
-          locations={[0, 0.45]}
+          colors={[`${colors.background}00`, `${colors.background}73`]}
+          locations={[0, fadeEnd]}
           style={StyleSheet.absoluteFill}
         />
       </View>
@@ -137,12 +144,6 @@ export function BottomNavigation({ active, onChange }: Props) {
 const styles = StyleSheet.create({
   // Navbar'in arkasinda kalan sayfa icerigini bulaniklastiran alan.
   blurArea: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  blurLayer: {
     position: "absolute",
     left: 0,
     right: 0,
