@@ -6,6 +6,7 @@ export * as foodsApi from "./foods";
 export * as leaderboardApi from "./leaderboard";
 export * as miniGamesApi from "./miniGames";
 export * as nutritionApi from "./nutrition";
+export * as nutritionAssistantApi from "./nutritionAssistant";
 export * as profileApi from "./profile";
 export * as progressApi from "./progress";
 export * from "./types";

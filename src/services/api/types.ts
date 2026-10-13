@@ -456,6 +456,62 @@ export type NutritionResponse = {
   macros: MacroOverview;
   water: WaterSummary;
   meals: MealEntry[];
+  /** Hedeflerle tuketimin sunucuda yapilan karsilastirmasi (ekranin altindaki asistan karti). Eski backend'de yok. */
+  insight?: NutritionInsight;
+};
+
+// ---- Nutrition Assistant (Mbfit Beslenme Asistani) ----
+export type NutritionInsightStatus =
+  | "noData"
+  | "noTargets"
+  | "goalsCompleted"
+  | "caloriesExceeded"
+  | "proteinBehind"
+  | "fatsHigh"
+  | "carbsHigh"
+  | "caloriesMostlyDone"
+  | "carbsOnTrack"
+  | "inProgress";
+
+export type NutritionInsight = {
+  status: NutritionInsightStatus;
+  message: string;
+  suggestedQuestion?: string | null;
+};
+
+/** Sohbet mesaji; icerik duz metindir (HTML/Markdown olarak yorumlanmaz). */
+export type AssistantMessage = {
+  /** Sunucunun her acilista urettigi karsilama mesajinda null. */
+  id: number | null;
+  role: "user" | "assistant";
+  content: string;
+  createdAt: string;
+};
+
+export type AssistantConversationResponse = {
+  conversationId: number | null;
+  date: string; // "yyyy-MM-dd"
+  assistantAvailable: boolean;
+  greeting: AssistantMessage;
+  messages: AssistantMessage[];
+  suggestedQuestions: string[];
+  insight: NutritionInsight;
+  remainingMessages: number;
+};
+
+export type AssistantChatRequest = {
+  message: string;
+  conversationId?: number | null;
+  date?: string; // "yyyy-MM-dd"
+};
+
+export type AssistantChatResponse = {
+  conversationId: number;
+  date: string;
+  userMessage: AssistantMessage;
+  message: AssistantMessage;
+  suggestedQuestions: string[];
+  remainingMessages: number;
 };
 
 /** Backend'in Domain.Enums.MealType degerleri; POST /api/nutrition/meals bu degerleri bekler. */

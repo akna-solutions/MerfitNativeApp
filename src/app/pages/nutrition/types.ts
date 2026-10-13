@@ -1,3 +1,5 @@
+import type { NutritionInsight } from "../../../services/api/types";
+
 export type MealType = "Kahvaltı" | "Öğle Yemeği" | "Akşam Yemeği" | "Atıştırmalık";
 
 export const MEAL_TYPES: MealType[] = [
@@ -41,4 +43,6 @@ export type NutritionData = {
     targetL: number;
   };
   meals: MealEntry[];
+  /** Hedef ve tuketime gore sunucunun degerlendirmesi (eski API surumlerinde gelmeyebilir). */
+  insight?: NutritionInsight;
 };
