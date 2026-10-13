@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { OnboardingButton } from "../../onboarding/components/OnboardingButton";
@@ -10,6 +11,10 @@ type Props = {
   nextExercise: Exercise | null;
   onAdjust: (deltaSec: number) => void;
   onSkip: () => void;
+  /** Mini oyun paneli acik mi? Acikken sayac kompakt gosterilir ve oyna butonu gizlenir. */
+  gameOpen?: boolean;
+  /** Verilirse "Dinlenirken Oyna" butonu gosterilir. */
+  onOpenGame?: () => void;
 };
 
 function formatTime(totalSeconds: number) {
@@ -25,15 +30,27 @@ export function RestTimer({
   nextExercise,
   onAdjust,
   onSkip,
+  gameOpen = false,
+  onOpenGame,
 }: Props) {
   const { colors } = useTheme();
   const ratio =
     totalSec > 0 ? Math.max(0, Math.min(1, remainingSec / totalSec)) : 0;
+  // Oyun aciksa sayac sifirda otomatik gecis yapilmaz (oyuna dokunurken yanlislikla "Seti Tamamla"ya
+  // basilmasin diye); kullaniciya acikca sonraki sete gecmesi soylenir.
+  const timeUp = gameOpen && remainingSec <= 0;
 
   return (
-    <View style={styles.wrapper}>
-      <Text style={[styles.label, { color: colors.textSecondary }]}>DİNLENME</Text>
-      <Text style={[styles.timer, { color: colors.text }]}>{formatTime(remainingSec)}</Text>
+    <View style={[styles.wrapper, gameOpen && styles.wrapperCompact]}>
+      <Text style={[styles.label, { color: timeUp ? colors.text : colors.textSecondary }]}>
+        {timeUp ? "DİNLENME BİTTİ" : "DİNLENME"}
+      </Text>
+      <Text
+        testID="rest-timer-remaining"
+        style={[styles.timer, gameOpen && styles.timerCompact, { color: colors.text }]}
+      >
+        {formatTime(remainingSec)}
+      </Text>
 
       <View style={[styles.track, { backgroundColor: colors.progressTrack }]}>
         <View style={[styles.fill, { width: `${ratio * 100}%`, backgroundColor: colors.primary }]} />
@@ -44,7 +61,28 @@ export function RestTimer({
         <AdjustButton label="+15" onPress={() => onAdjust(15)} />
       </View>
 
-      {nextExercise ? (
+      {timeUp ? (
+        <View style={styles.timeUpBlock}>
+          <Text style={[styles.timeUpText, { color: colors.textSecondary }]}>Sonraki sete geçme zamanı.</Text>
+          <OnboardingButton label="Sonraki Sete Geç" onPress={onSkip} />
+        </View>
+      ) : null}
+
+      {onOpenGame && !gameOpen ? (
+        <Pressable
+          onPress={onOpenGame}
+          accessibilityRole="button"
+          style={({ pressed }) => [
+            styles.playButton,
+            { backgroundColor: colors.inputBackground, borderColor: colors.border, opacity: pressed ? 0.8 : 1 },
+          ]}
+        >
+          <Ionicons name="game-controller-outline" size={18} color={colors.text} />
+          <Text style={[styles.playLabel, { color: colors.text }]}>Dinlenirken Oyna</Text>
+        </Pressable>
+      ) : null}
+
+      {nextExercise && !gameOpen ? (
         <View style={styles.nextBlock}>
           <Text style={[styles.nextLabel, { color: colors.textSecondary }]}>SONRAKİ EGZERSİZ</Text>
           <Text style={[styles.nextName, { color: colors.text }]}>{nextExercise.name}</Text>
@@ -54,9 +92,11 @@ export function RestTimer({
         </View>
       ) : null}
 
-      <View style={styles.skipButton}>
-        <OnboardingButton label="Dinlenmeyi Atla" onPress={onSkip} variant="text" />
-      </View>
+      {timeUp ? null : (
+        <View style={[styles.skipButton, gameOpen && styles.skipButtonCompact]}>
+          <OnboardingButton label="Dinlenmeyi Atla" onPress={onSkip} variant="text" />
+        </View>
+      )}
     </View>
   );
 }
@@ -82,6 +122,7 @@ function AdjustButton({
 
 const styles = StyleSheet.create({
   wrapper: { alignItems: "center", paddingTop: 32 },
+  wrapperCompact: { paddingTop: 8, paddingBottom: 12 },
   label: {
     fontSize: 13,
     fontWeight: "700",
@@ -93,6 +134,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontVariant: ["tabular-nums"],
   },
+  timerCompact: { fontSize: 44, marginTop: 4 },
   track: {
     width: "70%",
     height: 5,
@@ -123,4 +165,18 @@ const styles = StyleSheet.create({
   },
   nextMeta: { fontSize: 12, marginTop: 4 },
   skipButton: { marginTop: 28 },
+  skipButtonCompact: { marginTop: 12 },
+  timeUpBlock: { width: "100%", alignItems: "stretch", marginTop: 18, gap: 10 },
+  timeUpText: { fontSize: 13, textAlign: "center" },
+  playButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    minHeight: 44,
+    paddingHorizontal: 20,
+    borderRadius: 22,
+    borderWidth: StyleSheet.hairlineWidth,
+    marginTop: 22,
+  },
+  playLabel: { fontSize: 14, fontWeight: "700" },
 });
