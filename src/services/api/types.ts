@@ -779,3 +779,57 @@ export type MySubscriptionResponse = {
   current: SubscriptionInfo | null;
   products: SubscriptionProductItem[];
 };
+
+// ---- Mini oyun (Dumbbell Dash) ----
+/** MerfitCustomerApi MiniGameRewardTierDto: bu skora ulasan oyun `points` MB FIT puani kazanir. */
+export type MiniGameRewardTier = { minScore: number; points: number };
+
+export type MiniGameRewardRules = {
+  tiers: MiniGameRewardTier[];
+  maxPointsPerGame: number;
+  dailyPointLimit: number;
+};
+
+/** POST /api/mini-games/dumbbell-dash/sessions yaniti. */
+export type MiniGameSession = {
+  /** false ise odul sistemi kapali: oyun puansiz oynanir, sessionId/seed null gelir. */
+  rewardsEnabled: boolean;
+  sessionId: number | null;
+  /** Sunucunun urettigi 32 bit isaretsiz seed. */
+  seed: number | null;
+  engineVersion: number;
+  expiresAt: string | null;
+  rules: MiniGameRewardRules;
+  earnedToday: number;
+  remainingToday: number;
+};
+
+export type MiniGameResultStatus =
+  | "Rewarded"
+  | "NoReward"
+  | "DailyLimitReached"
+  | "Rejected"
+  | "Expired"
+  | "Abandoned";
+
+/** POST /api/mini-games/dumbbell-dash/sessions/{id}/finish yaniti (ayni oturum tekrar gonderilirse ayni sonuc). */
+export type MiniGameResult = {
+  sessionId: number;
+  status: MiniGameResultStatus;
+  verifiedScore: number | null;
+  tierPoints: number;
+  awardedPoints: number;
+  dailyLimitReached: boolean;
+  previousTotalPoints: number;
+  totalPoints: number;
+  earnedToday: number;
+  remainingToday: number;
+  nextTier: MiniGameRewardTier | null;
+};
+
+/** Oyun sonucu: skor yalnizca iddiadir; sunucu oyunu seed + flapTicks ile yeniden oynatarak dogrular. */
+export type FinishMiniGameRequest = {
+  score: number;
+  ticks: number;
+  flapTicks: number[];
+};

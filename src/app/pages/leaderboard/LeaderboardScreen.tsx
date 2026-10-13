@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { MiniGameCard } from "../../../shared/miniGame/dumbbellDash/MiniGameCard";
 import { PremiumFeature } from "../../../shared/plus/components/PremiumFeature";
 import { useProfile } from "../../../shared/profile/ProfileContext";
 import { ApiError } from "../../../services/api/client";
@@ -53,6 +54,16 @@ export function LeaderboardScreen() {
       setIsLoading(false);
     }
   }, [router]);
+
+  // Mini oyundan puan kazanilinca ekran sessizce (iskelet gostermeden) guncellenir; hata olursa mevcut
+  // veri korunur, bir sonraki acilista yeniden denenir.
+  const refreshAfterReward = useCallback(async () => {
+    try {
+      setData(await getLeaderboard(period));
+    } catch {
+      // Sessiz yenileme: ekrandaki veriyi bozma.
+    }
+  }, [period]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -115,8 +126,12 @@ export function LeaderboardScreen() {
             ) : null}
           </View>
 
+          <View style={[styles.padded, styles.sectionGap]}>
+            <MiniGameCard onRewardGranted={refreshAfterReward} />
+          </View>
+
           {isLoading || !data ? (
-            <View style={styles.padded}>
+            <View style={[styles.padded, styles.sectionGap]}>
               <LeaderboardSkeleton />
             </View>
           ) : (

@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
+    AppState,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
@@ -34,7 +35,9 @@ import { SetTracker } from "./components/SetTracker";
 import { WorkoutComplete } from "./components/WorkoutComplete";
 import { WorkoutProgress } from "./components/WorkoutProgress";
 import { WorkoutTopBar } from "./components/WorkoutTopBar";
+import { DumbbellDashPanel } from "../../../shared/miniGame/dumbbellDash/DumbbellDashPanel";
 import { useTheme } from "../../../shared/theme/ThemeContext";
+import { adjustRestEndsAt, remainingRestSeconds, restEndsAt } from "../../../shared/workout/restClock";
 import { estimateWorkoutCalories, formatKg } from "../../../shared/workoutHistory/format";
 import { Exercise, ExerciseProgress, WorkoutPhase, WorkoutSession } from "./types";
 import { WorkoutSummary } from "./WorkoutSummary";
@@ -143,10 +146,15 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
   const [inputError, setInputError] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [saveError, setSaveError] = useState<string | null>(null);
+  // Dinlenirken oynanan mini oyun. Yalnizca dinlenme ekraninda acilabilir; antrenman durumuna dokunmaz.
+  const [isGameOpen, setIsGameOpen] = useState(false);
+  const [isGamePlaying, setIsGamePlaying] = useState(false);
 
   const phaseBeforePause = useRef<WorkoutPhase>("exercise");
   const pendingAdvanceExercise = useRef(false);
   const restTotalSec = useRef(0);
+  /** Dinlenmenin bitecegi an (epoch ms); dinlenme disinda (veya duraklatilmisken) null. */
+  const restEndsAtRef = useRef<number | null>(null);
   // Set kayıtları arka planda gönderilir; antrenman tamamlanmadan önce hepsinin
   // sunucuya ulaştığından emin olmak için burada tutulur (anahtar: "egzersiz:set").
   const setLogs = useRef(new Map<string, SetLogEntry>());
@@ -211,20 +219,48 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
     return () => clearInterval(interval);
   }, [phase, session]);
 
+  // Dinlenme sayaci bitis anina gore hesaplanir (bkz. shared/workout/restClock): mini oyun JS thread'ini
+  // mesgul etse de yavaslamaz, uygulama arka plandan donunce gecen sure dogru yansir. Oyunun kendi
+  // dongusuyle hicbir baglantisi yoktur; oyun acilip kapatilmasi bu effect'i yeniden calistirmaz.
   useEffect(() => {
     if (phase !== "rest") return;
-    const interval = setInterval(() => {
-      setRestRemaining((prev) => Math.max(0, prev - 1));
-    }, 1000);
-    return () => clearInterval(interval);
+    if (restEndsAtRef.current === null) {
+      // Duraklatmadan donus: kalan sure kaldigi yerden devam eder.
+      restEndsAtRef.current = restEndsAt(restRemaining, Date.now());
+    }
+    const sync = () => {
+      if (restEndsAtRef.current !== null) {
+        setRestRemaining(remainingRestSeconds(restEndsAtRef.current, Date.now()));
+      }
+    };
+    const interval = setInterval(sync, 250);
+    const subscription = AppState.addEventListener("change", (next) => {
+      if (next === "active") sync();
+    });
+    return () => {
+      clearInterval(interval);
+      subscription.remove();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
   useEffect(() => {
-    if (phase === "rest" && restRemaining === 0) {
-      handleRestEnd();
-    }
+    // Oyun aciksa sifirda otomatik gecis yapilmaz: kullaniciya "Sonraki Sete Geç" gosterilir ve calisan oyun
+    // duraklatilir (bkz. restTimeUp). Oyun kapatilinca (veya hic acilmadiysa) mevcut otomatik gecis aynen calisir.
+    if (phase === "rest" && restRemaining === 0 && !isGameOpen) handleRestEnd();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, restRemaining]);
+  }, [phase, restRemaining, isGameOpen]);
+
+  // Dinlenmeden cikilinca (sonraki set, antrenman bitti/cikis) oyun ayni render'da tamamen kapanir
+  // (effect yerine render sirasinda guncelleme: kapanmis oyun bir kare bile cizilmez).
+  const [gamePhase, setGamePhase] = useState(phase);
+  if (gamePhase !== phase) {
+    setGamePhase(phase);
+    if (phase !== "rest" && phase !== "paused") {
+      setIsGameOpen(false);
+      setIsGamePlaying(false);
+    }
+  }
 
   if (isLoading) {
     return (
@@ -248,6 +284,10 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
   }
 
   const totalSets = session.exercises.reduce((sum, ex) => sum + ex.sets, 0);
+  // Dinlenmedeyken duraklatilinca dinlenme ekrani (ve acik oyun) duraklatma katmaninin altinda korunur.
+  const isRestView = phase === "rest" || (phase === "paused" && phaseBeforePause.current === "rest");
+  // Dinlenme suresi oyun acikken doldu: degisim, calisan oyunu bir kez duraklatir.
+  const restTimeUp = phase === "rest" && restRemaining === 0;
   const totalCompletedSets = Object.values(progress).reduce(
     (sum, item) => sum + item.completedSets.length,
     0,
@@ -405,12 +445,14 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
 
     pendingAdvanceExercise.current = isLastSetOfExercise;
     restTotalSec.current = currentExercise.restSec;
+    restEndsAtRef.current = restEndsAt(currentExercise.restSec, Date.now());
     setRestRemaining(currentExercise.restSec);
     setPhase("rest");
   }
 
   function handleRestEnd() {
     if (!currentExercise) return;
+    restEndsAtRef.current = null;
     if (pendingAdvanceExercise.current) {
       pendingAdvanceExercise.current = false;
       setExerciseIndex((prev) => prev + 1);
@@ -427,10 +469,21 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
   }
 
   function handleAdjustRest(deltaSec: number) {
+    if (restEndsAtRef.current !== null) {
+      const now = Date.now();
+      restEndsAtRef.current = adjustRestEndsAt(restEndsAtRef.current, deltaSec, now);
+      setRestRemaining(remainingRestSeconds(restEndsAtRef.current, now));
+      return;
+    }
     setRestRemaining((prev) => Math.max(0, prev + deltaSec));
   }
 
   function handlePause() {
+    if (phase === "rest" && restEndsAtRef.current !== null) {
+      // Duraklatilinca dinlenme sayaci da durur (mevcut davranis); kalan sure saklanir.
+      setRestRemaining(remainingRestSeconds(restEndsAtRef.current, Date.now()));
+      restEndsAtRef.current = null;
+    }
     phaseBeforePause.current = phase;
     setPhase("paused");
   }
@@ -523,19 +576,37 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
+            scrollEnabled={!isGamePlaying}
           >
-            {phase === "rest" ? (
-              <RestTimer
-                remainingSec={restRemaining}
-                totalSec={restTotalSec.current}
-                nextExercise={
-                  pendingAdvanceExercise.current
-                    ? (session.exercises[exerciseIndex + 1] ?? null)
-                    : null
-                }
-                onAdjust={handleAdjustRest}
-                onSkip={handleRestEnd}
-              />
+            {isRestView ? (
+              <>
+                <RestTimer
+                  remainingSec={restRemaining}
+                  totalSec={restTotalSec.current}
+                  nextExercise={
+                    pendingAdvanceExercise.current
+                      ? (session.exercises[exerciseIndex + 1] ?? null)
+                      : null
+                  }
+                  onAdjust={handleAdjustRest}
+                  onSkip={handleRestEnd}
+                  gameOpen={isGameOpen}
+                  onOpenGame={() => setIsGameOpen(true)}
+                />
+                {isGameOpen ? (
+                  <DumbbellDashPanel
+                    subtitle="Dinlenme sayacın çalışmaya devam ediyor"
+                    onClose={() => {
+                      setIsGameOpen(false);
+                      setIsGamePlaying(false);
+                    }}
+                    suspended={phase === "paused" || exitModalVisible}
+                    pauseSignal={restTimeUp ? 1 : 0}
+                    pausedHint={restRemaining === 0 ? "Dinlenme bitti" : undefined}
+                    onRunningChange={setIsGamePlaying}
+                  />
+                ) : null}
+              </>
             ) : (
               <>
                 <ExerciseVideo
