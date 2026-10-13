@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useReducer, useRef } from "react";
 
 import { ApiError, NetworkError } from "../../services/api/client";
-import { getAssistantConversation, sendAssistantMessage } from "../../services/api/nutritionAssistant";
+import { deleteAssistantConversation, getAssistantConversation, sendAssistantMessage } from "../../services/api/nutritionAssistant";
 import { assistantReducer, AssistantDayState, initialDayState } from "./chatState";
 
 /** API hatalarini sohbet icinde gosterilecek kisa ve anlasilir Turkce mesaja cevirir. */
@@ -31,6 +31,8 @@ export type NutritionAssistantController = {
   send: (text: string) => Promise<boolean>;
   /** Basarisiz mesaji yeniden gonderir. */
   retry: (key: string) => Promise<boolean>;
+  /** Gunun sohbetini sunucudan siler; yanit beklenirken calismaz. Hata olursa mesaj doner. */
+  clear: () => Promise<string | null>;
 };
 
 /**
@@ -116,5 +118,19 @@ export function useNutritionAssistant(date: string): NutritionAssistantControlle
     [date, send],
   );
 
-  return { state: all[date] ?? initialDayState, load, send, retry };
+  const clear = useCallback(async () => {
+    if (inFlight.current.has(date)) return "Yanıt beklenirken sohbet silinemez.";
+    const controller = track();
+    try {
+      await deleteAssistantConversation(date, controller.signal);
+      if (mounted.current) dispatch({ type: "reset", date });
+      return null;
+    } catch (error) {
+      return assistantErrorMessage(error);
+    } finally {
+      controllers.current.delete(controller);
+    }
+  }, [date]);
+
+  return { state: all[date] ?? initialDayState, load, send, retry, clear };
 }

@@ -44,7 +44,8 @@ export type AssistantAction =
   | { type: "sendStart"; date: string; key: string; text: string }
   | { type: "sendSuccess"; date: string; key: string; response: AssistantChatResponse }
   | { type: "sendFailure"; date: string; key: string; message: string }
-  | { type: "removeItem"; date: string; key: string };
+  | { type: "removeItem"; date: string; key: string }
+  | { type: "reset"; date: string };
 
 export function toChatItem(message: AssistantMessage, fallbackKey: string): ChatItem {
   return {
@@ -130,6 +131,16 @@ export function assistantReducer(state: AssistantState, action: AssistantAction)
       return update(state, action.date, (day) => ({
         ...day,
         items: day.items.filter((item) => item.key !== action.key),
+        sendError: null,
+      }));
+
+    case "reset":
+      // Sohbet silindi: karsilama ve oneriler korunur, mesajlar ve sohbet kimligi temizlenir.
+      return update(state, action.date, (day) => ({
+        ...day,
+        conversationId: null,
+        items: [],
+        sending: false,
         sendError: null,
       }));
 

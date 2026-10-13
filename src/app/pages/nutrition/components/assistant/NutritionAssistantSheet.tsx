@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Animated,
   FlatList,
   Keyboard,
@@ -50,7 +51,21 @@ export function NutritionAssistantSheet({ visible, onClose, controller }: Props)
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { height: screenHeight } = useWindowDimensions();
-  const { state, load, send, retry } = controller;
+  const { state, load, send, retry, clear } = controller;
+
+  const confirmClear = () => {
+    Alert.alert("Sohbeti sil", "Bugünkü sohbet geçmişin silinecek. Bu işlem geri alınamaz.", [
+      { text: "Vazgeç", style: "cancel" },
+      {
+        text: "Sil",
+        style: "destructive",
+        onPress: async () => {
+          const error = await clear();
+          if (error) Alert.alert("Sohbet silinemedi", error);
+        },
+      },
+    ]);
+  };
 
   const collapsedHeight = Math.round(screenHeight * COLLAPSED_RATIO);
   const expandedHeight = Math.max(collapsedHeight, screenHeight - insets.top - 8);
@@ -203,6 +218,19 @@ export function NutritionAssistantSheet({ visible, onClose, controller }: Props)
               <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
                 {ASSISTANT_TITLE}
               </Text>
+              {state.items.length > 0 ? (
+                <Pressable
+                  testID="assistant-clear"
+                  onPress={confirmClear}
+                  disabled={state.sending}
+                  hitSlop={10}
+                  accessibilityRole="button"
+                  accessibilityLabel="Sohbeti sil"
+                  style={[styles.close, { backgroundColor: colors.card }, state.sending && styles.disabledAction]}
+                >
+                  <Ionicons name="trash-outline" size={16} color={colors.textSecondary} />
+                </Pressable>
+              ) : null}
               <Pressable
                 testID="assistant-close"
                 onPress={onClose}
@@ -252,7 +280,8 @@ export function NutritionAssistantSheet({ visible, onClose, controller }: Props)
                   <>
                     {state.items.length === 0 && !state.sending ? (
                       <Text style={[styles.emptyHint, { color: colors.textSecondary }]} testID="assistant-empty">
-                        Öğünlerin, hedeflerin veya bugünkü durumunla ilgili istediğini sorabilirsin.
+                        Öğünlerin, hedeflerin veya bugünkü durumunla ilgili istediğini sorabilirsin. Öneriler genel
+                        bilgi amaçlıdır; doktor veya diyetisyen görüşünün yerini tutmaz.
                       </Text>
                     ) : null}
                     {state.sending ? <AssistantTypingIndicator /> : null}
@@ -309,6 +338,7 @@ const styles = StyleSheet.create({
   titleIcon: { width: 30, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center" },
   title: { flex: 1, fontSize: 16, fontWeight: "700" },
   close: { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center" },
+  disabledAction: { opacity: 0.4 },
   body: { flex: 1 },
   listContent: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 12 },
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12, paddingHorizontal: 32 },
