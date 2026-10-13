@@ -1,3 +1,4 @@
+import { BlurView } from "expo-blur";
 import { Modal, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -13,14 +14,16 @@ type Props = {
 
 /**
  * Dumbbell Dash'i aktif antrenman disinda tam ekran acan ortak pencere (MB FIT Puanim karti ve dashboard'daki
- * dinlenme gunu karti kullanir).
+ * dinlenme gunu karti kullanir). Pencere saydamdir: arkada kalan ekran bulanik ve hafif karartilmis gorunur.
  */
 export function MiniGameModal({ visible, onClose, onRewardGranted }: Props) {
-  const { colors } = useTheme();
+  const { isDark } = useTheme();
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
-      <View style={[styles.root, { backgroundColor: colors.background }]}>
+    <Modal visible={visible} animationType="fade" transparent statusBarTranslucent onRequestClose={onClose}>
+      <View style={styles.root}>
+        <BlurView intensity={40} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? "rgba(0,0,0,0.45)" : "rgba(11,13,18,0.25)" }]} />
         <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
           {visible ? (
             <DumbbellDashPanel
