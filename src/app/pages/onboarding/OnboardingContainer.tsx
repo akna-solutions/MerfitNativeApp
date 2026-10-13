@@ -12,9 +12,9 @@ import {
   RegisterRequest,
 } from "../../../services/api/types";
 import { useAuth } from "../../../shared/auth/AuthContext";
-import { goToDashboardAfterAuth } from "../../../shared/auth/navigation";
+import { goToEmailVerificationAfterAuth } from "../../../shared/auth/navigation";
+import { useUsernameAvailability } from "../../../shared/auth/useUsernameAvailability";
 import { OnboardingScreen } from "./components/OnboardingScreen";
-import { SuccessScreen } from "./components/SuccessScreen";
 import { AccountStep } from "./steps/AccountStep";
 import { ActivityStep } from "./steps/ActivityStep";
 import { AgeStep } from "./steps/AgeStep";
@@ -77,15 +77,13 @@ export function OnboardingContainer() {
   const router = useRouter();
   const { register } = useAuth();
   const [step, setStep] = useState(1);
-  const [showSuccess, setShowSuccess] = useState(false);
-  // Kayit yanitindaki VerificationEmailSent (false: dogrulama e-postasi gonderilemedi).
-  const [verificationEmailSent, setVerificationEmailSent] = useState<boolean | null>(null);
   const [data, setData] = useState<OnboardingData>(initialOnboardingData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [equipmentList, setEquipmentList] = useState<EquipmentListItem[]>([]);
   const [equipmentStatus, setEquipmentStatus] = useState<EquipmentLoadStatus>("loading");
   const [equipmentAttempt, setEquipmentAttempt] = useState(0);
+  const usernameAvailability = useUsernameAvailability(data.username);
 
   // Ekipman listesini akisin basinda cekiyoruz; EquipmentStep secenekleri bu listeden uretir
   // (sabit kodlanmis slug'lar yok). Basarisiz olursa kullanici adimda tekrar deneyebilir.
@@ -136,8 +134,13 @@ export function OnboardingContainer() {
     setIsSubmitting(true);
     try {
       const result = await register(toRegisterRequest(data, equipmentList.map((item) => item.id)));
-      setVerificationEmailSent(result.verificationEmailSent ?? null);
-      setShowSuccess(true);
+      // E-posta dogrulanmadan uygulamaya gecilmez: kayittan sonra dogrudan kod ekranina gidilir;
+      // kod dogrulaninca "Hazırsın" ekrani gosterilir.
+      goToEmailVerificationAfterAuth(router, {
+        codeState: result.verificationEmailSent === false ? "failed" : "sent",
+        fromRegistration: true,
+        name: `${data.name} ${data.lastName}`.trim(),
+      });
     } catch (error) {
       console.error("Kayıt hatası:", error);
       if (isApiError(error)) {
@@ -161,21 +164,6 @@ export function OnboardingContainer() {
     }
   };
 
-  const handleStartTraining = () => {
-    goToDashboardAfterAuth(router);
-  };
-
-  if (showSuccess) {
-    return (
-      <SuccessScreen
-        name={`${data.name} ${data.lastName}`.trim()}
-        email={data.email.trim()}
-        verificationEmailSent={verificationEmailSent}
-        onStart={handleStartTraining}
-      />
-    );
-  }
-
   const age = parseInt(data.age, 10);
   const ageValid = !Number.isNaN(age) && age >= 13 && age <= 100;
   const heightValid =
@@ -187,7 +175,11 @@ export function OnboardingContainer() {
   const passwordsMatch = data.password === data.confirmPassword;
   // Backend RegisterRequest.Username validasyonuyla (3-30 karakter, a-zA-Z0-9_) birebir ayni kural.
   const usernameValid = /^[a-zA-Z0-9_]{3,30}$/.test(data.username.trim());
-  const accountValid = usernameValid && emailValid && passwordValid && passwordsMatch;
+  // Kullanici adi alinmissa veya kontrol suruyorsa devam edilmez; kontrol yapilamadiysa ("unknown")
+  // kayit sirasinda sunucu yine kontrol eder.
+  const usernameUsable =
+    usernameAvailability.state !== "unavailable" && usernameAvailability.state !== "checking";
+  const accountValid = usernameValid && usernameUsable && emailValid && passwordValid && passwordsMatch;
 
   switch (step) {
     case 1:
@@ -422,6 +414,7 @@ export function OnboardingContainer() {
           <AccountStep
             username={data.username}
             onUsernameChange={(value) => update("username", value)}
+            usernameAvailability={usernameAvailability}
             email={data.email}
             onEmailChange={(value) => update("email", value)}
             password={data.password}

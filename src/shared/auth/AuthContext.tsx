@@ -27,7 +27,7 @@ type AuthContextValue = {
    * null'dur; o durumda profil (GET /api/profile emailConfirmed) esas alinir.
    */
   emailConfirmed: boolean | null;
-  /** Dogrulama basarili oldugunda (deep link / e-posta ekrani) cagrilir. */
+  /** Dogrulama kodu basariyla girildiginde cagrilir. */
   markEmailConfirmed: () => void;
   login: (request: LoginRequest) => Promise<AuthResponse>;
   register: (request: RegisterRequest) => Promise<AuthResponse>;
