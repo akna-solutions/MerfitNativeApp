@@ -8,6 +8,7 @@ import {
   RegisterRequest,
   ResendVerificationEmailResponse,
   ResetPasswordRequest,
+  UsernameAvailabilityResponse,
 } from "./types";
 
 /** POST /api/auth/login - basarili olursa token cifti SecureStore'a kaydedilir. */
@@ -52,19 +53,18 @@ export async function logout(): Promise<void> {
 }
 
 // ---- E-posta dogrulama / sifre sifirlama ----
-// Jetonlar e-postadaki baglantidan gelir; hicbir yerde loglanmaz veya saklanmaz.
+// Kodlar e-postayla gelir ve kullanici tarafindan girilir; hicbir yerde loglanmaz veya saklanmaz.
 
-/** POST /api/auth/email-verification/resend - giris yapmis kullaniciya yeni dogrulama e-postasi. */
+/** POST /api/auth/email-verification/resend - giris yapmis kullaniciya yeni 6 haneli dogrulama kodu. */
 export function resendVerificationEmail(): Promise<ResendVerificationEmailResponse> {
   return apiRequest<ResendVerificationEmailResponse>("/api/auth/email-verification/resend", { method: "POST" });
 }
 
-/** POST /api/auth/email-verification/confirm - tek kullanimlik dogrulama jetonunu kullanir. */
-export function confirmEmail(token: string): Promise<ConfirmEmailResponse> {
+/** POST /api/auth/email-verification/confirm - giris yapmis kullanicinin dogrulama kodunu kontrol eder. */
+export function confirmEmail(code: string): Promise<ConfirmEmailResponse> {
   return apiRequest<ConfirmEmailResponse>("/api/auth/email-verification/confirm", {
     method: "POST",
-    body: { token },
-    skipAuth: true,
+    body: { code },
   });
 }
 
@@ -77,20 +77,29 @@ export function requestPasswordReset(email: string): Promise<AccountActionRespon
   });
 }
 
-/** POST /api/auth/password/reset/validate - baglanti hala gecerli mi (jetonu kullanmaz). */
-export function validatePasswordResetToken(token: string): Promise<AccountActionResponse> {
-  return apiRequest<AccountActionResponse>("/api/auth/password/reset/validate", {
+/** POST /api/auth/password/reset/verify-code - kodu kullanmadan kontrol eder (bir deneme hakki harcar). */
+export function verifyPasswordResetCode(email: string, code: string): Promise<AccountActionResponse> {
+  return apiRequest<AccountActionResponse>("/api/auth/password/reset/verify-code", {
     method: "POST",
-    body: { token },
+    body: { email, code },
     skipAuth: true,
   });
 }
 
-/** POST /api/auth/password/reset - yeni sifreyi kaydeder; sunucu tum oturumlari kapatir. */
+/** POST /api/auth/password/reset - e-posta + kod ile yeni sifreyi kaydeder; sunucu tum oturumlari kapatir. */
 export function resetPassword(request: ResetPasswordRequest): Promise<AccountActionResponse> {
   return apiRequest<AccountActionResponse>("/api/auth/password/reset", {
     method: "POST",
     body: request,
     skipAuth: true,
+  });
+}
+
+/** GET /api/auth/username-availability - kayit ekranindaki anlik kullanici adi kontrolu. */
+export function checkUsernameAvailability(username: string, signal?: AbortSignal): Promise<UsernameAvailabilityResponse> {
+  return apiRequest<UsernameAvailabilityResponse>("/api/auth/username-availability", {
+    query: { username },
+    skipAuth: true,
+    signal,
   });
 }

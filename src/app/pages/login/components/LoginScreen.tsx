@@ -42,7 +42,7 @@ export function LoginScreen() {
     setIsSubmitting(true);
     try {
       const result = await login({ emailOrUsername: emailOrUsername.trim(), password });
-      // Dogrulanmamis hesaplar da giris yapar; once dogrulama ekrani gosterilir ("Daha sonra" ile devam edilir).
+      // Dogrulanmamis hesaplar giris yapar ama once kod ekranina gider; dogrulamadan uygulamaya gecilmez.
       if (result.emailConfirmed === false) {
         goToEmailVerificationAfterAuth(router);
       } else {

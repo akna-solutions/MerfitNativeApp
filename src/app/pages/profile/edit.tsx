@@ -114,7 +114,7 @@ export default function EditProfileRoute() {
         ) : null}
         {email.trim().toLowerCase() !== profile.email.trim().toLowerCase() && profile.email ? (
           <Text style={[styles.verifyText, styles.verifyRow, { color: colors.textSecondary }]}>
-            E-posta adresini değiştirirsen yeni adresi doğrulaman gerekir.
+            E-posta adresini değiştirirsen uygulamaya devam etmeden önce yeni adresine gelen kodla doğrulaman gerekir.
           </Text>
         ) : null}
       </Field>

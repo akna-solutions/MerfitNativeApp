@@ -3,6 +3,7 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { AuthProvider } from "../shared/auth/AuthContext";
+import { EmailVerificationGate } from "../shared/auth/EmailVerificationGate";
 import { PushNotificationsProvider } from "../shared/notifications/PushNotificationsProvider";
 import { PlusProvider } from "../shared/plus/PlusContext";
 import { ProfileProvider } from "../shared/profile/ProfileContext";
@@ -13,6 +14,7 @@ function RootNavigation() {
   return (
     <>
       <StatusBar style={isDark ? "light" : "dark"} />
+      <EmailVerificationGate />
       <Stack
         screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}
       />

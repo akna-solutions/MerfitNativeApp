@@ -1,11 +1,15 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { OnboardingInput } from "../components/OnboardingInput";
+import { UsernameAvailability } from "../../../../shared/auth/useUsernameAvailability";
 import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
   username: string;
   onUsernameChange: (value: string) => void;
+  /** Kullanici adinin anlik kontrol sonucu (bkz. useUsernameAvailability). */
+  usernameAvailability?: UsernameAvailability;
   email: string;
   onEmailChange: (value: string) => void;
   password: string;
@@ -23,6 +27,7 @@ const USERNAME_CHARS_REGEX = /^[a-zA-Z0-9_]*$/;
 export function AccountStep({
   username,
   onUsernameChange,
+  usernameAvailability = { state: "idle" },
   email,
   onEmailChange,
   password,
@@ -46,8 +51,13 @@ export function AccountStep({
         placeholder="Kullanıcı adı"
         autoCapitalize="none"
         autoCorrect={false}
-        style={styles.fieldFont}
+        maxLength={30}
+        style={[
+          styles.fieldFont,
+          usernameAvailability.state === "unavailable" ? { borderColor: colors.danger } : null,
+        ]}
       />
+      <UsernameStatus availability={usernameAvailability} />
       <View style={styles.gap} />
       <OnboardingInput
         value={email}
@@ -104,7 +114,42 @@ export function AccountStep({
   );
 }
 
+function UsernameStatus({ availability }: { availability: UsernameAvailability }) {
+  const { colors } = useTheme();
+
+  if (availability.state === "checking") {
+    return (
+      <View style={styles.statusRow} accessibilityLiveRegion="polite">
+        <ActivityIndicator size="small" color={colors.textSecondary} />
+        <Text style={[styles.statusText, { color: colors.textSecondary }]}>Kontrol ediliyor…</Text>
+      </View>
+    );
+  }
+
+  if (availability.state === "available") {
+    return (
+      <View style={styles.statusRow} accessibilityLiveRegion="polite">
+        <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
+        <Text style={[styles.statusText, { color: colors.primary }]}>Kullanıcı adı uygun</Text>
+      </View>
+    );
+  }
+
+  if (availability.state === "unavailable") {
+    return (
+      <View style={styles.statusRow} accessibilityLiveRegion="polite">
+        <Ionicons name="close-circle" size={16} color={colors.danger} />
+        <Text style={[styles.statusText, { color: colors.danger }]}>{availability.message}</Text>
+      </View>
+    );
+  }
+
+  return null;
+}
+
 const styles = StyleSheet.create({
+  statusRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8, paddingHorizontal: 4 },
+  statusText: { fontSize: 13, fontWeight: "600", flexShrink: 1 },
   fieldFont: { fontSize: 16, fontWeight: "600" },
   gap: { height: 12 },
   errorText: {

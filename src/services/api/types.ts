@@ -55,11 +55,11 @@ export type AuthResponse = {
    */
   personalizationStatus?: string | null;
   /**
-   * E-posta dogrulandi mi. Dogrulanmamis hesaplar da giris yapabilir; uygulama dogrulama
-   * hatirlatmasi gosterir (bkz. pages/auth/verify-email).
+   * E-posta dogrulandi mi. Dogrulanmamis hesaplar giris yapabilir ama uygulama, 6 haneli kod girilene
+   * kadar kod ekranindan ileri gecirmez (bkz. pages/auth/verify-email, EmailVerificationGate).
    */
   emailConfirmed?: boolean;
-  /** Yalnizca register yanitinda: dogrulama e-postasi gonderildiyse true, gonderilemediyse false. */
+  /** Yalnizca register yanitinda: dogrulama kodu e-postasi gonderildiyse true, gonderilemediyse false. */
   verificationEmailSent?: boolean | null;
 };
 
@@ -84,9 +84,19 @@ export type AccountActionResponse = {
 };
 
 export type ResetPasswordRequest = {
-  token: string;
+  email: string;
+  /** E-postayla gelen 6 haneli kod. */
+  code: string;
   newPassword: string;
   confirmPassword: string;
+};
+
+export type UsernameAvailabilityResponse = {
+  /** Kontrol edilen kullanici adi (kucuk harf, bosluksuz). */
+  username: string;
+  available: boolean;
+  /** Bicim hatasi veya "alinmis" aciklamasi. */
+  message?: string | null;
 };
 
 export type LoginRequest = {
