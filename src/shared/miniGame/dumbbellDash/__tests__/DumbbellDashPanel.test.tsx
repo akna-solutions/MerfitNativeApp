@@ -94,15 +94,16 @@ describe("DumbbellDashPanel (iki giris noktasinin ortak paneli)", () => {
 
     expect(startMock).toHaveBeenCalledWith(1, expect.any(Object));
     expect(screen.getByText("seed:4294967295")).toBeTruthy();
-    expect(screen.getByText(/10 skor → 1 · 20 → 2 · 30 → 3 · 50 → 5/)).toBeTruthy();
-    expect(screen.getByText(/Bugün kalan: 12\/15/)).toBeTruthy();
+    expect(screen.getByLabelText("10 skor, 1 puan")).toBeTruthy();
+    expect(screen.getByLabelText("50 skor, 5 puan")).toBeTruthy();
+    expect(screen.getByText("Bugün 12 / 15 puan daha kazanabilirsin")).toBeTruthy();
 
     fireEvent.press(screen.getByTestId("mock-game"));
     await flush();
 
     expect(finishMock).toHaveBeenCalledWith(11, mockGameOver);
     expect(screen.getByTestId("dumbbell-dash-awarded").props.children).toEqual(["+", 5, " MB FIT puanı"]);
-    expect(screen.getByText("Toplam puanın: 1,200 → 1,205")).toBeTruthy();
+    expect(screen.getByText("Toplam: 1,200 → 1,205 puan")).toBeTruthy();
     expect(onRewardGranted).toHaveBeenCalledTimes(1);
   });
 
@@ -118,8 +119,8 @@ describe("DumbbellDashPanel (iki giris noktasinin ortak paneli)", () => {
     fireEvent.press(screen.getByTestId("mock-game"));
     await flush();
 
-    expect(screen.getByText("Bu skor puan kazandırmadı.")).toBeTruthy();
-    expect(screen.getByText("Sonraki ödül: 10 skor = 1 puan (3 skor daha)")).toBeTruthy();
+    expect(screen.getByText("Bu turda puan yok.")).toBeTruthy();
+    expect(screen.getByText("Sonraki ödül: 10 skorda +1 puan")).toBeTruthy();
     expect(onRewardGranted).not.toHaveBeenCalled();
   });
 
@@ -205,6 +206,38 @@ describe("DumbbellDashPanel (iki giris noktasinin ortak paneli)", () => {
     expect(screen.getByText("seed:99")).toBeTruthy();
     expect(screen.queryByTestId("dumbbell-dash-summary")).toBeNull();
     expect(finishMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("gunluk puan hakki dolduysa bunu tek satirda soyler", async () => {
+    startMock.mockResolvedValue(session({ earnedToday: 15, remainingToday: 0 }));
+    render(<DumbbellDashPanel subtitle="test" onClose={jest.fn()} />);
+    await flush();
+    expect(screen.getByText("Bugünkü puan hakkını doldurdun. Oyun puansız devam eder.")).toBeTruthy();
+  });
+
+  it("yeni tur engelliyse oyun baslamaz ve 'Tekrar Oyna' yerine verilen eylem gosterilir", async () => {
+    startMock.mockResolvedValue(session());
+    finishMock.mockResolvedValue(rewarded());
+    const onAction = jest.fn();
+    const blocked = { message: "Dinlenme bitti, sete devam", actionLabel: "Sonraki Sete Geç", onAction };
+    const { rerender } = render(<DumbbellDashPanel subtitle="test" onClose={jest.fn()} />);
+    await flush();
+    // Tur oynanirken dinlenme biter: devam eden tur bitirilebilir.
+    rerender(<DumbbellDashPanel subtitle="test" onClose={jest.fn()} replayBlocked={blocked} />);
+    expect(screen.getByText("seed:pending")).toBeTruthy(); // canStart=false
+    fireEvent.press(screen.getByTestId("mock-game"));
+    await flush();
+    expect(finishMock).not.toHaveBeenCalled();
+
+    // Engel kalkmadan once biten bir tur (orn. engel geldiginde zaten oynaniyordu) icin eylem gosterilir.
+    rerender(<DumbbellDashPanel subtitle="test" onClose={jest.fn()} />);
+    fireEvent.press(screen.getByTestId("mock-game"));
+    await flush();
+    rerender(<DumbbellDashPanel subtitle="test" onClose={jest.fn()} replayBlocked={blocked} />);
+    expect(screen.queryByText("Tekrar Oyna")).toBeNull();
+    fireEvent.press(screen.getByText("Sonraki Sete Geç"));
+    expect(onAction).toHaveBeenCalledTimes(1);
+    expect(startMock).toHaveBeenCalledTimes(1);
   });
 
   it("kapat butonu onClose'u cagirir", async () => {

@@ -162,6 +162,21 @@ describe("ActiveWorkout - dinlenme sayaci ve mini oyun", () => {
     expect(screen.queryByTestId("dumbbell-dash-panel")).toBeNull();
   });
 
+  it("dinlenme bittiyse yeni oyun baslatilamaz; kullanici sete yonlendirilir", async () => {
+    await startAndCompleteFirstSet();
+    fireEvent.press(screen.getByText("Dinlenirken Oyna"));
+    await flush();
+    const board = screen.getByTestId("dumbbell-dash-board");
+    fireEvent(board, "layout", { nativeEvent: { layout: { x: 0, y: 0, width: 320, height: 229 } } });
+
+    advance(REST_SEC * 1000 + 1_000);
+    expect(screen.getByText("Dinlenme bitti, sete devam")).toBeTruthy();
+    fireEvent(board, "touchStart");
+    advance(1_000);
+    expect(screen.getByText("Dinlenme bitti, sete devam")).toBeTruthy();
+    expect(screen.queryByText("Başlamak için dokun")).toBeNull();
+  });
+
   it("sure dolduktan sonra oyun kapatilirsa mevcut otomatik gecis calisir", async () => {
     await startAndCompleteFirstSet();
     fireEvent.press(screen.getByText("Dinlenirken Oyna"));

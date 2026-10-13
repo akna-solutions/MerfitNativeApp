@@ -4,9 +4,9 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { useTheme } from "../../theme/ThemeContext";
 import type { MiniGameResult } from "../../../services/api/types";
+import { RewardInfo } from "./components/RewardInfo";
 import { RoundSummary } from "./components/RoundSummary";
 import { DumbbellDashGame, type GameOverResult } from "./DumbbellDashGame";
-import { describeTiers } from "./rewards";
 import { useMiniGameRewards } from "./useMiniGameRewards";
 
 type Props = {
@@ -24,6 +24,11 @@ type Props = {
   onRewardGranted?: (result: MiniGameResult) => void;
   /** Oyun aktif olarak oynanirken true (ust ekran kaydirmayi kapatabilir). */
   onRunningChange?: (running: boolean) => void;
+  /**
+   * Verilirse yeni tur baslatilamaz (orn. dinlenme bitti): devam eden tur bitirilebilir, ama "Tekrar Oyna"
+   * yerine bu eylem gosterilir ve henuz baslamamis oyun baslamaz.
+   */
+  replayBlocked?: { message: string; actionLabel: string; onAction: () => void } | null;
 };
 
 /**
@@ -39,6 +44,7 @@ export function DumbbellDashPanel({
   banner,
   onRewardGranted,
   onRunningChange,
+  replayBlocked = null,
 }: Props) {
   const { colors } = useTheme();
   const { session, finish, prepareRound, submit } = useMiniGameRewards(onRewardGranted);
@@ -87,7 +93,8 @@ export function DumbbellDashPanel({
         // Her tur (ve seed belli oldugunda) yeni ornek: skor/durum sifirlanir, eski dongu temizlenir.
         key={`${round}-${ready?.seed ?? "pending"}`}
         seed={ready?.seed ?? 0}
-        canStart={ready !== null}
+        canStart={ready !== null && replayBlocked === null}
+        readyHint={replayBlocked?.message}
         suspended={suspended}
         pauseSignal={pauseSignal}
         pausedHint={pausedHint}
@@ -96,14 +103,17 @@ export function DumbbellDashPanel({
       />
 
       {finish.kind === "idle" ? (
-        <Text style={[styles.info, { color: colors.textSecondary }]}>
-          {ready === null
-            ? "Oyun hazırlanıyor…"
-            : notice ??
-              (tiers
-                ? `Ödül: ${describeTiers(tiers)} MB FIT puanı · Bugün kalan: ${ready.session?.remainingToday ?? 0}/${ready.session?.rules.dailyPointLimit ?? 0}`
-                : "")}
-        </Text>
+        ready?.session && tiers ? (
+          <RewardInfo
+            tiers={tiers}
+            remainingToday={ready.session.remainingToday}
+            dailyPointLimit={ready.session.rules.dailyPointLimit}
+          />
+        ) : (
+          <Text style={[styles.info, { color: colors.textSecondary }]}>
+            {ready === null ? "Oyun hazırlanıyor…" : notice ?? ""}
+          </Text>
+        )
       ) : (
         <>
           <RoundSummary finish={finish} tiers={tiers} notice={notice} />
@@ -111,12 +121,16 @@ export function DumbbellDashPanel({
             {finish.kind === "failed" ? (
               <ActionButton label="Tekrar Gönder" onPress={handleRetrySubmit} kind="secondary" />
             ) : null}
-            <ActionButton
-              label="Tekrar Oyna"
-              onPress={handleReplay}
-              kind="primary"
-              disabled={finish.kind === "submitting"}
-            />
+            {replayBlocked ? (
+              <ActionButton label={replayBlocked.actionLabel} onPress={replayBlocked.onAction} kind="primary" />
+            ) : (
+              <ActionButton
+                label="Tekrar Oyna"
+                onPress={handleReplay}
+                kind="primary"
+                disabled={finish.kind === "submitting"}
+              />
+            )}
             <ActionButton label="Kapat" onPress={onClose} kind="secondary" />
           </View>
         </>
@@ -166,7 +180,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 16, fontWeight: "800" },
   subtitle: { fontSize: 12, marginTop: 2 },
   iconButton: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },
-  info: { fontSize: 12, lineHeight: 17 },
+  info: { fontSize: 12, lineHeight: 17, textAlign: "center" },
   actions: { flexDirection: "row", gap: 8 },
   action: {
     flex: 1,

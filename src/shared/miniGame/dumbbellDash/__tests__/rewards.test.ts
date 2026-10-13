@@ -1,4 +1,4 @@
-import { describeTiers, nextTierFor } from "../rewards";
+import { nextTierFor, sortTiers } from "../rewards";
 
 const tiers = [
   { minScore: 30, points: 3 },
@@ -15,7 +15,7 @@ describe("odul tablosu gosterimi", () => {
     expect(nextTierFor(tiers, 50)).toBeNull();
   });
 
-  it("tabloyu sirali ve kisa yazar", () => {
-    expect(describeTiers(tiers)).toBe("10 skor → 1 · 20 → 2 · 30 → 3 · 50 → 5");
+  it("esikleri kucukten buyuge siralar", () => {
+    expect(sortTiers(tiers).map((tier) => tier.minScore)).toEqual([10, 20, 30, 50]);
   });
 });

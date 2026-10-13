@@ -59,8 +59,8 @@ function Outcome({
 
   const next = reward.nextTier ?? (tiers ? nextTierFor(tiers, result.score) : null);
   const nextLine =
-    next && reward.status !== "Rejected" && reward.status !== "Expired"
-      ? `Sonraki ödül: ${next.minScore} skor = ${next.points} puan (${next.minScore - result.score} skor daha)`
+    next && (reward.status === "Rewarded" || reward.status === "NoReward")
+      ? `Sonraki ödül: ${next.minScore} skorda +${next.points} puan`
       : null;
 
   return (
@@ -71,30 +71,30 @@ function Outcome({
             +{reward.awardedPoints} MB FIT puanı
           </Text>
           <Text style={[styles.body, { color: colors.textSecondary }]}>
-            Toplam puanın: {reward.previousTotalPoints.toLocaleString()} → {reward.totalPoints.toLocaleString()}
+            Toplam: {reward.previousTotalPoints.toLocaleString()} → {reward.totalPoints.toLocaleString()} puan
           </Text>
           {reward.dailyLimitReached ? (
-            <Text style={[styles.body, { color: colors.textSecondary }]}>Bugünkü mini oyun puan sınırına ulaştın.</Text>
+            <Text style={[styles.body, { color: colors.textSecondary }]}>Bugünkü puan hakkını doldurdun.</Text>
           ) : null}
         </>
       ) : null}
 
       {reward.status === "NoReward" ? (
-        <Text style={[styles.body, { color: colors.textSecondary }]}>Bu skor puan kazandırmadı.</Text>
+        <Text style={[styles.body, { color: colors.textSecondary }]}>Bu turda puan yok.</Text>
       ) : null}
 
       {reward.status === "DailyLimitReached" ? (
         <Text style={[styles.body, { color: colors.textSecondary }]}>
-          Bugünkü mini oyun puan sınırına ulaştın; yarın yeniden puan kazanabilirsin.
+          Bugünkü puan hakkını doldurdun. Yarın yeniden kazanabilirsin.
         </Text>
       ) : null}
 
       {reward.status === "Rejected" ? (
-        <Text style={[styles.body, { color: colors.textSecondary }]}>Bu sonuç doğrulanamadığı için puan verilmedi.</Text>
+        <Text style={[styles.body, { color: colors.textSecondary }]}>Sonuç doğrulanamadı, puan verilmedi.</Text>
       ) : null}
 
       {reward.status === "Expired" || reward.status === "Abandoned" ? (
-        <Text style={[styles.body, { color: colors.textSecondary }]}>Oyun oturumunun süresi dolduğu için puan verilmedi.</Text>
+        <Text style={[styles.body, { color: colors.textSecondary }]}>Oturumun süresi doldu, puan verilmedi.</Text>
       ) : null}
 
       {nextLine && reward.remainingToday > 0 ? (
