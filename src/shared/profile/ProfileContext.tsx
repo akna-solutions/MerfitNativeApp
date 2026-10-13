@@ -37,6 +37,7 @@ function mapToProfileData(response: ProfileResponse): ProfileData {
     lastName: response.lastName,
     username: response.username,
     email: response.email,
+    emailConfirmed: response.emailConfirmed,
     dateOfBirth: response.dateOfBirth,
     gender: response.gender as ProfileData["gender"],
     age: response.age,

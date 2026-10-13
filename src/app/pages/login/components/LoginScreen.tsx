@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../../../../shared/auth/AuthContext";
-import { goToDashboardAfterAuth } from "../../../../shared/auth/navigation";
+import { goToDashboardAfterAuth, goToEmailVerificationAfterAuth } from "../../../../shared/auth/navigation";
 import { ApiError, isApiError, NetworkError } from "../../../../services/api/client";
 import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { OnboardingButton } from "../../onboarding/components/OnboardingButton";
@@ -41,8 +41,13 @@ export function LoginScreen() {
     setErrorMessage(null);
     setIsSubmitting(true);
     try {
-      await login({ emailOrUsername: emailOrUsername.trim(), password });
-      goToDashboardAfterAuth(router);
+      const result = await login({ emailOrUsername: emailOrUsername.trim(), password });
+      // Dogrulanmamis hesaplar da giris yapar; once dogrulama ekrani gosterilir ("Daha sonra" ile devam edilir).
+      if (result.emailConfirmed === false) {
+        goToEmailVerificationAfterAuth(router);
+      } else {
+        goToDashboardAfterAuth(router);
+      }
     } catch (error) {
       console.error("Login hatası:", error);
       if (isApiError(error)) {
@@ -59,6 +64,15 @@ export function LoginScreen() {
     }
   };
 
+  const handleForgotPassword = () => {
+    const identifier = emailOrUsername.trim();
+    router.push(
+      identifier.includes("@")
+        ? { pathname: "/pages/auth/forgot-password", params: { email: identifier } }
+        : "/pages/auth/forgot-password",
+    );
+  };
+
   const handleGoogleLogin = () => {
     // TODO: Google OAuth akışı mevcut authentication sistemine bağlandığında burada tetiklenecek.
   };
@@ -72,8 +86,10 @@ export function LoginScreen() {
 
         <View style={styles.header}>
           <Pressable
-            onPress={() => router.back()}
+            onPress={() => (router.canGoBack() ? router.back() : router.replace("/pages/welcome"))}
             hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel="Geri"
             style={[styles.backButton, { backgroundColor: colors.inputBackground }]}
           >
             <Text style={[styles.backLabel, { color: colors.text }]}>←</Text>
@@ -110,7 +126,12 @@ export function LoginScreen() {
               style={styles.fieldFont}
             />
 
-            <Pressable hitSlop={8} style={styles.forgotRow}>
+            <Pressable
+              onPress={handleForgotPassword}
+              hitSlop={8}
+              style={styles.forgotRow}
+              accessibilityRole="link"
+            >
               <Text style={[styles.forgotLabel, { color: colors.primary }]}>Şifreni mi unuttun?</Text>
             </Pressable>
 

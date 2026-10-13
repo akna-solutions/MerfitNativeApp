@@ -2,15 +2,21 @@ import { useEffect, useRef } from "react";
 import { Animated, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { EmailVerificationNotice } from "../../../../shared/auth/components/EmailVerificationNotice";
+import { DEFAULT_RESEND_COOLDOWN_SECONDS } from "../../../../shared/auth/useResendCooldown";
 import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { OnboardingButton } from "./OnboardingButton";
 
 type Props = {
   name: string;
+  /** Kayitta girilen e-posta; dogrulama kartinda gosterilir. */
+  email?: string;
+  /** Kayit yanitindaki VerificationEmailSent; null/undefined ise dogrulama karti gosterilmez. */
+  verificationEmailSent?: boolean | null;
   onStart: () => void;
 };
 
-export function SuccessScreen({ name, onStart }: Props) {
+export function SuccessScreen({ name, email, verificationEmailSent, onStart }: Props) {
   const { colors } = useTheme();
   const fade = useRef(new Animated.Value(0)).current;
 
@@ -54,6 +60,16 @@ export function SuccessScreen({ name, onStart }: Props) {
           Antrenman deneyimini kişiselleştirmek için profilini kullanacağız.
         </Text>
       </Animated.View>
+
+      {typeof verificationEmailSent === "boolean" ? (
+        <View style={styles.notice}>
+          <EmailVerificationNotice
+            email={email ?? null}
+            initialSendFailed={!verificationEmailSent}
+            initialCooldownSeconds={DEFAULT_RESEND_COOLDOWN_SECONDS}
+          />
+        </View>
+      ) : null}
 
       <View style={styles.spacer} />
 
@@ -99,5 +115,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingHorizontal: 16,
   },
+  notice: { marginTop: 28 },
   footer: { paddingBottom: 8 },
 });

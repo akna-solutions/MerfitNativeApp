@@ -17,13 +17,16 @@ export class ApiError extends Error {
   readonly status: number;
   readonly fieldErrors: string[];
   readonly traceId?: string;
+  /** 429/503 yanitlarindaki Retry-After basligi (saniye); yoksa undefined. */
+  readonly retryAfterSeconds?: number;
 
-  constructor(status: number, message: string, fieldErrors: string[] = [], traceId?: string) {
+  constructor(status: number, message: string, fieldErrors: string[] = [], traceId?: string, retryAfterSeconds?: number) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.fieldErrors = fieldErrors;
     this.traceId = traceId;
+    this.retryAfterSeconds = retryAfterSeconds;
     Object.setPrototypeOf(this, ApiError.prototype);
   }
 
@@ -155,11 +158,13 @@ export async function apiRequest<TResponse>(path: string, options: RequestOption
       errorBody.title ??
       defaultMessageForStatus(response.status);
 
+    const retryAfter = Number(response.headers?.get?.("Retry-After"));
     throw new ApiError(
       response.status,
       message,
       fieldErrors,
       errorBody.traceId,
+      Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : undefined,
     );
   }
 
@@ -182,6 +187,10 @@ function defaultMessageForStatus(status: number): string {
       return "Aranan kayit bulunamadi.";
     case 409:
       return "Islem mevcut bir kayitla cakisiyor.";
+    case 429:
+      return "Çok fazla deneme yaptın. Lütfen biraz bekleyip tekrar dene.";
+    case 503:
+      return "Servis şu anda kullanılamıyor. Lütfen biraz sonra tekrar dene.";
     default:
       return "Beklenmeyen bir hata olustu. Lutfen daha sonra tekrar deneyin.";
   }

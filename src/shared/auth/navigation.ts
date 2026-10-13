@@ -8,3 +8,12 @@ export function goToDashboardAfterAuth(router: Pick<ImperativeRouter, "canDismis
   if (router.canDismiss()) router.dismissAll();
   router.replace("/pages/dashboard");
 }
+
+/**
+ * Dogrulanmamis e-postayla girisin ardindan dogrulama ekranini acar (ayni stack temizligiyle).
+ * Ekrandaki "Daha sonra" kullaniciyi ana sayfaya goturur; dogrulama zorunlu degildir.
+ */
+export function goToEmailVerificationAfterAuth(router: Pick<ImperativeRouter, "canDismiss" | "dismissAll" | "replace">) {
+  if (router.canDismiss()) router.dismissAll();
+  router.replace("/pages/auth/verify-email");
+}
