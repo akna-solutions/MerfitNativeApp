@@ -16,6 +16,8 @@ export type ThemeTokens = {
   borderActive: string;
   primary: string;
   primaryPressed: string;
+  /** Ikincil dolu buton zemini (orn. antrenman sonu "Bitti"); primary ile ayni sekil, notr renk. */
+  secondary: string;
   accent: string;
   /**
    * Yikici (destructive) eylemler icin semantic renk seti (orn. "Çıkış Yap", hesap silme).
@@ -43,6 +45,7 @@ export const darkColors: ThemeTokens = {
   borderActive: "rgba(62,123,250,0.55)",
   primary: "#3E7BFA",
   primaryPressed: "#1d51c0",
+  secondary: "#2A2D34",
   accent: "#8B5CF6",
   danger: "#FF6B6B",
   dangerPressed: "#E14F4F",
@@ -65,6 +68,7 @@ export const lightColors: ThemeTokens = {
   borderActive: "rgba(62,123,250,0.55)",
   primary: "#1d51c0",
   primaryPressed: "#153e94",
+  secondary: "#1F2329",
   accent: "#8B5CF6",
   danger: "#DC2626",
   dangerPressed: "#B91C1C",

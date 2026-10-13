@@ -78,7 +78,7 @@ export function WorkoutComplete({
           <OnboardingButton
             label="Bitti"
             onPress={onDone}
-            variant="text"
+            variant="secondary"
             disabled={saveStatus === "saving"}
           />
         </View>
@@ -136,5 +136,5 @@ const styles = StyleSheet.create({
     height: 30,
   },
   footer: { paddingBottom: 8 },
-  doneGap: { marginTop: 2 },
+  doneGap: { marginTop: 12 },
 });

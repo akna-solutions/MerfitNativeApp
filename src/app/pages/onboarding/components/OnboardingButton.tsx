@@ -13,7 +13,7 @@ type Props = {
   label: string;
   onPress: () => void;
   disabled?: boolean;
-  variant?: "primary" | "text";
+  variant?: "primary" | "secondary" | "text";
   /** true iken buton devre disi kalir ve etiket yerine bir spinner gosterilir (orn. API istegi devam ediyorken). */
   isLoading?: boolean;
 };
@@ -57,7 +57,7 @@ export function OnboardingButton({
       <Animated.View
         style={[
           styles.primary,
-          { backgroundColor: colors.primaryPressed },
+          { backgroundColor: variant === "secondary" ? colors.secondary : colors.primaryPressed },
           isDisabled && styles.primaryDisabled,
           { transform: [{ scale }] },
         ]}
