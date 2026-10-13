@@ -1,9 +1,9 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react-native";
 import { useState } from "react";
-import { Keyboard } from "react-native";
+import { Alert, Keyboard } from "react-native";
 
 import { ApiError } from "../../../../services/api/client";
-import { getAssistantConversation, sendAssistantMessage } from "../../../../services/api/nutritionAssistant";
+import { deleteAssistantConversation, getAssistantConversation, sendAssistantMessage } from "../../../../services/api/nutritionAssistant";
 import { useNutritionAssistant } from "../../../../shared/nutritionAssistant/useNutritionAssistant";
 import { mockThemeValue } from "../../../../test/mockTheme";
 import { chatReply, conversation, deferred, msg } from "../../../../test/nutritionAssistantFixtures";
@@ -16,10 +16,12 @@ jest.mock("react-native-safe-area-context", () => require("react-native-safe-are
 jest.mock("../../../../services/api/nutritionAssistant", () => ({
   getAssistantConversation: jest.fn(),
   sendAssistantMessage: jest.fn(),
+  deleteAssistantConversation: jest.fn(),
 }));
 
 const getMock = getAssistantConversation as jest.MockedFunction<typeof getAssistantConversation>;
 const sendMock = sendAssistantMessage as jest.MockedFunction<typeof sendAssistantMessage>;
+const deleteMock = deleteAssistantConversation as jest.MockedFunction<typeof deleteAssistantConversation>;
 const flat = (style: unknown) => Object.assign({}, ...[style].flat(Infinity).filter(Boolean));
 
 /** Beslenme ekranindaki kullanimin aynisi: kart -> pencere, durum ekran seviyesinde tutulur. */
@@ -45,6 +47,7 @@ async function openSheet() {
 beforeEach(() => {
   getMock.mockReset();
   sendMock.mockReset();
+  deleteMock.mockReset();
 });
 
 describe("NutritionInsight", () => {
@@ -218,5 +221,25 @@ describe("NutritionAssistantSheet", () => {
     act(() => listeners[hideEvent]({}));
     expect(padding()).not.toBe(320);
     spy.mockRestore();
+  });
+
+  it("sohbet sil onaylaninca gecmis temizlenir, karsilama kalir", async () => {
+    getMock.mockResolvedValue(conversation({ conversationId: 7, messages: [msg(1, "user", "Tavuk istemiyorum"), msg(2, "assistant", "Tamam")] }));
+    deleteMock.mockResolvedValue(undefined);
+    const alertSpy = jest.spyOn(Alert, "alert").mockImplementation((_title, _message, buttons) => {
+      const destructive = buttons?.find((b) => b.style === "destructive");
+      void destructive?.onPress?.();
+    });
+    render(<Harness />);
+    await openSheet();
+    expect(screen.getByText("Tavuk istemiyorum")).toBeTruthy();
+
+    await act(async () => fireEvent.press(screen.getByTestId("assistant-clear")));
+
+    expect(deleteMock).toHaveBeenCalledWith("2026-10-13", expect.anything());
+    expect(screen.queryByText("Tavuk istemiyorum")).toBeNull();
+    expect(screen.getByText(/Merhaba Ayşe!/)).toBeTruthy();
+    expect(screen.queryByTestId("assistant-clear")).toBeNull();
+    alertSpy.mockRestore();
   });
 });

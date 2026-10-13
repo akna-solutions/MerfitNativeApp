@@ -1,21 +1,24 @@
 import { act, renderHook } from "@testing-library/react-native";
 
 import { ApiError, NetworkError } from "../../../services/api/client";
-import { getAssistantConversation, sendAssistantMessage } from "../../../services/api/nutritionAssistant";
+import { deleteAssistantConversation, getAssistantConversation, sendAssistantMessage } from "../../../services/api/nutritionAssistant";
 import { chatReply, conversation, deferred, msg } from "../../../test/nutritionAssistantFixtures";
 import { assistantErrorMessage, useNutritionAssistant } from "../useNutritionAssistant";
 
 jest.mock("../../../services/api/nutritionAssistant", () => ({
   getAssistantConversation: jest.fn(),
   sendAssistantMessage: jest.fn(),
+  deleteAssistantConversation: jest.fn(),
 }));
 
 const getMock = getAssistantConversation as jest.MockedFunction<typeof getAssistantConversation>;
 const sendMock = sendAssistantMessage as jest.MockedFunction<typeof sendAssistantMessage>;
+const deleteMock = deleteAssistantConversation as jest.MockedFunction<typeof deleteAssistantConversation>;
 
 beforeEach(() => {
   getMock.mockReset();
   sendMock.mockReset();
+  deleteMock.mockReset();
 });
 
 describe("useNutritionAssistant", () => {
@@ -183,9 +186,45 @@ describe("useNutritionAssistant", () => {
   });
 });
 
+describe("useNutritionAssistant clear", () => {
+  it("sohbeti siler, mesajlari temizler ve sonraki mesaj yeni sohbet baslatir", async () => {
+    getMock.mockResolvedValue(conversation({ conversationId: 7, messages: [msg(1, "user", "Tavuk istemiyorum")] }));
+    deleteMock.mockResolvedValue(undefined);
+    sendMock.mockResolvedValue(chatReply(20, "Merhaba", "Selam"));
+    const { result } = renderHook(() => useNutritionAssistant("2026-10-13"));
+    await act(() => result.current.load());
+
+    await act(async () => {
+      expect(await result.current.clear()).toBeNull();
+    });
+    expect(deleteMock).toHaveBeenCalledWith("2026-10-13", expect.anything());
+    expect(result.current.state.items).toHaveLength(0);
+    expect(result.current.state.conversationId).toBeNull();
+    expect(result.current.state.greeting).toContain("Merhaba Ayşe");
+
+    await act(() => result.current.send("Merhaba"));
+    expect(sendMock.mock.calls[0][0].conversationId).toBeNull();
+  });
+
+  it("silme hatasinda sohbet korunur ve hata mesaji doner", async () => {
+    getMock.mockResolvedValue(conversation({ conversationId: 7, messages: [msg(1, "user", "Soru")] }));
+    deleteMock.mockRejectedValue(new NetworkError());
+    const { result } = renderHook(() => useNutritionAssistant("2026-10-13"));
+    await act(() => result.current.load());
+
+    let error: string | null = null;
+    await act(async () => {
+      error = await result.current.clear();
+    });
+    expect(error).toContain("Bağlantı kurulamadı");
+    expect(result.current.state.items).toHaveLength(1);
+  });
+});
+
 describe("assistantErrorMessage", () => {
   it("hatalari anlasilir Turkce mesajlara cevirir", () => {
     expect(assistantErrorMessage(new ApiError(429, "Bugünkü mesaj limitine ulaştın."))).toBe("Bugünkü mesaj limitine ulaştın.");
+    expect(assistantErrorMessage(new ApiError(503, "Beslenme asistanı şu an çok yoğun. Lütfen biraz sonra tekrar dene."))).toContain("çok yoğun");
     expect(assistantErrorMessage(new ApiError(401, "Unauthorized"))).toContain("Oturumunun süresi doldu");
     expect(assistantErrorMessage(new ApiError(500, "Internal"))).toContain("yanıt veremiyor");
     expect(assistantErrorMessage(new NetworkError("İstek zaman aşımına uğradı."))).toContain("uzun sürdü");

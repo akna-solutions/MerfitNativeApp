@@ -26,3 +26,8 @@ export async function sendAssistantMessage(request: AssistantChatRequest, signal
     timeoutMs: ASSISTANT_TIMEOUT_MS,
   });
 }
+
+/** DELETE /api/nutrition-assistant/conversation - kullanicinin o gunku sohbetini ve mesajlarini siler. */
+export async function deleteAssistantConversation(date: string, signal?: AbortSignal): Promise<void> {
+  await apiRequest<void>(`${BASE_PATH}/conversation`, { method: "DELETE", query: { date }, signal });
+}
