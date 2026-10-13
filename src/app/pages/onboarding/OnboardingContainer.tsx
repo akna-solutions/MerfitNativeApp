@@ -35,7 +35,7 @@ const TOTAL_STEPS = 12;
  * OnboardingData (RN state) -> RegisterRequest (backend DTO). Sayisal alanlar backend'de
  * decimal/int oldugundan bos string'ler yerine null gonderiyoruz.
  */
-function toRegisterRequest(data: OnboardingData): RegisterRequest {
+function toRegisterRequest(data: OnboardingData, allEquipmentIds: number[]): RegisterRequest {
   const age = parseInt(data.age, 10);
   const heightCm = data.height ? parseFloat(data.height) : null;
   const heightFeet = data.heightFeet ? parseInt(data.heightFeet, 10) : null;
@@ -64,8 +64,12 @@ function toRegisterRequest(data: OnboardingData): RegisterRequest {
     trainingExperience: data.trainingExperience,
     trainingDays: data.trainingDays,
     trainingLocation: data.trainingLocation,
+    // Spor salonunda tum ekipmanlar var sayilir (ekipman secimi sorulmaz).
     // "none" yalnizca istemci secenegidir; backend'e yalnizca gercek Equipment.Id'leri gider.
-    equipmentIds: data.equipment.filter((item): item is number => item !== "none"),
+    equipmentIds:
+      data.trainingLocation === "gym"
+        ? allEquipmentIds
+        : data.equipment.filter((item): item is number => item !== "none"),
   };
 }
 
@@ -131,7 +135,7 @@ export function OnboardingContainer() {
     setSubmitError(null);
     setIsSubmitting(true);
     try {
-      const result = await register(toRegisterRequest(data));
+      const result = await register(toRegisterRequest(data, equipmentList.map((item) => item.id)));
       setVerificationEmailSent(result.verificationEmailSent ?? null);
       setShowSuccess(true);
     } catch (error) {
@@ -383,6 +387,8 @@ export function OnboardingContainer() {
           continueDisabled={
             !data.trainingLocation ||
             equipmentStatus === "loading" ||
+            // Spor salonunda tum ekipman ID'leri gonderilir; liste gelmeden devam edilemez.
+            (data.trainingLocation === "gym" && equipmentStatus !== "ready") ||
             // Liste alinamadiysa gercek secim yapilamaz; yalnizca "Ekipman yok" ile devam edilebilir.
             (equipmentStatus === "error" && !data.equipment.includes("none"))
           }
