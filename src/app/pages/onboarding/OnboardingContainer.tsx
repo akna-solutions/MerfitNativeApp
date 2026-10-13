@@ -74,6 +74,8 @@ export function OnboardingContainer() {
   const { register } = useAuth();
   const [step, setStep] = useState(1);
   const [showSuccess, setShowSuccess] = useState(false);
+  // Kayit yanitindaki VerificationEmailSent (false: dogrulama e-postasi gonderilemedi).
+  const [verificationEmailSent, setVerificationEmailSent] = useState<boolean | null>(null);
   const [data, setData] = useState<OnboardingData>(initialOnboardingData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -129,7 +131,8 @@ export function OnboardingContainer() {
     setSubmitError(null);
     setIsSubmitting(true);
     try {
-      await register(toRegisterRequest(data));
+      const result = await register(toRegisterRequest(data));
+      setVerificationEmailSent(result.verificationEmailSent ?? null);
       setShowSuccess(true);
     } catch (error) {
       console.error("Kayıt hatası:", error);
@@ -162,6 +165,8 @@ export function OnboardingContainer() {
     return (
       <SuccessScreen
         name={`${data.name} ${data.lastName}`.trim()}
+        email={data.email.trim()}
+        verificationEmailSent={verificationEmailSent}
         onStart={handleStartTraining}
       />
     );

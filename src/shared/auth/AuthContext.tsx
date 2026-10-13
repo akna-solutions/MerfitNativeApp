@@ -10,7 +10,7 @@ import {
 
 import * as authApi from "../../services/api/auth";
 import { getStoredTokens } from "../../services/api/tokenStorage";
-import { LoginRequest, RegisterRequest } from "../../services/api/types";
+import { AuthResponse, LoginRequest, RegisterRequest } from "../../services/api/types";
 import { deactivateStoredPushToken } from "../notifications/pushRegistration";
 
 type AuthStatus = "loading" | "signedIn" | "signedOut";
@@ -20,8 +20,17 @@ type AuthContextValue = {
   userName: string | null;
   /** Backend AuthResponse.Username - "@" ONEKI ICERMEZ (bkz. services/api/types.ts). */
   username: string | null;
-  login: (request: LoginRequest) => Promise<void>;
-  register: (request: RegisterRequest) => Promise<void>;
+  /** Giris/kayit yanitindaki e-posta; uygulama soguk acildiysa null (bkz. ProfileContext). */
+  email: string | null;
+  /**
+   * Giris/kayit yanitindaki e-posta dogrulama durumu. Uygulama kayitli token ile soguk acildiysa
+   * null'dur; o durumda profil (GET /api/profile emailConfirmed) esas alinir.
+   */
+  emailConfirmed: boolean | null;
+  /** Dogrulama basarili oldugunda (deep link / e-posta ekrani) cagrilir. */
+  markEmailConfirmed: () => void;
+  login: (request: LoginRequest) => Promise<AuthResponse>;
+  register: (request: RegisterRequest) => Promise<AuthResponse>;
   logout: () => Promise<void>;
   /** 401 gibi durumlarda (bkz. services/api/client.ts) token'lar client tarafinda temizlendiginde cagirilir. */
   forceSignOut: () => void;
@@ -44,6 +53,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>("loading");
   const [userName, setUserName] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
+  const [emailConfirmed, setEmailConfirmed] = useState<boolean | null>(null);
   const [sessionVersion, setSessionVersion] = useState(0);
   const bumpSession = useCallback(() => setSessionVersion((v) => v + 1), []);
 
@@ -58,21 +69,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const login = useCallback(async (request: LoginRequest) => {
-    const result = await authApi.login(request);
+  const applySession = useCallback((result: AuthResponse) => {
     setUserName(result.name || result.email);
     setUsername(result.username || null);
+    setEmail(result.email || null);
+    setEmailConfirmed(typeof result.emailConfirmed === "boolean" ? result.emailConfirmed : null);
     setStatus("signedIn");
     bumpSession();
   }, [bumpSession]);
 
+  const login = useCallback(async (request: LoginRequest) => {
+    const result = await authApi.login(request);
+    applySession(result);
+    return result;
+  }, [applySession]);
+
   const register = useCallback(async (request: RegisterRequest) => {
     const result = await authApi.register(request);
-    setUserName(result.name || result.email);
-    setUsername(result.username || null);
-    setStatus("signedIn");
-    bumpSession();
-  }, [bumpSession]);
+    applySession(result);
+    return result;
+  }, [applySession]);
+
+  const markEmailConfirmed = useCallback(() => setEmailConfirmed(true), []);
 
   const logout = useCallback(async () => {
     // Token'lar silinmeden once bu cihazin push kaydi pasiflestirilir (kimlik dogrulamali istek);
@@ -81,6 +99,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await authApi.logout();
     setUserName(null);
     setUsername(null);
+    setEmail(null);
+    setEmailConfirmed(null);
     setStatus("signedOut");
     bumpSession();
   }, [bumpSession]);
@@ -88,13 +108,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const forceSignOut = useCallback(() => {
     setUserName(null);
     setUsername(null);
+    setEmail(null);
+    setEmailConfirmed(null);
     setStatus("signedOut");
     bumpSession();
   }, [bumpSession]);
 
   const value = useMemo(
-    () => ({ status, userName, username, login, register, logout, forceSignOut, sessionVersion }),
-    [status, userName, username, login, register, logout, forceSignOut, sessionVersion],
+    () => ({
+      status, userName, username, email, emailConfirmed, markEmailConfirmed,
+      login, register, logout, forceSignOut, sessionVersion,
+    }),
+    [status, userName, username, email, emailConfirmed, markEmailConfirmed, login, register, logout, forceSignOut, sessionVersion],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

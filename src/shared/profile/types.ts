@@ -48,6 +48,8 @@ export type ProfileData = {
   lastName: string;
   username: string;
   email: string;
+  /** Sunucudan gelir; profil henuz yuklenmediyse undefined (dogrulama uyarisi gosterilmez). */
+  emailConfirmed?: boolean;
   dateOfBirth: string; // "YYYY-MM-DD"
   gender: Gender;
 

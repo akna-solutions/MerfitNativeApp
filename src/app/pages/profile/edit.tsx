@@ -98,6 +98,25 @@ export default function EditProfileRoute() {
           autoCapitalize="none"
           style={styles.input}
         />
+        {profile.emailConfirmed === false && email.trim().toLowerCase() === profile.email.trim().toLowerCase() ? (
+          <Pressable
+            onPress={() => router.push("/pages/auth/verify-email")}
+            accessibilityRole="link"
+            accessibilityLabel="E-posta adresin doğrulanmadı. Doğrula"
+            hitSlop={8}
+            style={styles.verifyRow}
+          >
+            <Text style={[styles.verifyText, { color: colors.textSecondary }]}>
+              E-posta adresin doğrulanmadı.{" "}
+              <Text style={[styles.verifyLink, { color: colors.primary }]}>Doğrula</Text>
+            </Text>
+          </Pressable>
+        ) : null}
+        {email.trim().toLowerCase() !== profile.email.trim().toLowerCase() && profile.email ? (
+          <Text style={[styles.verifyText, styles.verifyRow, { color: colors.textSecondary }]}>
+            E-posta adresini değiştirirsen yeni adresi doğrulaman gerekir.
+          </Text>
+        ) : null}
       </Field>
       <Field label="Yaş">
         <OnboardingInput
@@ -140,6 +159,9 @@ function Field({
 }
 
 const styles = StyleSheet.create({
+  verifyRow: { marginTop: 8 },
+  verifyText: { fontSize: 12, lineHeight: 17 },
+  verifyLink: { fontWeight: "700" },
   avatarWrapper: { alignItems: "center", marginBottom: 28 },
   avatar: {
     width: 84,

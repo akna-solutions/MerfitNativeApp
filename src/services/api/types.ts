@@ -54,6 +54,39 @@ export type AuthResponse = {
    * bos durumunu gosterip gostermeyecegine karar vermek icin kullanilir.
    */
   personalizationStatus?: string | null;
+  /**
+   * E-posta dogrulandi mi. Dogrulanmamis hesaplar da giris yapabilir; uygulama dogrulama
+   * hatirlatmasi gosterir (bkz. pages/auth/verify-email).
+   */
+  emailConfirmed?: boolean;
+  /** Yalnizca register yanitinda: dogrulama e-postasi gonderildiyse true, gonderilemediyse false. */
+  verificationEmailSent?: boolean | null;
+};
+
+// ---- E-posta dogrulama / sifre sifirlama (MerfitCustomerApi AccountEmailDtos) ----
+/** POST /api/auth/email-verification/resend */
+export type ResendVerificationEmailResponse = {
+  alreadyVerified: boolean;
+  sent: boolean;
+  /** Bir sonraki tekrar gonderimin yapilabilecegi sure (saniye). */
+  resendAvailableInSeconds: number;
+};
+
+/** POST /api/auth/email-verification/confirm */
+export type ConfirmEmailResponse = {
+  email: string;
+  emailConfirmed: boolean;
+};
+
+/** POST /api/auth/password/forgot | /password/reset/validate | /password/reset */
+export type AccountActionResponse = {
+  message: string;
+};
+
+export type ResetPasswordRequest = {
+  token: string;
+  newPassword: string;
+  confirmPassword: string;
 };
 
 export type LoginRequest = {
@@ -716,6 +749,8 @@ export type ProfileResponse = {
   lastName: string;
   username: string;
   email: string;
+  /** E-posta dogrulandi mi; e-posta degistirilince false olur. */
+  emailConfirmed?: boolean;
   dateOfBirth: string;
   gender: string;
   age: number;
