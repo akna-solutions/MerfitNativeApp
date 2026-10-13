@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { useTheme } from "../../theme/ThemeContext";
 import type { MiniGameResult } from "../../../services/api/types";
 import { Mascot } from "./components/Mascot";
-import { DumbbellDashPanel } from "./DumbbellDashPanel";
+import { MiniGameModal } from "./MiniGameModal";
 
 type Props = {
   /** Puan verildiginde cagrilir (orn. MB FIT Puanim ekrani puani yeniler). */
@@ -16,7 +15,7 @@ type Props = {
 
 /**
  * MB FIT Puanim ekranindaki mini oyun karti. Aktif antrenman gerektirmez; oyun, dinlenme ekranindakiyle ayni
- * DumbbellDashPanel'i tam ekran bir pencerede acar.
+ * DumbbellDashPanel'i MiniGameModal ile tam ekran acar.
  */
 export function MiniGameCard({ onRewardGranted, onClosed }: Props) {
   const { colors } = useTheme();
@@ -50,19 +49,7 @@ export function MiniGameCard({ onRewardGranted, onClosed }: Props) {
         </Pressable>
       </View>
 
-      <Modal visible={open} animationType="slide" presentationStyle="fullScreen" onRequestClose={close}>
-        <View style={[styles.modalRoot, { backgroundColor: colors.background }]}>
-          <SafeAreaView style={styles.modalSafe} edges={["top", "bottom"]}>
-            {open ? (
-              <DumbbellDashPanel
-                subtitle="Skoruna göre MB FIT puanı kazan"
-                onClose={close}
-                onRewardGranted={onRewardGranted}
-              />
-            ) : null}
-          </SafeAreaView>
-        </View>
-      </Modal>
+      <MiniGameModal visible={open} onClose={close} onRewardGranted={onRewardGranted} />
     </>
   );
 }
@@ -83,6 +70,4 @@ const styles = StyleSheet.create({
   body: { fontSize: 12, lineHeight: 17, marginTop: 4 },
   cta: { minHeight: 46, borderRadius: 14, alignItems: "center", justifyContent: "center" },
   ctaLabel: { fontSize: 14, fontWeight: "800" },
-  modalRoot: { flex: 1 },
-  modalSafe: { flex: 1, justifyContent: "center", paddingHorizontal: 16 },
 });
