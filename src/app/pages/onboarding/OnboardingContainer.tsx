@@ -12,6 +12,7 @@ import {
   RegisterRequest,
 } from "../../../services/api/types";
 import { useAuth } from "../../../shared/auth/AuthContext";
+import { goToDashboardAfterAuth } from "../../../shared/auth/navigation";
 import { OnboardingScreen } from "./components/OnboardingScreen";
 import { SuccessScreen } from "./components/SuccessScreen";
 import { AccountStep } from "./steps/AccountStep";
@@ -154,7 +155,7 @@ export function OnboardingContainer() {
   };
 
   const handleStartTraining = () => {
-    router.replace("/pages/dashboard");
+    goToDashboardAfterAuth(router);
   };
 
   if (showSuccess) {
