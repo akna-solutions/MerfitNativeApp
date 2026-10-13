@@ -17,28 +17,27 @@ import { LeaderboardHeader } from "./components/LeaderboardHeader";
 import { LeaderboardList } from "./components/LeaderboardList";
 import { LeaderboardSkeleton } from "./components/LeaderboardSkeleton";
 import { MotivationCard } from "./components/MotivationCard";
-import { NearbyUsers } from "./components/NearbyUsers";
-import { PeriodFilter } from "./components/PeriodFilter";
 import { RewardsSection } from "./components/RewardsSection";
 import { ScoreBreakdown } from "./components/ScoreBreakdown";
 import { ScoreChart } from "./components/ScoreChart";
 import { useTheme } from "../../../shared/theme/ThemeContext";
-import { PeriodFilter as PeriodFilterType } from "./types";
+
+// Siralama yalnizca aylik puanla gosterilir; donem secimi kaldirildi.
+const PERIOD = "month" as const;
 
 export function LeaderboardScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { profile } = useProfile();
-  const [period, setPeriod] = useState<PeriodFilterType>("month");
   const [data, setData] = useState<LeaderboardResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const anonymized = !profile.privacy.profileVisibleOnLeaderboard;
 
-  const loadLeaderboard = useCallback(async (p: PeriodFilterType, signal?: AbortSignal) => {
+  const loadLeaderboard = useCallback(async (signal?: AbortSignal) => {
     setErrorMessage(null);
     try {
-      const response = await getLeaderboard(p, signal);
+      const response = await getLeaderboard(PERIOD, signal);
       setData(response);
     } catch (error) {
       if (error instanceof ApiError && error.isUnauthorized) {
@@ -59,18 +58,18 @@ export function LeaderboardScreen() {
   // veri korunur, bir sonraki acilista yeniden denenir.
   const refreshAfterReward = useCallback(async () => {
     try {
-      setData(await getLeaderboard(period));
+      setData(await getLeaderboard(PERIOD));
     } catch {
       // Sessiz yenileme: ekrandaki veriyi bozma.
     }
-  }, [period]);
+  }, []);
 
   useEffect(() => {
     setIsLoading(true);
     const controller = new AbortController();
-    loadLeaderboard(period, controller.signal);
+    loadLeaderboard(controller.signal);
     return () => controller.abort();
-  }, [period, loadLeaderboard]);
+  }, [loadLeaderboard]);
 
   if (errorMessage) {
     return (
@@ -80,7 +79,7 @@ export function LeaderboardScreen() {
           style={[styles.retryButton, { backgroundColor: colors.primary }]}
           onPress={() => {
             setIsLoading(true);
-            loadLeaderboard(period);
+            loadLeaderboard();
           }}
         >
           <Text style={styles.retryLabel}>Tekrar dene</Text>
@@ -98,9 +97,12 @@ export function LeaderboardScreen() {
   const pointsToRewardZone = data
     ? Math.max(1, lastRewardRankPoints - data.currentUser.points + 1)
     : 0;
-  const rewardsPeriodLabel = period === "week" ? "Bu Haftanın" : period === "month" ? "Bu Ayın" : "Dönemin";
 
   const currentIndex = data?.nearbyEntries.findIndex((entry) => entry.isCurrentUser) ?? -1;
+  // Ilk 10'da degilse kullanicinin kendi satiri listenin altinda gosterilir.
+  const currentUserEntry = data && !data.topEntries.some((entry) => entry.isCurrentUser)
+    ? data.nearbyEntries.find((entry) => entry.isCurrentUser) ?? null
+    : null;
   const nextUser = data && currentIndex > 0 ? data.nearbyEntries[currentIndex - 1] : null;
   const pointsToNextRank = nextUser ? nextUser.points - data!.currentUser.points : 0;
 
@@ -147,17 +149,13 @@ export function LeaderboardScreen() {
                   <RewardsSection
                     rewards={data.rewards}
                     resetAt={new Date(data.rewardsResetAt)}
-                    periodLabel={rewardsPeriodLabel}
+                    periodLabel="Bu Ayın"
                     currentRank={currentRank}
                     lastRewardRank={lastRewardRank}
                     pointsToRewardZone={pointsToRewardZone}
                   />
                 </View>
               ) : null}
-
-              <View style={[styles.padded, styles.sectionGap]}>
-                <PeriodFilter value={period} onChange={setPeriod} />
-              </View>
 
               {data.topEntries.length === 0 ? (
                 <View style={styles.padded}>
@@ -170,15 +168,10 @@ export function LeaderboardScreen() {
                   <View style={[styles.padded, styles.sectionGap]}>
                     <LeaderboardList
                       entries={data.topEntries}
+                      currentUserEntry={currentUserEntry}
                       anonymized={anonymized}
                     />
                   </View>
-
-                  {data.nearbyEntries.length > 0 ? (
-                    <View style={[styles.padded, styles.sectionGap]}>
-                      <NearbyUsers entries={data.nearbyEntries} anonymized={anonymized} />
-                    </View>
-                  ) : null}
 
                   <View style={[styles.padded, styles.sectionGap]}>
                     <PremiumFeature feature="ADVANCED_LEADERBOARD">
