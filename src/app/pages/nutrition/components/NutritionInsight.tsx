@@ -1,14 +1,29 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import type { NutritionInsight as NutritionInsightData } from "../../../../services/api/types";
 import { useTheme } from "../../../../shared/theme/ThemeContext";
 
-type Props = { onViewSuggestions: () => void };
+/** Sunucu degerlendirmesi gelmezse (eski API surumu) gosterilen notr metin; varsayim icermez. */
+export const INSIGHT_FALLBACK_MESSAGE =
+  "Bugünkü hedeflerine göre öğünlerini planlamak için beslenme asistanına danışabilirsin.";
 
-export function NutritionInsight({ onViewSuggestions }: Props) {
+type Props = {
+  insight?: NutritionInsightData | null;
+  onViewSuggestions: () => void;
+};
+
+/** Gunluk hedef ve tuketime gore sunucunun urettigi kisa degerlendirme; dokununca asistan acilir. */
+export function NutritionInsight({ insight, onViewSuggestions }: Props) {
   const { colors } = useTheme();
   return (
-    <Pressable onPress={onViewSuggestions} style={[styles.card, { backgroundColor: colors.card }]}>
+    <Pressable
+      testID="nutrition-insight"
+      accessibilityRole="button"
+      accessibilityHint="Beslenme asistanını açar"
+      onPress={onViewSuggestions}
+      style={[styles.card, { backgroundColor: colors.card }]}
+    >
       <View style={styles.header}>
         <Ionicons
           name="sparkles-outline"
@@ -19,8 +34,7 @@ export function NutritionInsight({ onViewSuggestions }: Props) {
       </View>
 
       <Text style={[styles.message, { color: colors.text }]}>
-        Bugün protein alımın düşük. Bir sonraki öğününe Yunan yoğurdu, yumurta
-        veya tavuk eklemeyi dene.
+        {insight?.message || INSIGHT_FALLBACK_MESSAGE}
       </Text>
 
       <View style={styles.footer}>

@@ -57,6 +57,8 @@ type RequestOptions = {
   /** Bu istek icin Authorization header'i EKLENMEZ (orn. login/register). Varsayilan: false. */
   skipAuth?: boolean;
   signal?: AbortSignal;
+  /** Bu istek icin zaman asimi (ms). Varsayilan: API_TIMEOUT_MS. Yapay zeka yanitlari gibi yavas uclar icin. */
+  timeoutMs?: number;
 };
 
 function buildUrl(path: string, query?: RequestOptions["query"]): string {
@@ -84,7 +86,7 @@ async function parseErrorBody(response: Response): Promise<ApiErrorBody> {
  * hata govdesini ApiError'a cevirir ve 401 durumunda saklanan token'lari temizler.
  */
 export async function apiRequest<TResponse>(path: string, options: RequestOptions = {}): Promise<TResponse> {
-  const { method = "GET", body, query, skipAuth = false, signal } = options;
+  const { method = "GET", body, query, skipAuth = false, signal, timeoutMs = API_TIMEOUT_MS } = options;
 
   const headers: Record<string, string> = {
     Accept: "application/json",
@@ -101,7 +103,7 @@ export async function apiRequest<TResponse>(path: string, options: RequestOption
   }
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   if (signal) {
     signal.addEventListener("abort", () => controller.abort(), { once: true });
   }

@@ -19,6 +19,8 @@ import { NutritionHeader } from "./components/NutritionHeader";
 import { NutritionInsight } from "./components/NutritionInsight";
 import { TodayNutritionPlanCard } from "./components/TodayNutritionPlanCard";
 import { WaterTracker } from "./components/WaterTracker";
+import { NutritionAssistantSheet } from "./components/assistant/NutritionAssistantSheet";
+import { useNutritionAssistant } from "../../../shared/nutritionAssistant/useNutritionAssistant";
 import { useTheme } from "../../../shared/theme/ThemeContext";
 import { MealEntry, MealType, NutritionData } from "./types";
 
@@ -42,6 +44,7 @@ function mapToNutritionData(response: NutritionResponse): NutritionData {
       name: meal.name,
       calories: meal.calories,
     })),
+    insight: response.insight,
   };
 }
 
@@ -54,6 +57,8 @@ export function NutritionScreen() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [addMealType, setAddMealType] = useState<MealType | null>(null);
   const [isAddingWater, setIsAddingWater] = useState(false);
+  const [assistantOpen, setAssistantOpen] = useState(false);
+  const assistant = useNutritionAssistant(toDateParam(selectedDate));
 
   const loadNutrition = useCallback(async (date: Date, signal?: AbortSignal) => {
     setErrorMessage(null);
@@ -71,6 +76,15 @@ export function NutritionScreen() {
       );
     } finally {
       if (!signal?.aborted) setIsLoading(false);
+    }
+  }, []);
+
+  const refreshNutritionSilently = useCallback(async (date: Date) => {
+    try {
+      const response = await getDailyNutrition(toDateParam(date));
+      setData((prev) => (prev ? mapToNutritionData(response) : prev));
+    } catch {
+      // Ekrandaki veri korunur; bir sonraki acilista yeniden yuklenir.
     }
   }, []);
 
@@ -154,6 +168,8 @@ export function NutritionScreen() {
   const handleMealLogged = (entry: MealEntry) => {
     setData((prev) => (prev ? { ...prev, meals: [...prev.meals, entry] } : prev));
     setAddMealType(null);
+    // Makrolar ve degerlendirme kartinin guncel kalmasi icin gunun verisi arka planda yenilenir.
+    void refreshNutritionSilently(selectedDate);
   };
 
   const hasLoggedFirstMeal = (data?.meals.length ?? 0) > 0;
@@ -251,11 +267,7 @@ export function NutritionScreen() {
               </View>
 
               <View style={[styles.padded, styles.sectionGap]}>
-                <NutritionInsight
-                  onViewSuggestions={() => {
-                    // TODO: Nutrition Suggestions ekranı eklendiğinde yönlendir.
-                  }}
-                />
+                <NutritionInsight insight={data.insight} onViewSuggestions={() => setAssistantOpen(true)} />
               </View>
             </>
           ) : (
@@ -269,6 +281,9 @@ export function NutritionScreen() {
               <NutritionEmptyState
                 onAddFirstMeal={() => setAddMealType("Kahvaltı")}
               />
+              <View style={styles.sectionGap}>
+                <NutritionInsight insight={data.insight} onViewSuggestions={() => setAssistantOpen(true)} />
+              </View>
             </Animated.View>
           )}
         </ScrollView>
@@ -280,6 +295,12 @@ export function NutritionScreen() {
         selectedDate={selectedDate}
         onLogged={handleMealLogged}
         onClose={() => setAddMealType(null)}
+      />
+
+      <NutritionAssistantSheet
+        visible={assistantOpen}
+        onClose={() => setAssistantOpen(false)}
+        controller={assistant}
       />
     </View>
   );
