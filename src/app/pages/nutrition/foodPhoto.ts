@@ -112,10 +112,8 @@ export function isRetryableAnalysisError(error: unknown): boolean {
   return error instanceof NetworkError;
 }
 
-/** Sunucuya ulasilamazsa gosterilen bilgilendirme (sunucudaki FoodAnalysis:DataNotice ile ayni anlam). */
-export const FALLBACK_DATA_NOTICE =
-  "Fotoğrafın analiz için Google Gemini'ye gönderilir ve sunucularımızda saklanmaz. Google, gönderilen içeriği " +
-  "hizmetlerini geliştirmek için kullanabilir; fotoğrafta yüzün ya da kişisel bilgin görünmesin. Değerler tahminidir.";
+/** Fotograf ekraninda gosterilen bilgilendirme. Sunucunun dataNotice metni (saglayici adi iceriyor) gosterilmez. */
+export const FOOD_PHOTO_NOTICE = "Değerler tahminidir, tıbbi beslenme tavsiyesi yerine geçmez.";
 
 export function formatGrams(value: number): string {
   return value.toLocaleString("tr-TR", { maximumFractionDigits: 0 });

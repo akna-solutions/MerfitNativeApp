@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Animated,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -17,6 +18,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ApiError } from "../../../../services/api/client";
 import { deleteMealItem, getMealItem, updateMealItem } from "../../../../services/api/nutrition";
 import { MealItemDetail } from "../../../../services/api/types";
+import { useDragToClose } from "../../../../shared/sheet/useDragToClose";
 import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { MealEntry } from "../types";
 import { FoodPortionPicker, PortionSelection } from "./FoodPortionPicker";
@@ -42,6 +44,7 @@ export function EditMealItemModal({ mealId, onUpdated, onDeleted, onClose }: Pro
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const { translateY: dragY, panHandlers } = useDragToClose(mealId !== null, onClose);
 
   useEffect(() => {
     if (!mealId) return;
@@ -102,70 +105,74 @@ export function EditMealItemModal({ mealId, onUpdated, onDeleted, onClose }: Pro
       <KeyboardAvoidingView style={styles.backdrop} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
 
-        <SafeAreaView
-          style={[styles.sheet, { backgroundColor: colors.background, borderColor: colors.border }]}
-          edges={["bottom"]}
-        >
-          <View style={styles.header}>
-            <View>
-              <Text style={[styles.headerTitle, { color: colors.text }]}>Öğünü Düzenle</Text>
-              {detail ? (
-                <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>{detail.type}</Text>
-              ) : null}
+        <Animated.View style={[styles.sheetWrapper, { transform: [{ translateY: dragY }] }]}>
+          <SafeAreaView
+            style={[styles.sheet, { backgroundColor: colors.background, borderColor: colors.border }]}
+            edges={["bottom"]}
+          >
+            <View testID="edit-meal-drag-area" {...panHandlers}>
+              <View style={[styles.handle, { backgroundColor: colors.border }]} />
+              <View style={styles.header}>
+                <View>
+                  <Text style={[styles.headerTitle, { color: colors.text }]}>Öğünü Düzenle</Text>
+                  {detail ? (
+                    <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>{detail.type}</Text>
+                  ) : null}
+                </View>
+                <Pressable
+                  onPress={onClose}
+                  hitSlop={10}
+                  style={[styles.closeButton, { backgroundColor: colors.inputBackground }]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Kapat"
+                >
+                  <Ionicons name="close" size={18} color={colors.text} />
+                </Pressable>
+              </View>
             </View>
-            <Pressable
-              onPress={onClose}
-              hitSlop={10}
-              style={[styles.closeButton, { backgroundColor: colors.inputBackground }]}
-              accessibilityRole="button"
-              accessibilityLabel="Kapat"
-            >
-              <Ionicons name="close" size={18} color={colors.text} />
-            </Pressable>
-          </View>
 
-          {loadError ? (
-            <View style={styles.stateBox}>
-              <Text style={[styles.stateText, { color: colors.textSecondary }]}>{loadError}</Text>
-              <Pressable onPress={() => setReloadKey((k) => k + 1)} hitSlop={8}>
-                <Text style={[styles.linkLabel, { color: colors.primary }]}>Tekrar dene</Text>
-              </Pressable>
-            </View>
-          ) : !detail ? (
-            <View style={styles.stateBox} testID="edit-meal-loading">
-              <ActivityIndicator color={colors.primary} />
-            </View>
-          ) : (
-            <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-              {actionError ? <Text style={[styles.errorText, { color: colors.danger }]}>{actionError}</Text> : null}
-              <FoodPortionPicker
-                key={detail.id}
-                food={detail.food}
-                initialValue={detail.amount ?? detail.quantity}
-                confirmLabel="Kaydet"
-                isSubmitting={isSaving}
-                onConfirm={handleSave}
-                onBack={onClose}
-              />
-              <Pressable
-                testID="edit-meal-delete"
-                onPress={confirmDelete}
-                disabled={busy}
-                accessibilityRole="button"
-                style={[styles.deleteButton, { borderColor: colors.danger, opacity: busy ? 0.5 : 1 }]}
-              >
-                {isDeleting ? (
-                  <ActivityIndicator color={colors.danger} />
-                ) : (
-                  <>
-                    <Ionicons name="trash-outline" size={16} color={colors.danger} />
-                    <Text style={[styles.deleteLabel, { color: colors.danger }]}>Öğünden sil</Text>
-                  </>
-                )}
-              </Pressable>
-            </ScrollView>
-          )}
-        </SafeAreaView>
+            {loadError ? (
+              <View style={styles.stateBox}>
+                <Text style={[styles.stateText, { color: colors.textSecondary }]}>{loadError}</Text>
+                <Pressable onPress={() => setReloadKey((k) => k + 1)} hitSlop={8}>
+                  <Text style={[styles.linkLabel, { color: colors.primary }]}>Tekrar dene</Text>
+                </Pressable>
+              </View>
+            ) : !detail ? (
+              <View style={styles.stateBox} testID="edit-meal-loading">
+                <ActivityIndicator color={colors.primary} />
+              </View>
+            ) : (
+              <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+                {actionError ? <Text style={[styles.errorText, { color: colors.danger }]}>{actionError}</Text> : null}
+                <FoodPortionPicker
+                  key={detail.id}
+                  food={detail.food}
+                  initialValue={detail.amount ?? detail.quantity}
+                  confirmLabel="Kaydet"
+                  isSubmitting={isSaving}
+                  onConfirm={handleSave}
+                />
+                <Pressable
+                  testID="edit-meal-delete"
+                  onPress={confirmDelete}
+                  disabled={busy}
+                  accessibilityRole="button"
+                  style={[styles.deleteButton, { borderColor: colors.danger, opacity: busy ? 0.5 : 1 }]}
+                >
+                  {isDeleting ? (
+                    <ActivityIndicator color={colors.danger} />
+                  ) : (
+                    <>
+                      <Ionicons name="trash-outline" size={16} color={colors.danger} />
+                      <Text style={[styles.deleteLabel, { color: colors.danger }]}>Öğünden sil</Text>
+                    </>
+                  )}
+                </Pressable>
+              </ScrollView>
+            )}
+          </SafeAreaView>
+        </Animated.View>
       </KeyboardAvoidingView>
     </Modal>
   );
@@ -173,14 +180,16 @@ export function EditMealItemModal({ mealId, onUpdated, onDeleted, onClose }: Pro
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.6)" },
+  sheetWrapper: { maxHeight: "85%" },
   sheet: {
-    maxHeight: "85%",
+    flexShrink: 1,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 24,
   },
-  header: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", paddingTop: 20 },
+  handle: { alignSelf: "center", width: 40, height: 5, borderRadius: 3, marginTop: 10 },
+  header: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", paddingTop: 12, paddingBottom: 4 },
   headerTitle: { fontSize: 18, fontWeight: "700" },
   headerSubtitle: { fontSize: 12, marginTop: 2 },
   closeButton: { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center" },

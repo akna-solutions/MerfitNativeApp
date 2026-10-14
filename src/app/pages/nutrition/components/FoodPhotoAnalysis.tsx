@@ -14,8 +14,8 @@ import { useTheme } from "../../../../shared/theme/ThemeContext";
 import {
   analysisErrorMessage,
   computeTotals,
-  FALLBACK_DATA_NOTICE,
   formatGrams,
+  FOOD_PHOTO_NOTICE,
   formatMacro,
   isRetryableAnalysisError,
   MAX_GRAMS,
@@ -37,7 +37,8 @@ type Props = {
   date: string;
   /** Onaydan sonra gunluge eklenen kayitlar. */
   onLogged: (entries: MealEntry[]) => void;
-  onBack: () => void;
+  /** Verilmezse "Geri" baglantisi gosterilmez; pencere kapat ya da asagi cekme ile kapanir. */
+  onBack?: () => void;
 };
 
 /**
@@ -165,16 +166,17 @@ export function FoodPhotoAnalysis({ mealType, date, onLogged, onBack }: Props) {
     }
   };
 
-  const notice = status?.dataNotice || FALLBACK_DATA_NOTICE;
   const disabled = status?.enabled === false;
   const outOfQuota = status != null && status.remainingAnalyses <= 0;
 
-  const backRow = (
-    <Pressable onPress={phase === "result" ? startOver : onBack} hitSlop={8} style={styles.backRow}>
+  // Sonuc ekraninda "Yeni fotoğraf" her zaman gosterilir; "Geri" yalnizca onBack verildiyse.
+  const backAction = phase === "result" ? startOver : onBack;
+  const backRow = backAction ? (
+    <Pressable onPress={backAction} hitSlop={8} style={styles.backRow}>
       <Ionicons name="chevron-back" size={16} color={colors.primary} />
       <Text style={[styles.backLabel, { color: colors.primary }]}>{phase === "result" ? "Yeni fotoğraf" : "Geri"}</Text>
     </Pressable>
-  );
+  ) : null;
 
   if (phase === "camera") {
     return <FoodPhotoCamera onCaptured={analyzePicked} onCancel={() => setPhase("choose")} />;
@@ -316,7 +318,7 @@ export function FoodPhotoAnalysis({ mealType, date, onLogged, onBack }: Props) {
 
       <View style={[styles.noticeBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <Ionicons name="information-circle-outline" size={16} color={colors.textSecondary} />
-        <Text style={[styles.noticeText, { color: colors.textSecondary }]} testID="food-photo-notice">{notice}</Text>
+        <Text style={[styles.noticeText, { color: colors.textSecondary }]} testID="food-photo-notice">{FOOD_PHOTO_NOTICE}</Text>
       </View>
     </View>
   );

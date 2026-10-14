@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
     ActivityIndicator,
+    Animated,
     FlatList,
     KeyboardAvoidingView,
     Modal,
@@ -18,6 +19,7 @@ import { ApiError } from "../../../../services/api/client";
 import { getFoodByBarcode, searchFoods } from "../../../../services/api/foods";
 import { logMealItem } from "../../../../services/api/nutrition";
 import { ApiMealType, FoodListItem } from "../../../../services/api/types";
+import { useDragToClose } from "../../../../shared/sheet/useDragToClose";
 import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { MealEntry, MealType } from "../types";
 import { displayUnit } from "../servingUnits";
@@ -86,6 +88,7 @@ export function AddMealModal({
   const [selectedFood, setSelectedFood] = useState<FoodListItem | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLookingUpBarcode, setIsLookingUpBarcode] = useState(false);
+  const { translateY, panHandlers } = useDragToClose(visible, onClose);
 
   // Modal her açıldığında aramayı ve adımı sıfırla.
   useEffect(() => {
@@ -174,137 +177,142 @@ export function AddMealModal({
       >
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
 
-        <SafeAreaView style={[styles.sheet, { backgroundColor: colors.background, borderColor: colors.border }]} edges={["bottom"]}>
-          <View style={styles.header}>
-            <View>
-              <Text style={[styles.headerTitle, { color: colors.text }]}>Öğün Ekle</Text>
-              {mealType ? (
-                <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>{mealType}</Text>
-              ) : null}
-            </View>
-            <Pressable
-              onPress={onClose}
-              hitSlop={10}
-              style={[styles.closeButton, { backgroundColor: colors.inputBackground }]}
-            >
-              <Ionicons name="close" size={18} color={colors.text} />
-            </Pressable>
-          </View>
-
-          {step === "photo" && mealType ? (
-            <FoodPhotoAnalysis
-              mealType={MEAL_TYPE_TO_API[mealType]}
-              date={toDateParam(selectedDate)}
-              onLogged={onLogged}
-              onBack={() => setStep("search")}
-            />
-          ) : step === "scan" ? (
-            isLookingUpBarcode ? (
-              <View style={styles.lookupBox}>
-                <ActivityIndicator color={colors.primary} />
-                <Text style={[styles.lookupText, { color: colors.textSecondary }]}>Ürün aranıyor...</Text>
+        <Animated.View style={[styles.sheetWrapper, { transform: [{ translateY }] }]}>
+          <SafeAreaView style={[styles.sheet, { backgroundColor: colors.background, borderColor: colors.border }]} edges={["bottom"]}>
+            <View testID="add-meal-drag-area" {...panHandlers}>
+              <View style={[styles.handle, { backgroundColor: colors.border }]} />
+              <View style={styles.header}>
+                <View>
+                  <Text style={[styles.headerTitle, { color: colors.text }]}>Öğün Ekle</Text>
+                  {mealType ? (
+                    <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>{mealType}</Text>
+                  ) : null}
+                </View>
+                <Pressable
+                  onPress={onClose}
+                  hitSlop={10}
+                  style={[styles.closeButton, { backgroundColor: colors.inputBackground }]}
+                >
+                  <Ionicons name="close" size={18} color={colors.text} />
+                </Pressable>
               </View>
-            ) : (
-              <BarcodeScanner onScanned={handleBarcodeScanned} onCancel={() => setStep("search")} />
-            )
-          ) : step === "portion" && selectedFood ? (
-            <>
-              {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-              <FoodPortionPicker
-                food={selectedFood}
-                isSubmitting={isSubmitting}
-                onConfirm={handleConfirmPortion}
+            </View>
+
+            {step === "photo" && mealType ? (
+              <FoodPhotoAnalysis
+                mealType={MEAL_TYPE_TO_API[mealType]}
+                date={toDateParam(selectedDate)}
+                onLogged={onLogged}
                 onBack={() => setStep("search")}
               />
-            </>
-          ) : (
-            <>
-              <View style={styles.searchRow}>
-                <View style={[styles.searchWrapper, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                  <Ionicons
-                    name="search-outline"
-                    size={16}
-                    color={colors.textSecondary}
-                  />
-                  <TextInput
-                    value={query}
-                    onChangeText={setQuery}
-                    placeholder="Yiyecek ara..."
-                    placeholderTextColor={colors.textSecondary}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    keyboardAppearance={isDark ? "dark" : "light"}
-                    style={[styles.searchInput, { color: colors.text }]}
-                  />
+            ) : step === "scan" ? (
+              isLookingUpBarcode ? (
+                <View style={styles.lookupBox}>
+                  <ActivityIndicator color={colors.primary} />
+                  <Text style={[styles.lookupText, { color: colors.textSecondary }]}>Ürün aranıyor...</Text>
+                </View>
+              ) : (
+                <BarcodeScanner onScanned={handleBarcodeScanned} onCancel={() => setStep("search")} />
+              )
+            ) : step === "portion" && selectedFood ? (
+              <>
+                {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+                <FoodPortionPicker
+                  food={selectedFood}
+                  isSubmitting={isSubmitting}
+                  onConfirm={handleConfirmPortion}
+                  onBack={() => setStep("search")}
+                />
+              </>
+            ) : (
+              <>
+                <View style={styles.searchRow}>
+                  <View style={[styles.searchWrapper, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <Ionicons
+                      name="search-outline"
+                      size={16}
+                      color={colors.textSecondary}
+                    />
+                    <TextInput
+                      value={query}
+                      onChangeText={setQuery}
+                      placeholder="Yiyecek ara..."
+                      placeholderTextColor={colors.textSecondary}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      keyboardAppearance={isDark ? "dark" : "light"}
+                      style={[styles.searchInput, { color: colors.text }]}
+                    />
+                  </View>
+
+                  <Pressable
+                    style={[styles.scanButton, { backgroundColor: colors.card, borderColor: colors.primary }]}
+                    onPress={() => {
+                      setErrorMessage(null);
+                      setStep("scan");
+                    }}
+                    hitSlop={6}
+                    accessibilityRole="button"
+                    accessibilityLabel="Barkod tara"
+                  >
+                    <Ionicons
+                      name="barcode-outline"
+                      size={26}
+                      color={colors.primary}
+                    />
+                  </Pressable>
+
+                  <Pressable
+                    style={[styles.scanButton, { backgroundColor: colors.card, borderColor: colors.primary }]}
+                    onPress={() => {
+                      setErrorMessage(null);
+                      setStep("photo");
+                    }}
+                    hitSlop={6}
+                    accessibilityRole="button"
+                    accessibilityLabel="Fotoğrafla ekle"
+                    testID="add-meal-photo"
+                  >
+                    <Ionicons
+                      name="camera-outline"
+                      size={24}
+                      color={colors.primary}
+                    />
+                  </Pressable>
                 </View>
 
-                <Pressable
-                  style={[styles.scanButton, { backgroundColor: colors.card, borderColor: colors.primary }]}
-                  onPress={() => {
-                    setErrorMessage(null);
-                    setStep("scan");
-                  }}
-                  hitSlop={6}
-                  accessibilityRole="button"
-                  accessibilityLabel="Barkod tara"
-                >
-                  <Ionicons
-                    name="barcode-outline"
-                    size={26}
+                {errorMessage ? (
+                  <Text style={styles.errorText}>{errorMessage}</Text>
+                ) : null}
+
+                {isSearching ? (
+                  <ActivityIndicator
                     color={colors.primary}
+                    style={styles.loadingIndicator}
                   />
-                </Pressable>
-
-                <Pressable
-                  style={[styles.scanButton, { backgroundColor: colors.card, borderColor: colors.primary }]}
-                  onPress={() => {
-                    setErrorMessage(null);
-                    setStep("photo");
-                  }}
-                  hitSlop={6}
-                  accessibilityRole="button"
-                  accessibilityLabel="Fotoğrafla ekle"
-                  testID="add-meal-photo"
-                >
-                  <Ionicons
-                    name="camera-outline"
-                    size={24}
-                    color={colors.primary}
+                ) : (
+                  <FlatList
+                    data={foods}
+                    keyExtractor={(item) => String(item.id)}
+                    contentContainerStyle={styles.list}
+                    ItemSeparatorComponent={() => <View style={[styles.separator, { backgroundColor: colors.border }]} />}
+                    renderItem={({ item }) => (
+                      <Pressable
+                        style={styles.foodRow}
+                        onPress={() => handleSelectFood(item)}
+                      >
+                        <Text style={[styles.foodName, { color: colors.text }]}>{item.name}</Text>
+                        <Text style={[styles.foodCalories, { color: colors.textSecondary }]}>
+                          {item.calories} kcal / {formatServing(item)}
+                        </Text>
+                      </Pressable>
+                    )}
                   />
-                </Pressable>
-              </View>
-
-              {errorMessage ? (
-                <Text style={styles.errorText}>{errorMessage}</Text>
-              ) : null}
-
-              {isSearching ? (
-                <ActivityIndicator
-                  color={colors.primary}
-                  style={styles.loadingIndicator}
-                />
-              ) : (
-                <FlatList
-                  data={foods}
-                  keyExtractor={(item) => String(item.id)}
-                  contentContainerStyle={styles.list}
-                  ItemSeparatorComponent={() => <View style={[styles.separator, { backgroundColor: colors.border }]} />}
-                  renderItem={({ item }) => (
-                    <Pressable
-                      style={styles.foodRow}
-                      onPress={() => handleSelectFood(item)}
-                    >
-                      <Text style={[styles.foodName, { color: colors.text }]}>{item.name}</Text>
-                      <Text style={[styles.foodCalories, { color: colors.textSecondary }]}>
-                        {item.calories} kcal / {formatServing(item)}
-                      </Text>
-                    </Pressable>
-                  )}
-                />
-              )}
-            </>
-          )}
-        </SafeAreaView>
+                )}
+              </>
+            )}
+          </SafeAreaView>
+        </Animated.View>
       </KeyboardAvoidingView>
     </Modal>
   );
@@ -316,8 +324,9 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     backgroundColor: "rgba(0,0,0,0.6)",
   },
+  sheetWrapper: { maxHeight: "80%" },
   sheet: {
-    maxHeight: "80%",
+    flexShrink: 1,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     borderWidth: StyleSheet.hairlineWidth,
@@ -327,8 +336,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
-    paddingTop: 20,
+    paddingTop: 12,
+    paddingBottom: 4,
   },
+  handle: { alignSelf: "center", width: 40, height: 5, borderRadius: 3, marginTop: 10 },
   headerTitle: { fontSize: 18, fontWeight: "700" },
   headerSubtitle: { fontSize: 12, marginTop: 2 },
   closeButton: {
