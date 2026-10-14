@@ -8,6 +8,7 @@
     "scheme": "mbfitnativeapp",
     "userInterfaceStyle": "automatic",
     "ios": {
+      "bundleIdentifier": "online.mbfit.app",
       "icon": "./assets/expo.icon"
     },
     "android": {
@@ -18,9 +19,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "permissions": [
-        "android.permission.CAMERA"
-      ],
+      "permissions": ["android.permission.CAMERA"],
       "package": "com.anonymous.MBFitNativeApp"
     },
     "web": {
