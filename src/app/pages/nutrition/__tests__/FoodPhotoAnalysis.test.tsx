@@ -31,7 +31,23 @@ jest.mock("expo-image-manipulator", () => ({
   ImageManipulator: { manipulate: jest.fn(() => mockContext) },
 }));
 jest.mock("react-native-safe-area-context", () => require("react-native-safe-area-context/jest/mock").default);
-jest.mock("expo-camera", () => ({ CameraView: () => null, useCameraPermissions: () => [null, jest.fn()] }));
+// Uygulama ici kamera: izin durumu ve cekim testten yonetilir; kamera hazir olunca onCameraReady cagrilir.
+const mockCamera = {
+  permission: { granted: true, canAskAgain: true } as { granted: boolean; canAskAgain: boolean } | null,
+  requestPermission: jest.fn(),
+  takePictureAsync: jest.fn(),
+};
+jest.mock("expo-camera", () => {
+  const React = require("react");
+  return {
+    useCameraPermissions: () => [mockCamera.permission, mockCamera.requestPermission],
+    CameraView: React.forwardRef((props: { onCameraReady?: () => void }, ref: unknown) => {
+      React.useImperativeHandle(ref, () => ({ takePictureAsync: mockCamera.takePictureAsync }));
+      React.useEffect(() => props.onCameraReady?.(), []);
+      return null;
+    }),
+  };
+});
 jest.mock("../../../../services/api/foods", () => ({ searchFoods: jest.fn(), getFoodByBarcode: jest.fn() }));
 jest.mock("../../../../services/api/nutrition", () => ({ logMealItem: jest.fn() }));
 jest.mock("../../../../services/api/foodAnalysis", () => ({
@@ -107,14 +123,24 @@ async function renderScreen(onLogged = jest.fn()) {
   return onLogged;
 }
 
-async function pickFromCamera() {
+async function openCamera() {
   await act(async () => {
     fireEvent.press(screen.getByTestId("food-photo-camera"));
   });
 }
 
+/** "Fotoğraf çek" -> pencere icindeki kamera -> deklansor. */
+async function pickFromCamera() {
+  await openCamera();
+  await act(async () => {
+    fireEvent.press(screen.getByTestId("food-camera-shutter"));
+  });
+}
+
 beforeEach(() => {
   jest.clearAllMocks();
+  mockCamera.permission = { granted: true, canAskAgain: true };
+  mockCamera.takePictureAsync.mockResolvedValue({ uri: "file:///photo.jpg", width: 4032, height: 3024, format: "jpg" });
   statusMock.mockResolvedValue({ enabled: true, dataNotice: "Fotoğrafın Google Gemini'ye gönderilir.", dailyLimit: 15, remainingAnalyses: 12 });
   picker.requestCameraPermissionsAsync.mockResolvedValue(granted);
   picker.requestMediaLibraryPermissionsAsync.mockResolvedValue(granted);
@@ -173,11 +199,11 @@ describe("FoodPhotoAnalysis", () => {
   });
 
   it("kamera izni kalici reddedilirse uyarir, ayarlara yonlendirir ve yukleme yapmaz", async () => {
-    picker.requestCameraPermissionsAsync.mockResolvedValue(deniedForever);
+    mockCamera.permission = { granted: false, canAskAgain: false };
     const openSettings = jest.spyOn(Linking, "openSettings").mockResolvedValue(undefined);
     await renderScreen();
 
-    await pickFromCamera();
+    await openCamera();
 
     expect(await screen.findByText("Fotoğraf çekmek için kamera izni gerekiyor.")).toBeTruthy();
     fireEvent.press(screen.getByText("Ayarları aç"));
@@ -198,15 +224,30 @@ describe("FoodPhotoAnalysis", () => {
     expect(analyzeMock).not.toHaveBeenCalled();
   });
 
-  it("kullanici vazgecerse analiz yapilmaz", async () => {
-    picker.launchCameraAsync.mockResolvedValue({ canceled: true, assets: null } as never);
+  it("Fotoğraf çek pencere icinde kamerayi acar; vazgecilirse analiz yapilmaz", async () => {
     await renderScreen();
 
-    await pickFromCamera();
+    await openCamera();
+    expect(screen.getByTestId("food-camera-shutter")).toBeTruthy();
+    expect(picker.launchCameraAsync).not.toHaveBeenCalled();
 
-    await waitFor(() => expect(picker.launchCameraAsync).toHaveBeenCalled());
-    expect(analyzeMock).not.toHaveBeenCalled();
+    fireEvent.press(screen.getByText("Vazgeç"));
+
     expect(screen.getByTestId("food-photo-camera")).toBeTruthy();
+    expect(mockCamera.takePictureAsync).not.toHaveBeenCalled();
+    expect(analyzeMock).not.toHaveBeenCalled();
+  });
+
+  it("galeriden secilen fotograf da kucultulup analiz edilir", async () => {
+    analyzeMock.mockResolvedValue(analysis);
+    await renderScreen();
+
+    await act(async () => {
+      fireEvent.press(screen.getByTestId("food-photo-library"));
+    });
+
+    expect(mockContext.resize).toHaveBeenCalledWith({ height: MAX_PHOTO_DIMENSION });
+    expect(analyzeMock).toHaveBeenCalledWith({ uri: "file:///small.jpg", mimeType: "image/jpeg", fileName: "meal.jpg" }, expect.anything());
   });
 
   it("kucultulmus JPEG'i yukler, yuklenirken bekleme gosterir ve sonuclari tek tek listeler", async () => {
@@ -217,6 +258,8 @@ describe("FoodPhotoAnalysis", () => {
     await pickFromCamera();
 
     expect(await screen.findByTestId("food-photo-analyzing")).toBeTruthy();
+    expect(mockCamera.takePictureAsync).toHaveBeenCalledTimes(1);
+    expect(mockContext.resize).toHaveBeenCalledWith({ width: MAX_PHOTO_DIMENSION });
     expect(analyzeMock).toHaveBeenCalledWith({ uri: "file:///small.jpg", mimeType: "image/jpeg", fileName: "meal.jpg" }, expect.anything());
 
     await act(async () => resolve(analysis));
@@ -317,7 +360,7 @@ describe("FoodPhotoAnalysis", () => {
     expect(analyzeMock).toHaveBeenCalledTimes(2);
     expect(analyzeMock.mock.calls[1][0]).toEqual(analyzeMock.mock.calls[0][0]);
     expect(screen.getByTestId("food-photo-item-1")).toBeTruthy();
-    expect(picker.launchCameraAsync).toHaveBeenCalledTimes(1);
+    expect(mockCamera.takePictureAsync).toHaveBeenCalledTimes(1);
   });
 
   it("yemek bulunamadi gibi dogrulama hatalarinda tekrar dene yerine yeni fotograf ister", async () => {

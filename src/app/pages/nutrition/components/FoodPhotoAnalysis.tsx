@@ -27,8 +27,9 @@ import {
   prepareFoodPhoto,
 } from "../foodPhoto";
 import { MealEntry } from "../types";
+import { CapturedPhoto, FoodPhotoCamera } from "./FoodPhotoCamera";
 
-type Phase = "choose" | "analyzing" | "error" | "result";
+type Phase = "choose" | "camera" | "analyzing" | "error" | "result";
 
 type Props = {
   mealType: ApiMealType;
@@ -105,7 +106,17 @@ export function FoodPhotoAnalysis({ mealType, date, onLogged, onBack }: Props) {
         return;
       }
       if (picked.status === "canceled") return;
-      setPhase("analyzing");
+      await analyzePicked(picked);
+    } catch (e) {
+      setError({ message: analysisErrorMessage(e), retryable: false });
+      setPhase("error");
+    }
+  };
+
+  /** Secilen ya da cekilen fotografi kucultup analize gonderir. */
+  const analyzePicked = async (picked: CapturedPhoto) => {
+    setPhase("analyzing");
+    try {
       const upload = await prepareFoodPhoto(picked);
       setPhoto(upload);
       await runAnalysis(upload);
@@ -166,6 +177,10 @@ export function FoodPhotoAnalysis({ mealType, date, onLogged, onBack }: Props) {
       <Text style={[styles.backLabel, { color: colors.primary }]}>{phase === "result" ? "Yeni fotoğraf" : "Geri"}</Text>
     </Pressable>
   );
+
+  if (phase === "camera") {
+    return <FoodPhotoCamera onCaptured={analyzePicked} onCancel={() => setPhase("choose")} />;
+  }
 
   if (phase === "analyzing") {
     return (
@@ -297,7 +312,10 @@ export function FoodPhotoAnalysis({ mealType, date, onLogged, onBack }: Props) {
         <Text style={[styles.hint, { color: colors.textSecondary }]}>Bugünlük fotoğraf analizi hakkın doldu. Öğünü listeden arayarak ekleyebilirsin.</Text>
       ) : (
         <View style={styles.sourceRow}>
-          <SourceButton icon="camera-outline" label="Fotoğraf çek" onPress={() => handlePick("camera")} testID="food-photo-camera" />
+          <SourceButton icon="camera-outline" label="Fotoğraf çek" onPress={() => {
+              setDenied(null);
+              setPhase("camera");
+            }} testID="food-photo-camera" />
           <SourceButton icon="images-outline" label="Galeriden seç" onPress={() => handlePick("library")} testID="food-photo-library" />
         </View>
       )}
