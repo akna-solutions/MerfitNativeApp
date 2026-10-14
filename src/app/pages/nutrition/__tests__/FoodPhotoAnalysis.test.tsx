@@ -289,7 +289,7 @@ describe("FoodPhotoAnalysis", () => {
     expect(screen.getByText("Öğüne kaydet · 390 kcal")).toBeTruthy();
   });
 
-  it("belirsiz porsiyon onaylanmadan ve gecersiz gramajla kaydetmez; onaydan sonra kaydeder", async () => {
+  it("porsiyon uyarisi gostermez, gecersiz gramajla kaydetmez, duzeltilince kaydeder", async () => {
     analyzeMock.mockResolvedValue(analysis);
     confirmMock.mockResolvedValue({
       analysisId: 28,
@@ -303,10 +303,11 @@ describe("FoodPhotoAnalysis", () => {
     await pickFromCamera();
     await screen.findByTestId("food-photo-item-1");
 
-    fireEvent.press(screen.getByTestId("food-photo-save"));
-    expect(confirmMock).not.toHaveBeenCalled();
+    // Belirsiz porsiyon icin uyari ya da zorunlu onay yok; yalnizca gecersiz gramaj kaydi engeller.
+    expect(screen.queryByText(/porsiyon/i)).toBeNull();
+    expect(screen.queryByText("Sostaki yağ miktarı görünmüyor.")).toBeNull();
+    expect(screen.queryByText("Tavuk sote porsiyonu belirsiz.")).toBeNull();
 
-    fireEvent.press(screen.getByTestId("food-photo-confirm-2"));
     fireEvent.changeText(screen.getByTestId("food-photo-grams-1"), "0");
     fireEvent.press(screen.getByTestId("food-photo-save"));
     expect(confirmMock).not.toHaveBeenCalled();
