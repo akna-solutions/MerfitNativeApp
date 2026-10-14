@@ -13,6 +13,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../../../../shared/auth/AuthContext";
+import { GoogleButton } from "../../../../shared/auth/components/GoogleButton";
+import { useGoogleSignIn } from "../../../../shared/auth/useGoogleSignIn";
 import { goToDashboardAfterAuth, goToEmailVerificationAfterAuth } from "../../../../shared/auth/navigation";
 import { ApiError, isApiError, NetworkError } from "../../../../services/api/client";
 import { useTheme } from "../../../../shared/theme/ThemeContext";
@@ -27,18 +29,20 @@ export function LoginScreen() {
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const google = useGoogleSignIn();
 
   // Backend hem e-posta hem kullanici adi ile girisi destekler (bkz.
   // AuthService.FindUserByEmailOrUsernameAsync); bu yuzden burada e-posta formati zorunlu
   // tutulmaz, yalnizca alanin dolu olmasi yeterlidir.
   const identifierValid = emailOrUsername.trim().length > 0;
   const passwordValid = password.length >= 6;
-  const canSubmit = identifierValid && passwordValid && !isSubmitting;
+  const canSubmit = identifierValid && passwordValid && !isSubmitting && !google.isLoading;
 
   const handleLogin = async () => {
     if (!canSubmit) return;
 
     setErrorMessage(null);
+    google.setErrorMessage(null);
     setIsSubmitting(true);
     try {
       const result = await login({ emailOrUsername: emailOrUsername.trim(), password });
@@ -73,8 +77,14 @@ export function LoginScreen() {
     );
   };
 
-  const handleGoogleLogin = () => {
-    // TODO: Google OAuth akışı mevcut authentication sistemine bağlandığında burada tetiklenecek.
+  const handleGoogleLogin = async () => {
+    setErrorMessage(null);
+    const outcome = await google.start();
+    if (outcome.type === "registrationRequired") {
+      // Bu Google hesabiyla kayitli bir hesap yok: onboarding Google bilgileriyle on doldurulmus acilir;
+      // son adimda e-posta/sifre yerine yalnizca kullanici adi sorulur.
+      router.push({ pathname: "/pages/onboarding", params: { google: "1" } });
+    }
   };
 
   return (
@@ -135,8 +145,8 @@ export function LoginScreen() {
               <Text style={[styles.forgotLabel, { color: colors.primary }]}>Şifreni mi unuttun?</Text>
             </Pressable>
 
-            {errorMessage ? (
-              <Text style={styles.errorText}>{errorMessage}</Text>
+            {errorMessage || google.errorMessage ? (
+              <Text style={styles.errorText}>{errorMessage ?? google.errorMessage}</Text>
             ) : null}
 
             <View style={styles.dividerRow}>
@@ -145,12 +155,7 @@ export function LoginScreen() {
               <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
             </View>
 
-            <Pressable
-              onPress={handleGoogleLogin}
-              style={[styles.googleButton, { borderColor: colors.border, backgroundColor: colors.inputBackground }]}
-            >
-              <Text style={[styles.googleLabel, { color: colors.text }]}>Google ile devam et</Text>
-            </Pressable>
+            <GoogleButton onPress={handleGoogleLogin} loading={google.isLoading} disabled={isSubmitting} />
           </View>
         </ScrollView>
 
@@ -232,14 +237,6 @@ const styles = StyleSheet.create({
     height: StyleSheet.hairlineWidth,
   },
   dividerLabel: { fontSize: 12, marginHorizontal: 12 },
-  googleButton: {
-    height: 56,
-    borderRadius: 14,
-    borderWidth: StyleSheet.hairlineWidth,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  googleLabel: { fontSize: 14, fontWeight: "600" },
   footer: { paddingHorizontal: 24, paddingBottom: 8, paddingTop: 8 },
   signupRow: { marginTop: 16, alignItems: "center" },
   signupText: { fontSize: 13 },

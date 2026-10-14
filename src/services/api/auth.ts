@@ -4,6 +4,8 @@ import {
   AccountActionResponse,
   AuthResponse,
   ConfirmEmailResponse,
+  GoogleRegisterRequest,
+  GoogleSignInResponse,
   LoginRequest,
   RegisterRequest,
   ResendVerificationEmailResponse,
@@ -35,6 +37,44 @@ export async function register(
   request: RegisterRequest,
 ): Promise<AuthResponse> {
   const result = await apiRequest<AuthResponse>("/api/auth/register", {
+    method: "POST",
+    body: request,
+    skipAuth: true,
+  });
+
+  await saveTokens({
+    accessToken: result.accessToken,
+    refreshToken: result.refreshToken,
+  });
+  return result;
+}
+
+/**
+ * POST /api/auth/google - Google ID token'i ile giris. Hesap varsa token cifti kaydedilir; yoksa
+ * registrationRequired=true doner ve hicbir sey kaydedilmez (uygulama onboarding'e gecer).
+ */
+export async function googleSignIn(idToken: string): Promise<GoogleSignInResponse> {
+  const result = await apiRequest<GoogleSignInResponse>("/api/auth/google", {
+    method: "POST",
+    body: { idToken },
+    skipAuth: true,
+  });
+
+  if (result.auth) {
+    await saveTokens({
+      accessToken: result.auth.accessToken,
+      refreshToken: result.auth.refreshToken,
+    });
+  }
+  return result;
+}
+
+/**
+ * POST /api/auth/google/register - onboarding'in son adimi (Google ile). Hesap bu arada olusmussa backend
+ * yeni hesap acmadan giris yapar (isNewUser=false). Her iki durumda da token'lar kaydedilir.
+ */
+export async function googleRegister(request: GoogleRegisterRequest): Promise<AuthResponse> {
+  const result = await apiRequest<AuthResponse>("/api/auth/google/register", {
     method: "POST",
     body: request,
     skipAuth: true,

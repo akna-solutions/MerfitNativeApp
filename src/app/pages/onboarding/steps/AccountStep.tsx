@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { OnboardingInput } from "../components/OnboardingInput";
+import { GoogleButton } from "../../../../shared/auth/components/GoogleButton";
 import { UsernameAvailability } from "../../../../shared/auth/useUsernameAvailability";
 import { useTheme } from "../../../../shared/theme/ThemeContext";
 
@@ -17,6 +18,15 @@ type Props = {
   confirmPassword: string;
   onConfirmPasswordChange: (value: string) => void;
   onGooglePress: () => void;
+  /** Google hesap secici / sunucu kontrolu suruyor. */
+  googleLoading?: boolean;
+  /**
+   * Google ile kayit modunda Google hesabinin e-postasi. Doluyken e-posta ve sifre alanlari gizlenir;
+   * yalnizca kullanici adi sorulur.
+   */
+  googleEmail?: string | null;
+  /** Google ile kayit modundan e-posta/sifre ile kayda doner. */
+  onUseOtherMethod?: () => void;
   onLoginPress: () => void;
   errorMessage?: string | null;
 };
@@ -35,12 +45,15 @@ export function AccountStep({
   confirmPassword,
   onConfirmPasswordChange,
   onGooglePress,
+  googleLoading = false,
+  googleEmail,
+  onUseOtherMethod,
   onLoginPress,
   errorMessage,
 }: Props) {
   const { colors } = useTheme();
-  return (
-    <View>
+  const usernameField = (
+    <>
       <OnboardingInput
         value={username}
         onChangeText={(value) => {
@@ -58,6 +71,38 @@ export function AccountStep({
         ]}
       />
       <UsernameStatus availability={usernameAvailability} />
+    </>
+  );
+
+  if (googleEmail) {
+    return (
+      <View>
+        <View style={[styles.googleAccount, { borderColor: colors.border, backgroundColor: colors.inputBackground }]}>
+          <Ionicons name="logo-google" size={18} color={colors.text} />
+          <View style={styles.googleAccountText}>
+            <Text style={[styles.googleAccountLabel, { color: colors.textSecondary }]}>Google hesabınla kayıt oluyorsun</Text>
+            <Text style={[styles.googleAccountEmail, { color: colors.text }]} numberOfLines={1}>{googleEmail}</Text>
+          </View>
+        </View>
+        <View style={styles.gap} />
+        {usernameField}
+
+        {errorMessage ? (
+          <Text style={styles.errorText}>{errorMessage}</Text>
+        ) : null}
+
+        {onUseOtherMethod ? (
+          <Pressable onPress={onUseOtherMethod} hitSlop={8} style={styles.loginRow} accessibilityRole="button">
+            <Text style={[styles.loginLink, { color: colors.primary }]}>E-posta ve şifreyle kayıt ol</Text>
+          </Pressable>
+        ) : null}
+      </View>
+    );
+  }
+
+  return (
+    <View>
+      {usernameField}
       <View style={styles.gap} />
       <OnboardingInput
         value={email}
@@ -97,12 +142,7 @@ export function AccountStep({
         <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
       </View>
 
-      <Pressable
-        onPress={onGooglePress}
-        style={[styles.googleButton, { borderColor: colors.border, backgroundColor: colors.inputBackground }]}
-      >
-        <Text style={[styles.googleLabel, { color: colors.text }]}>Google ile devam et</Text>
-      </Pressable>
+      <GoogleButton onPress={onGooglePress} loading={googleLoading} />
 
       <Pressable onPress={onLoginPress} hitSlop={8} style={styles.loginRow}>
         <Text style={[styles.loginText, { color: colors.textSecondary }]}>
@@ -171,14 +211,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginHorizontal: 12,
   },
-  googleButton: {
-    height: 56,
+  googleAccount: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
     borderRadius: 14,
     borderWidth: StyleSheet.hairlineWidth,
-    alignItems: "center",
-    justifyContent: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
-  googleLabel: { fontSize: 14, fontWeight: "600" },
+  googleAccountText: { flex: 1 },
+  googleAccountLabel: { fontSize: 12, fontWeight: "600" },
+  googleAccountEmail: { fontSize: 15, fontWeight: "700", marginTop: 2 },
   loginRow: { marginTop: 22, alignItems: "center" },
   loginText: { fontSize: 13 },
   loginLink: { fontWeight: "700" },

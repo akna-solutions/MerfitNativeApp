@@ -10,8 +10,16 @@ import {
 
 import * as authApi from "../../services/api/auth";
 import { getStoredTokens } from "../../services/api/tokenStorage";
-import { AuthResponse, LoginRequest, RegisterRequest } from "../../services/api/types";
+import {
+  AuthResponse,
+  GoogleRegisterRequest,
+  GoogleSignInResponse,
+  LoginRequest,
+  RegisterRequest,
+} from "../../services/api/types";
 import { deactivateStoredPushToken } from "../notifications/pushRegistration";
+import { signOutFromGoogle } from "./googleSignIn";
+import { clearPendingGoogleSignup } from "./pendingGoogleSignup";
 
 type AuthStatus = "loading" | "signedIn" | "signedOut";
 
@@ -31,6 +39,13 @@ type AuthContextValue = {
   markEmailConfirmed: () => void;
   login: (request: LoginRequest) => Promise<AuthResponse>;
   register: (request: RegisterRequest) => Promise<AuthResponse>;
+  /**
+   * Google ID token'i ile giris. Hesap varsa oturum acilir (sonucta auth dolu); yoksa registrationRequired=true
+   * doner ve oturum acilmaz (bkz. useGoogleSignIn, onboarding).
+   */
+  googleSignIn: (idToken: string) => Promise<GoogleSignInResponse>;
+  /** Onboarding'in son adimi, Google ile: parolasiz hesap olusturur (veya var olan hesapla giris yapar). */
+  googleRegister: (request: GoogleRegisterRequest) => Promise<AuthResponse>;
   logout: () => Promise<void>;
   /** 401 gibi durumlarda (bkz. services/api/client.ts) token'lar client tarafinda temizlendiginde cagirilir. */
   forceSignOut: () => void;
@@ -90,6 +105,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return result;
   }, [applySession]);
 
+  const googleSignIn = useCallback(async (idToken: string) => {
+    const result = await authApi.googleSignIn(idToken);
+    if (result.auth) {
+      applySession(result.auth);
+    }
+    return result;
+  }, [applySession]);
+
+  const googleRegister = useCallback(async (request: GoogleRegisterRequest) => {
+    const result = await authApi.googleRegister(request);
+    clearPendingGoogleSignup();
+    applySession(result);
+    return result;
+  }, [applySession]);
+
   const markEmailConfirmed = useCallback(() => setEmailConfirmed(true), []);
 
   const logout = useCallback(async () => {
@@ -97,6 +127,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // backend'e ulasilamazsa cikis yine de tamamlanir.
     await deactivateStoredPushToken("Logout");
     await authApi.logout();
+    // Cihazdaki Google oturumu da kapatilir; bir sonraki "Google ile devam et" hesap seciciyi yeniden gosterir.
+    await signOutFromGoogle();
+    clearPendingGoogleSignup();
     setUserName(null);
     setUsername(null);
     setEmail(null);
@@ -117,9 +150,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       status, userName, username, email, emailConfirmed, markEmailConfirmed,
-      login, register, logout, forceSignOut, sessionVersion,
+      login, register, googleSignIn, googleRegister, logout, forceSignOut, sessionVersion,
     }),
-    [status, userName, username, email, emailConfirmed, markEmailConfirmed, login, register, logout, forceSignOut, sessionVersion],
+    [status, userName, username, email, emailConfirmed, markEmailConfirmed, login, register, googleSignIn, googleRegister, logout, forceSignOut, sessionVersion],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

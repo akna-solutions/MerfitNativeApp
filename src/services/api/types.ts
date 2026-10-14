@@ -61,6 +61,31 @@ export type AuthResponse = {
   emailConfirmed?: boolean;
   /** Yalnizca register yanitinda: dogrulama kodu e-postasi gonderildiyse true, gonderilemediyse false. */
   verificationEmailSent?: boolean | null;
+  /** Bu istekte yeni hesap olusturulduysa true (register, Google ile kayit). Girislerde false. */
+  isNewUser?: boolean;
+};
+
+// ---- Google ile giris / kayit (MerfitCustomerApi GoogleAuthDtos) ----
+/** Google ID token'indan okunan, onboarding'i on doldurmak icin kullanilan bilgiler. */
+export type GoogleProfile = {
+  email: string;
+  firstName?: string | null;
+  lastName?: string | null;
+};
+
+/**
+ * POST /api/auth/google. Hesap varsa (veya ayni dogrulanmis e-postali hesaba baglandiysa) auth doludur;
+ * yoksa registrationRequired=true ve profile ile onboarding'e gecilir.
+ */
+export type GoogleSignInResponse = {
+  registrationRequired: boolean;
+  auth?: AuthResponse | null;
+  profile?: GoogleProfile | null;
+};
+
+/** POST /api/auth/google/register - onboarding alanlari + Google ID token; e-posta ve parola yok. */
+export type GoogleRegisterRequest = Omit<RegisterRequest, "email" | "password" | "confirmPassword"> & {
+  idToken: string;
 };
 
 // ---- E-posta dogrulama / sifre sifirlama (MerfitCustomerApi AccountEmailDtos) ----
