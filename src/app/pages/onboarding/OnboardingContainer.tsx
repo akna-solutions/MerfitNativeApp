@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 
 import {
@@ -9,12 +9,21 @@ import {
 import { getEquipmentList } from "../../../services/api/equipment";
 import {
   EquipmentListItem,
+  GoogleRegisterRequest,
   RegisterRequest,
 } from "../../../services/api/types";
 import { useAuth } from "../../../shared/auth/AuthContext";
-import { goToEmailVerificationAfterAuth } from "../../../shared/auth/navigation";
+import { refreshGoogleIdToken } from "../../../shared/auth/googleSignIn";
+import { goToDashboardAfterAuth, goToEmailVerificationAfterAuth } from "../../../shared/auth/navigation";
+import {
+  clearPendingGoogleSignup,
+  getPendingGoogleSignup,
+  PendingGoogleSignup,
+} from "../../../shared/auth/pendingGoogleSignup";
+import { googleErrorMessage, useGoogleSignIn } from "../../../shared/auth/useGoogleSignIn";
 import { useUsernameAvailability } from "../../../shared/auth/useUsernameAvailability";
 import { OnboardingScreen } from "./components/OnboardingScreen";
+import { SuccessScreen } from "./components/SuccessScreen";
 import { AccountStep } from "./steps/AccountStep";
 import { ActivityStep } from "./steps/ActivityStep";
 import { AgeStep } from "./steps/AgeStep";
@@ -31,11 +40,13 @@ import { initialOnboardingData, OnboardingData } from "./types";
 
 const TOTAL_STEPS = 12;
 
+type ProfileFields = Omit<RegisterRequest, "email" | "password" | "confirmPassword">;
+
 /**
- * OnboardingData (RN state) -> RegisterRequest (backend DTO). Sayisal alanlar backend'de
- * decimal/int oldugundan bos string'ler yerine null gonderiyoruz.
+ * OnboardingData (RN state) -> kayit isteklerinin ortak onboarding alanlari (backend AccountProfileRequest).
+ * Sayisal alanlar backend'de decimal/int oldugundan bos string'ler yerine null gonderiyoruz.
  */
-function toRegisterRequest(data: OnboardingData, allEquipmentIds: number[]): RegisterRequest {
+function toProfileFields(data: OnboardingData, allEquipmentIds: number[]): ProfileFields {
   const age = parseInt(data.age, 10);
   const heightCm = data.height ? parseFloat(data.height) : null;
   const heightFeet = data.heightFeet ? parseInt(data.heightFeet, 10) : null;
@@ -48,9 +59,6 @@ function toRegisterRequest(data: OnboardingData, allEquipmentIds: number[]): Reg
     firstName: data.name.trim(),
     lastName: data.lastName.trim(),
     username: data.username.trim(),
-    email: data.email.trim(),
-    password: data.password,
-    confirmPassword: data.confirmPassword,
     gender: data.gender,
     age: Number.isNaN(age) ? null : age,
     heightUnit: data.heightUnit,
@@ -73,11 +81,55 @@ function toRegisterRequest(data: OnboardingData, allEquipmentIds: number[]): Reg
   };
 }
 
+/** OnboardingData -> RegisterRequest (e-posta/sifre ile kayit). */
+function toRegisterRequest(data: OnboardingData, allEquipmentIds: number[]): RegisterRequest {
+  return {
+    ...toProfileFields(data, allEquipmentIds),
+    email: data.email.trim(),
+    password: data.password,
+    confirmPassword: data.confirmPassword,
+  };
+}
+
+/** Google profilindeki ad/soyad ile onboarding'in ilk adimlarini on doldurur (kullanici degistirebilir). */
+function initialDataFor(googleSignup: PendingGoogleSignup | null): OnboardingData {
+  if (!googleSignup) return initialOnboardingData;
+  return {
+    ...initialOnboardingData,
+    name: googleSignup.profile.firstName?.trim() ?? "",
+    lastName: googleSignup.profile.lastName?.trim() ?? "",
+    email: googleSignup.profile.email,
+  };
+}
+
+function registrationErrorMessage(error: unknown): string {
+  if (isApiError(error)) {
+    const apiError = error as ApiError;
+    return apiError.fieldErrors.length > 0 ? apiError.fieldErrors[0] : apiError.message;
+  }
+  if (error instanceof NetworkError) {
+    return "Sunucuya ulaşılamadı. İnternet bağlantınızı veya backend adresini kontrol edin.";
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return "Hesap oluşturulamadı. Lütfen tekrar deneyin.";
+}
+
 export function OnboardingContainer() {
   const router = useRouter();
-  const { register } = useAuth();
+  const params = useLocalSearchParams<{ google?: string }>();
+  const { register, googleRegister } = useAuth();
+  const google = useGoogleSignIn();
+  // Giris ekraninda "Google ile devam et" denenip hesap bulunamadiysa onboarding Google moduyla acilir
+  // (google=1): ad/soyad on doldurulur, son adimda e-posta/sifre yerine yalnizca kullanici adi sorulur.
+  const [googleSignup, setGoogleSignup] = useState<PendingGoogleSignup | null>(() =>
+    params.google === "1" ? getPendingGoogleSignup() : null,
+  );
   const [step, setStep] = useState(1);
-  const [data, setData] = useState<OnboardingData>(initialOnboardingData);
+  const [data, setData] = useState<OnboardingData>(() => initialDataFor(googleSignup));
+  // Google ile yeni hesap acildiginda (e-posta Google tarafindan dogrulanmis) kod ekrani yerine "Hazirsin" gosterilir.
+  const [completedName, setCompletedName] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [equipmentList, setEquipmentList] = useState<EquipmentListItem[]>([]);
@@ -129,6 +181,10 @@ export function OnboardingContainer() {
 
   const handleCreateAccount = async () => {
     if (isSubmitting) return;
+    if (googleSignup) {
+      await handleCreateGoogleAccount(googleSignup);
+      return;
+    }
 
     setSubmitError(null);
     setIsSubmitting(true);
@@ -143,25 +199,65 @@ export function OnboardingContainer() {
       });
     } catch (error) {
       console.error("Kayıt hatası:", error);
-      if (isApiError(error)) {
-        const apiError = error as ApiError;
-        setSubmitError(
-          apiError.fieldErrors.length > 0
-            ? apiError.fieldErrors[0]
-            : apiError.message,
-        );
-      } else if (error instanceof NetworkError) {
-        setSubmitError(
-          "Sunucuya ulaşılamadı. İnternet bağlantınızı veya backend adresini kontrol edin.",
-        );
-      } else if (error instanceof Error) {
-        setSubmitError(error.message);
+      setSubmitError(registrationErrorMessage(error));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCreateGoogleAccount = async (signup: PendingGoogleSignup) => {
+    setSubmitError(null);
+    setIsSubmitting(true);
+    try {
+      // ID token ~1 saat gecerli; onboarding uzun surduyse sessizce yenisi alinir.
+      const idToken = (await refreshGoogleIdToken()) ?? signup.idToken;
+      const request: GoogleRegisterRequest = {
+        ...toProfileFields(data, equipmentList.map((item) => item.id)),
+        idToken,
+      };
+      const result = await googleRegister(request);
+      const name = `${data.name} ${data.lastName}`.trim();
+      if (result.emailConfirmed === false) {
+        // Google e-postayi dogrulanmis saymadiysa (nadir) e-posta/sifre kaydindaki gibi kod istenir.
+        goToEmailVerificationAfterAuth(router, {
+          codeState: result.verificationEmailSent === false ? "failed" : "sent",
+          fromRegistration: true,
+          name,
+        });
+      } else if (result.isNewUser) {
+        setCompletedName(name);
       } else {
-        setSubmitError("Hesap oluşturulamadı. Lütfen tekrar deneyin.");
+        // Bu Google hesabi bu arada baska bir yoldan kaydolmus: dogrudan uygulamaya gecilir.
+        goToDashboardAfterAuth(router);
+      }
+    } catch (error) {
+      console.error("Google ile kayıt hatası:", error);
+      if (isApiError(error) && error.status === 401) {
+        // Google kimligi dogrulanamadi (suresi dolmus olabilir): Google butonu tekrar gorunsun.
+        clearPendingGoogleSignup();
+        setGoogleSignup(null);
+        setSubmitError("Google oturumunun süresi doldu. \"Google ile devam et\"e tekrar dokun.");
+      } else {
+        setSubmitError(isApiError(error) || error instanceof NetworkError ? registrationErrorMessage(error) : googleErrorMessage(error));
       }
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleGooglePress = async () => {
+    setSubmitError(null);
+    const outcome = await google.start();
+    if (outcome.type === "registrationRequired") {
+      // Hesap yok: bu adim Google moduna gecer, kullanici adini secip "Hesap olustur"a dokunur.
+      setGoogleSignup({ idToken: outcome.idToken, profile: outcome.profile });
+    }
+  };
+
+  const handleUseOtherMethod = () => {
+    clearPendingGoogleSignup();
+    setGoogleSignup(null);
+    setSubmitError(null);
   };
 
   const age = parseInt(data.age, 10);
@@ -179,7 +275,13 @@ export function OnboardingContainer() {
   // kayit sirasinda sunucu yine kontrol eder.
   const usernameUsable =
     usernameAvailability.state !== "unavailable" && usernameAvailability.state !== "checking";
-  const accountValid = usernameValid && usernameUsable && emailValid && passwordValid && passwordsMatch;
+  const accountValid = googleSignup
+    ? usernameValid && usernameUsable
+    : usernameValid && usernameUsable && emailValid && passwordValid && passwordsMatch;
+
+  if (completedName !== null) {
+    return <SuccessScreen name={completedName} onStart={() => goToDashboardAfterAuth(router)} />;
+  }
 
   switch (step) {
     case 1:
@@ -404,11 +506,15 @@ export function OnboardingContainer() {
           step={12}
           totalSteps={TOTAL_STEPS}
           title="MB FIT hesabını oluştur"
-          description="Profilini kaydet ve kişiselleştirilmiş fitness yolculuğuna başla."
+          description={
+            googleSignup
+              ? "Son olarak bir kullanıcı adı seç."
+              : "Profilini kaydet ve kişiselleştirilmiş fitness yolculuğuna başla."
+          }
           onBack={goBack}
           onContinue={goNext}
           continueLabel="Hesap oluştur"
-          continueDisabled={!accountValid || isSubmitting}
+          continueDisabled={!accountValid || isSubmitting || google.isLoading}
           continueLoading={isSubmitting}
         >
           <AccountStep
@@ -423,11 +529,12 @@ export function OnboardingContainer() {
             onConfirmPasswordChange={(value) =>
               update("confirmPassword", value)
             }
-            onGooglePress={() => {
-              // TODO: mevcut authentication sistemi bağlandığında Google OAuth akışını burada tetikle.
-            }}
+            onGooglePress={handleGooglePress}
+            googleLoading={google.isLoading}
+            googleEmail={googleSignup?.profile.email || null}
+            onUseOtherMethod={handleUseOtherMethod}
             onLoginPress={() => router.push("/pages/login")}
-            errorMessage={submitError}
+            errorMessage={submitError ?? google.errorMessage}
           />
         </OnboardingScreen>
       );
