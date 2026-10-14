@@ -1,3 +1,4 @@
+import { File } from "expo-file-system";
 import { Platform } from "react-native";
 
 import { apiRequest } from "./client";
@@ -19,8 +20,9 @@ async function toFormData(photo: FoodPhotoUpload): Promise<FormData> {
     const blob = await (await fetch(photo.uri)).blob();
     form.append("photo", blob, photo.fileName);
   } else {
-    // React Native FormData { uri, name, type } nesnesini dosya olarak gonderir.
-    form.append("photo", { uri: photo.uri, name: photo.fileName, type: photo.mimeType } as unknown as Blob);
+    // SDK 57'de global fetch expo/fetch'tir; React Native'in { uri, name, type } dosya parcasini desteklemez
+    // ("Unsupported FormDataPart implementation"). expo-file-system File'i Blob arayuzunu uygular, dosyayi okuyup gonderir.
+    form.append("photo", new File(photo.uri), photo.fileName);
   }
   return form;
 }
