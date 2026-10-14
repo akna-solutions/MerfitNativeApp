@@ -16,7 +16,7 @@ type Shortcut = {
   id: string;
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
-  /** Ikonun altinda etiketin yerine gosterilen deger (puan karti). */
+  /** Ikonun yerine gosterilen deger (puan karti). */
   value?: string;
   accessibilityLabel: string;
   onPress: () => void;
@@ -73,16 +73,20 @@ export function DashboardShortcuts({ points, onMealPhotoPress, onGamePress, onAs
             { backgroundColor: colors.card, borderColor: colors.border, opacity: pressed ? 0.8 : 1 },
           ]}
         >
-          <View style={[styles.iconCircle, { backgroundColor: colors.cardActive }]}>
-            <Ionicons name={item.icon} size={20} color={colors.primary} />
-          </View>
+          {/* Puan kutusunda ikon yerine sayi ayni yukseklikte durur; boylece dort etiket ayni hizada kalir. */}
           {item.value ? (
-            <Text style={[styles.value, { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>
-              {item.value}
-            </Text>
-          ) : null}
+            <View style={styles.valueBox}>
+              <Text style={[styles.value, { color: colors.primary }]} numberOfLines={1} adjustsFontSizeToFit>
+                {item.value}
+              </Text>
+            </View>
+          ) : (
+            <View style={[styles.iconCircle, { backgroundColor: colors.cardActive }]}>
+              <Ionicons name={item.icon} size={20} color={colors.primary} />
+            </View>
+          )}
           <Text
-            style={[styles.label, { color: item.value ? colors.textSecondary : colors.text }]}
+            style={[styles.label, { color: colors.text }]}
             numberOfLines={1}
             adjustsFontSizeToFit
             minimumFontScale={0.8}
@@ -96,14 +100,14 @@ export function DashboardShortcuts({ points, onMealPhotoPress, onGamePress, onAs
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: "row", gap: 10 },
+  row: { flexDirection: "row", gap: 8 },
   tile: {
     flex: 1,
     alignItems: "center",
     borderRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: 12,
-    paddingHorizontal: 4,
+    paddingHorizontal: 2,
     gap: 6,
   },
   iconCircle: {
@@ -113,6 +117,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  value: { fontSize: 14, fontWeight: "800", marginBottom: -4 },
-  label: { fontSize: 11, fontWeight: "700" },
+  valueBox: { alignSelf: "stretch", height: 40, alignItems: "center", justifyContent: "center" },
+  value: { fontSize: 16, fontWeight: "800" },
+  label: { fontSize: 10, fontWeight: "700", textAlign: "center" },
 });
