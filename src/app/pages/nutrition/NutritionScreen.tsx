@@ -177,10 +177,16 @@ export function NutritionScreen() {
     }
   };
 
-  const handleMealLogged = (entry: MealEntry) => {
-    setData((prev) =>
-      prev ? { ...prev, meals: [...prev.meals, entry] } : prev,
-    );
+  const handleMealLogged = (entries: MealEntry[]) => {
+    // Ayni kayit tekrar gelirse (orn. daha once onaylanmis fotograf analizi) listede iki kez gosterilmez.
+    setData((prev) => {
+      if (!prev) return prev;
+      const ids = new Set(entries.map((e) => e.id));
+      return {
+        ...prev,
+        meals: [...prev.meals.filter((m) => !ids.has(m.id)), ...entries],
+      };
+    });
     setAddMealType(null);
     // Makrolar ve degerlendirme kartinin guncel kalmasi icin gunun verisi arka planda yenilenir.
     void refreshNutritionSilently(selectedDate);
