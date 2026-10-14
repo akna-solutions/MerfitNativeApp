@@ -191,11 +191,14 @@ describe("foodPhoto yardimcilari", () => {
 });
 
 describe("FoodPhotoAnalysis", () => {
-  it("analiz oncesi veri kullanimi bilgisini ve kalan hakki gosterir", async () => {
+  it("analiz oncesi tahmin uyarisini ve kalan hakki gosterir, saglayici adini gostermez", async () => {
     await renderScreen();
 
     expect(await screen.findByText("Bugün kalan analiz hakkın: 12/15")).toBeTruthy();
-    expect(screen.getByTestId("food-photo-notice").props.children).toContain("Google Gemini");
+    expect(screen.getByTestId("food-photo-notice").props.children).toBe(
+      "Değerler tahminidir, tıbbi beslenme tavsiyesi yerine geçmez.",
+    );
+    expect(screen.queryByText(/Gemini/)).toBeNull();
   });
 
   it("kamera izni kalici reddedilirse uyarir, ayarlara yonlendirir ve yukleme yapmaz", async () => {

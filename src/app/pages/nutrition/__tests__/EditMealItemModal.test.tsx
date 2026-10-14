@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react-nativ
 import { Alert } from "react-native";
 
 import { mockThemeValue } from "../../../../test/mockTheme";
+import { shouldDismissSheet } from "../../../../shared/sheet/useDragToClose";
 import { EditMealItemModal } from "../components/EditMealItemModal";
 
 jest.mock("../../../../shared/theme/ThemeContext", () => ({ useTheme: () => mockThemeValue }));
@@ -64,5 +65,18 @@ describe("EditMealItemModal", () => {
     await waitFor(() => expect(onDeleted).toHaveBeenCalledWith("100"));
     expect(mockDelete).toHaveBeenCalledWith(100);
     alertSpy.mockRestore();
+  });
+
+  it("geri baglantisi gostermez", async () => {
+    render(<EditMealItemModal mealId="100" onUpdated={jest.fn()} onDeleted={jest.fn()} onClose={jest.fn()} />);
+    await screen.findByDisplayValue("150");
+    expect(screen.queryByText("Geri")).toBeNull();
+  });
+
+  it("yeterince ya da hizli asagi cekilince kapanmaya karar verir", () => {
+    expect(shouldDismissSheet(120, 0)).toBe(true);
+    expect(shouldDismissSheet(30, 1.2)).toBe(true);
+    expect(shouldDismissSheet(30, 0.2)).toBe(false);
+    expect(shouldDismissSheet(-200, 0)).toBe(false);
   });
 });

@@ -17,7 +17,8 @@ type Props = {
   food: FoodListItem;
   isSubmitting: boolean;
   onConfirm: (selection: PortionSelection) => void;
-  onBack: () => void;
+  /** Verilmezse "Geri" baglantisi gosterilmez (orn. duzenleme penceresi). */
+  onBack?: () => void;
   /** Duzenlemede mevcut miktar (g/ml ya da porsiyon); verilmezse bir porsiyon. */
   initialValue?: number;
   /** Onay butonunun etiketi; varsayilan "Ekle". */
@@ -62,10 +63,12 @@ export function FoodPortionPicker({ food, isSubmitting, onConfirm, onBack, initi
 
   return (
     <View style={styles.container}>
-      <Pressable onPress={onBack} hitSlop={8} style={styles.backRow}>
-        <Ionicons name="chevron-back" size={16} color={colors.primary} />
-        <Text style={[styles.backLabel, { color: colors.primary }]}>Geri</Text>
-      </Pressable>
+      {onBack ? (
+        <Pressable onPress={onBack} hitSlop={8} style={styles.backRow}>
+          <Ionicons name="chevron-back" size={16} color={colors.primary} />
+          <Text style={[styles.backLabel, { color: colors.primary }]}>Geri</Text>
+        </Pressable>
+      ) : null}
 
       <Text style={[styles.foodName, { color: colors.text }]}>{food.name}</Text>
       {food.brand ? <Text style={[styles.brand, { color: colors.textSecondary }]}>{food.brand}</Text> : null}
