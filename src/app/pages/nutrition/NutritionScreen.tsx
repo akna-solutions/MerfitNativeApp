@@ -1,14 +1,22 @@
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Animated, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Animated,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { PremiumFeature } from "../../../shared/plus/components/PremiumFeature";
 import { ApiError } from "../../../services/api/client";
 import { getDailyNutrition, logWater } from "../../../services/api/nutrition";
 import { NutritionResponse } from "../../../services/api/types";
+import { useNutritionAssistant } from "../../../shared/nutritionAssistant/useNutritionAssistant";
+import { useTheme } from "../../../shared/theme/ThemeContext";
 import { AddMealModal } from "./components/AddMealModal";
-import { AiNutritionPlanCard } from "./components/AiNutritionPlanCard";
 import { CalorieBreakdown } from "./components/CalorieBreakdown";
 import { CalorieCard } from "./components/CalorieCard";
 import { DateSelector } from "./components/DateSelector";
@@ -20,8 +28,6 @@ import { NutritionInsight } from "./components/NutritionInsight";
 import { TodayNutritionPlanCard } from "./components/TodayNutritionPlanCard";
 import { WaterTracker } from "./components/WaterTracker";
 import { NutritionAssistantSheet } from "./components/assistant/NutritionAssistantSheet";
-import { useNutritionAssistant } from "../../../shared/nutritionAssistant/useNutritionAssistant";
-import { useTheme } from "../../../shared/theme/ThemeContext";
 import { MealEntry, MealType, NutritionData } from "./types";
 
 /** "yyyy-MM-dd" - backend'in DateOnly query param formati (yerel saat diliminde). */
@@ -60,24 +66,27 @@ export function NutritionScreen() {
   const [assistantOpen, setAssistantOpen] = useState(false);
   const assistant = useNutritionAssistant(toDateParam(selectedDate));
 
-  const loadNutrition = useCallback(async (date: Date, signal?: AbortSignal) => {
-    setErrorMessage(null);
-    try {
-      const response = await getDailyNutrition(toDateParam(date), signal);
-      if (signal?.aborted) return;
-      setData(mapToNutritionData(response));
-    } catch (error) {
-      // Gun hizla degistirildiginde iptal edilen eski istek, yeni gunun durumunu ezmemeli.
-      if (signal?.aborted) return;
-      setErrorMessage(
-        error instanceof ApiError
-          ? error.message
-          : "Beslenme verisi yüklenemedi. Lütfen tekrar deneyin.",
-      );
-    } finally {
-      if (!signal?.aborted) setIsLoading(false);
-    }
-  }, []);
+  const loadNutrition = useCallback(
+    async (date: Date, signal?: AbortSignal) => {
+      setErrorMessage(null);
+      try {
+        const response = await getDailyNutrition(toDateParam(date), signal);
+        if (signal?.aborted) return;
+        setData(mapToNutritionData(response));
+      } catch (error) {
+        // Gun hizla degistirildiginde iptal edilen eski istek, yeni gunun durumunu ezmemeli.
+        if (signal?.aborted) return;
+        setErrorMessage(
+          error instanceof ApiError
+            ? error.message
+            : "Beslenme verisi yüklenemedi. Lütfen tekrar deneyin.",
+        );
+      } finally {
+        if (!signal?.aborted) setIsLoading(false);
+      }
+    },
+    [],
+  );
 
   const refreshNutritionSilently = useCallback(async (date: Date) => {
     try {
@@ -156,7 +165,10 @@ export function NutritionScreen() {
     if (!data || isAddingWater) return;
     setIsAddingWater(true);
     try {
-      const water = await logWater({ amountMl: 250, date: toDateParam(selectedDate) });
+      const water = await logWater({
+        amountMl: 250,
+        date: toDateParam(selectedDate),
+      });
       setData((prev) => (prev ? { ...prev, water } : prev));
     } catch {
       // Sessizce yut - kullanıcı butona tekrar basabilir.
@@ -166,7 +178,9 @@ export function NutritionScreen() {
   };
 
   const handleMealLogged = (entry: MealEntry) => {
-    setData((prev) => (prev ? { ...prev, meals: [...prev.meals, entry] } : prev));
+    setData((prev) =>
+      prev ? { ...prev, meals: [...prev.meals, entry] } : prev,
+    );
     setAddMealType(null);
     // Makrolar ve degerlendirme kartinin guncel kalmasi icin gunun verisi arka planda yenilenir.
     void refreshNutritionSilently(selectedDate);
@@ -186,7 +200,10 @@ export function NutritionScreen() {
             <NutritionHeader
               onAssistantPress={() => setAssistantOpen(true)}
               onNotificationsPress={() =>
-                router.push({ pathname: "/pages/notifications", params: { category: "nutrition" } } as never)
+                router.push({
+                  pathname: "/pages/notifications",
+                  params: { category: "nutrition" },
+                } as never)
               }
             />
           </Animated.View>
@@ -209,7 +226,10 @@ export function NutritionScreen() {
                 {errorMessage ?? "Beslenme verisi yüklenemedi."}
               </Text>
               <Pressable
-                style={[styles.retryButton, { backgroundColor: colors.primary }]}
+                style={[
+                  styles.retryButton,
+                  { backgroundColor: colors.primary },
+                ]}
                 onPress={() => {
                   setIsLoading(true);
                   loadNutrition(selectedDate);
@@ -240,13 +260,10 @@ export function NutritionScreen() {
               </Animated.View>
 
               <View style={[styles.padded, styles.sectionGap]}>
-                <NutritionInsight insight={data.insight} onViewSuggestions={() => setAssistantOpen(true)} />
-              </View>
-
-              <View style={[styles.padded, styles.sectionGap]}>
-                <PremiumFeature feature="AI_NUTRITION" borderRadius={18}>
-                  <AiNutritionPlanCard />
-                </PremiumFeature>
+                <NutritionInsight
+                  insight={data.insight}
+                  onViewSuggestions={() => setAssistantOpen(true)}
+                />
               </View>
 
               <View style={[styles.padded, styles.sectionGap]}>
@@ -283,7 +300,10 @@ export function NutritionScreen() {
                 onAddFirstMeal={() => setAddMealType("Kahvaltı")}
               />
               <View style={styles.sectionGap}>
-                <NutritionInsight insight={data.insight} onViewSuggestions={() => setAssistantOpen(true)} />
+                <NutritionInsight
+                  insight={data.insight}
+                  onViewSuggestions={() => setAssistantOpen(true)}
+                />
               </View>
             </Animated.View>
           )}
@@ -310,7 +330,12 @@ export function NutritionScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   flex: { flex: 1 },
-  dayState: { alignItems: "center", justifyContent: "center", gap: 16, minHeight: 240 },
+  dayState: {
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 16,
+    minHeight: 240,
+  },
   errorText: { fontSize: 14, textAlign: "center" },
   retryButton: {
     paddingHorizontal: 20,
