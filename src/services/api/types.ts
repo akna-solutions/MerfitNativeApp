@@ -934,3 +934,70 @@ export type FinishMiniGameRequest = {
   ticks: number;
   flapTicks: number[];
 };
+
+// ---- Fotograftan kalori analizi (POST /api/food-analysis/analyze) ----
+// Tum degerler tahminidir; sonuc otomatik kaydedilmez, kullanici onaylayinca /confirm cagrilir.
+export type FoodAnalysisNutrients = {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+};
+
+export type FoodAnalysisItem = FoodAnalysisNutrients & {
+  /** Analiz icindeki sira (1'den baslar); onayda yemegi tanimlar. */
+  itemId: number;
+  foodName: string;
+  estimatedGrams: number;
+  minGrams: number;
+  maxGrams: number;
+  /** 100 g icin degerler; porsiyon degisince toplam bunlarla hesaplanir. */
+  per100g: FoodAnalysisNutrients;
+  /** Tanima guveni (0-1). */
+  confidence: number;
+  portionUncertainty: "low" | "medium" | "high";
+  needsPortionConfirmation: boolean;
+  isEstimate: boolean;
+  /** "catalog": dogrulanmis besin katalogu, "ai_estimate": model tahmini. */
+  nutritionSource: "catalog" | "ai_estimate";
+  matchedFoodName?: string | null;
+  matchedFoodId?: number | null;
+  note?: string | null;
+};
+
+export type FoodAnalysisResult = {
+  analysisId: number;
+  foodName: string;
+  items: FoodAnalysisItem[];
+  totals: FoodAnalysisNutrients & { estimatedGrams: number };
+  confidence: number;
+  isEstimate: boolean;
+  needsPortionConfirmation: boolean;
+  warnings: string[];
+  unidentifiedItems: string[];
+  remainingAnalyses: number;
+  /** Bu analizin kaydedilebilecegi son an (UTC, ISO). */
+  confirmBefore: string;
+};
+
+/** GET /api/food-analysis/status - analiz oncesi bilgi; kotadan dusmez. */
+export type FoodAnalysisStatus = {
+  enabled: boolean;
+  /** Fotografin hangi saglayiciya gittigi ve nasil kullanilabilecegi; analiz oncesi gosterilir. */
+  dataNotice: string;
+  dailyLimit: number;
+  remainingAnalyses: number;
+};
+
+export type ConfirmFoodAnalysisRequest = {
+  date?: string; // "yyyy-MM-dd"
+  mealType: ApiMealType;
+  items: { itemId: number; grams: number }[];
+};
+
+export type ConfirmFoodAnalysisResponse = {
+  analysisId: number;
+  /** true: bu analiz daha once kaydedilmisti; yeni kayit olusmadi, ilk kaydin sonucu dondu. */
+  alreadyLogged: boolean;
+  entries: MealEntry[];
+};

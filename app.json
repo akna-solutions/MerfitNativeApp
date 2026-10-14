@@ -40,9 +40,17 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Öğün eklerken ürün barkodunu okutmak için kameranıza erişmemiz gerekiyor.",
+          "cameraPermission": "Öğün eklerken ürün barkodunu okutmak ve yemeğinin fotoğrafını çekmek için kameranıza erişmemiz gerekiyor.",
           "microphonePermission": false,
           "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Öğününü fotoğrafla eklemek için seçtiğin yemek fotoğrafına erişmemiz gerekiyor.",
+          "cameraPermission": "Öğün eklerken ürün barkodunu okutmak ve yemeğinin fotoğrafını çekmek için kameranıza erişmemiz gerekiyor.",
+          "microphonePermission": false
         }
       ],
       "expo-font",

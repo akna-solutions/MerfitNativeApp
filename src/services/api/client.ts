@@ -85,7 +85,7 @@ async function parseErrorBody(response: Response): Promise<ApiErrorBody> {
 }
 
 /**
- * MerfitCustomerApi'ye JSON istegi atar; Authorization header'ini otomatik ekler,
+ * MerfitCustomerApi'ye JSON (ya da FormData ile multipart) istegi atar; Authorization header'ini otomatik ekler,
  * hata govdesini ApiError'a cevirir ve 401 durumunda saklanan token'lari temizler.
  */
 export async function apiRequest<TResponse>(path: string, options: RequestOptions = {}): Promise<TResponse> {
@@ -94,7 +94,9 @@ export async function apiRequest<TResponse>(path: string, options: RequestOption
   const headers: Record<string, string> = {
     Accept: "application/json",
   };
-  if (body !== undefined) {
+  // FormData (dosya yukleme) govdesinde Content-Type'i fetch belirler (multipart boundary dahil).
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+  if (body !== undefined && !isFormData) {
     headers["Content-Type"] = "application/json";
   }
 
@@ -117,7 +119,7 @@ export async function apiRequest<TResponse>(path: string, options: RequestOption
     response = await fetch(targetUrl, {
       method,
       headers,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: body === undefined ? undefined : isFormData ? (body as FormData) : JSON.stringify(body),
       signal: controller.signal,
     });
   } catch (error) {
