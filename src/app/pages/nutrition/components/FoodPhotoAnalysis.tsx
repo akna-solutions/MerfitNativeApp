@@ -54,7 +54,6 @@ export function FoodPhotoAnalysis({ mealType, date, onLogged, onBack }: Props) {
   const [result, setResult] = useState<FoodAnalysisResult | null>(null);
   const [gramsText, setGramsText] = useState<Record<number, string>>({});
   const [selected, setSelected] = useState<Record<number, boolean>>({});
-  const [portionChecked, setPortionChecked] = useState<Record<number, boolean>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const analysisRef = useRef<AbortController | null>(null);
@@ -84,7 +83,6 @@ export function FoodPhotoAnalysis({ mealType, date, onLogged, onBack }: Props) {
       // Duz sayi: yerel binlik ayirici ("1.200") ondalik olarak okunmasin.
       setGramsText(Object.fromEntries(analysis.items.map((i) => [i.itemId, String(Math.round(i.estimatedGrams))])));
       setSelected(Object.fromEntries(analysis.items.map((i) => [i.itemId, true])));
-      setPortionChecked({});
       setStatus((prev) => (prev ? { ...prev, remainingAnalyses: analysis.remainingAnalyses } : prev));
       setPhase("result");
     } catch (e) {
@@ -145,8 +143,8 @@ export function FoodPhotoAnalysis({ mealType, date, onLogged, onBack }: Props) {
   const totals = computeTotals(items, grams, selected);
   const selectedItems = items.filter((i) => selected[i.itemId]);
   const hasInvalidGrams = selectedItems.some((i) => grams[i.itemId] == null);
-  const needsCheck = selectedItems.filter((i) => i.needsPortionConfirmation && !portionChecked[i.itemId]);
-  const canSave = selectedItems.length > 0 && !hasInvalidGrams && needsCheck.length === 0 && !isSaving;
+  // Porsiyon zorunlu onaylatilmaz; kullanici isterse gramaji duzeltir.
+  const canSave = selectedItems.length > 0 && !hasInvalidGrams && !isSaving;
 
   const handleSave = async () => {
     if (!result || !canSave || savedRef.current) return;
@@ -217,23 +215,18 @@ export function FoodPhotoAnalysis({ mealType, date, onLogged, onBack }: Props) {
 
   if (phase === "result" && result) {
     return (
-        <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {backRow}
           <Text style={[styles.title, { color: colors.text }]}>{result.foodName}</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Değerler fotoğraftan tahmin edildi; gramajları kontrol edip düzeltebilirsin.
           </Text>
 
-          {result.warnings.length > 0 || result.unidentifiedItems.length > 0 ? (
-            <View style={[styles.warningBox, { backgroundColor: colors.dangerBackground, borderColor: colors.dangerBorder }]} testID="food-photo-warnings">
-              {result.warnings.map((w) => (
-                <Text key={w} style={[styles.warningText, { color: colors.text }]}>• {w}</Text>
-              ))}
-              {result.unidentifiedItems.length > 0 ? (
-                <Text style={[styles.warningText, { color: colors.text }]}>
-                  • Tanımlanamayanlar: {result.unidentifiedItems.join(", ")}. Bunları listeden arayarak ekleyebilirsin.
-                </Text>
-              ) : null}
+          {result.unidentifiedItems.length > 0 ? (
+            <View style={[styles.warningBox, { backgroundColor: colors.card, borderColor: colors.border }]} testID="food-photo-warnings">
+              <Text style={[styles.warningText, { color: colors.text }]}>
+                Tanımlanamayanlar: {result.unidentifiedItems.join(", ")}. Bunları listeden arayarak ekleyebilirsin.
+              </Text>
             </View>
           ) : null}
 
@@ -244,11 +237,9 @@ export function FoodPhotoAnalysis({ mealType, date, onLogged, onBack }: Props) {
               text={gramsText[item.itemId] ?? ""}
               grams={grams[item.itemId]}
               selected={!!selected[item.itemId]}
-              checked={!!portionChecked[item.itemId]}
               isDark={isDark}
               onChangeText={(t) => setGramsText((prev) => ({ ...prev, [item.itemId]: t }))}
               onToggleSelected={() => setSelected((prev) => ({ ...prev, [item.itemId]: !prev[item.itemId] }))}
-              onToggleChecked={() => setPortionChecked((prev) => ({ ...prev, [item.itemId]: !prev[item.itemId] }))}
             />
           ))}
 
@@ -260,9 +251,6 @@ export function FoodPhotoAnalysis({ mealType, date, onLogged, onBack }: Props) {
             </Text>
           </View>
 
-          {needsCheck.length > 0 ? (
-            <Text style={[styles.hint, { color: colors.danger }]}>Kaydetmeden önce işaretli porsiyonları kontrol et.</Text>
-          ) : null}
           {saveError ? <Text style={[styles.hint, { color: colors.danger }]}>{saveError}</Text> : null}
 
           <Pressable
@@ -354,14 +342,12 @@ type ItemRowProps = {
   text: string;
   grams: number | null;
   selected: boolean;
-  checked: boolean;
   isDark: boolean;
   onChangeText: (text: string) => void;
   onToggleSelected: () => void;
-  onToggleChecked: () => void;
 };
 
-function ItemRow({ item, text, grams, selected, checked, isDark, onChangeText, onToggleSelected, onToggleChecked }: ItemRowProps) {
+function ItemRow({ item, text, grams, selected, isDark, onChangeText, onToggleSelected }: ItemRowProps) {
   const { colors } = useTheme();
   const values = grams != null ? nutrientsFor(item.per100g, grams) : null;
   const sourceLabel = item.nutritionSource === "catalog" ? "Besin kataloğu" : "Yapay zekâ tahmini";
@@ -412,13 +398,6 @@ function ItemRow({ item, text, grams, selected, checked, isDark, onChangeText, o
           </View>
           {grams == null ? (
             <Text style={[styles.hint, { color: colors.danger }]}>{MIN_GRAMS} ile {MAX_GRAMS} g arasında bir değer gir.</Text>
-          ) : null}
-          {item.note ? <Text style={[styles.itemMeta, styles.note, { color: colors.textSecondary }]}>{item.note}</Text> : null}
-          {item.needsPortionConfirmation ? (
-            <Pressable onPress={onToggleChecked} style={styles.checkRow} accessibilityRole="checkbox" accessibilityState={{ checked }} testID={`food-photo-confirm-${item.itemId}`}>
-              <Ionicons name={checked ? "checkmark-circle" : "ellipse-outline"} size={18} color={checked ? colors.primary : colors.danger} />
-              <Text style={[styles.checkLabel, { color: colors.text }]}>Porsiyon belirsiz; gramajı kontrol ettim</Text>
-            </Pressable>
           ) : null}
         </>
       ) : null}
@@ -473,7 +452,6 @@ const styles = StyleSheet.create({
   itemHeader: { flexDirection: "row", gap: 10, alignItems: "flex-start" },
   itemName: { fontSize: 14, fontWeight: "700" },
   itemMeta: { fontSize: 11, marginTop: 2 },
-  note: { marginTop: 8 },
   gramsRow: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 10 },
   inputWrapper: {
     flexDirection: "row",
@@ -488,8 +466,6 @@ const styles = StyleSheet.create({
   inputUnit: { fontSize: 13, fontWeight: "600" },
   itemValues: { flex: 1, alignItems: "flex-end" },
   itemCalories: { fontSize: 16, fontWeight: "800" },
-  checkRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 10 },
-  checkLabel: { fontSize: 12, fontWeight: "600" },
   totalsCard: { borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, padding: 14, marginTop: 16 },
   totalsLabel: { fontSize: 12, fontWeight: "600" },
   totalsCalories: { fontSize: 24, fontWeight: "800", marginTop: 4 },
