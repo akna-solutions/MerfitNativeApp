@@ -62,6 +62,8 @@ type Props = {
   visible: boolean;
   mealType: MealType | null;
   selectedDate: Date;
+  /** Pencere acildiginda gosterilecek adim; dashboard kisayolu dogrudan fotograf adimini acar. */
+  initialStep?: "search" | "photo";
   /** Gunluge eklenen kayitlar (listeden tek besin; fotograf analizinde birden fazla olabilir). */
   onLogged: (entries: MealEntry[]) => void;
   onClose: () => void;
@@ -71,6 +73,7 @@ export function AddMealModal({
   visible,
   mealType,
   selectedDate,
+  initialStep = "search",
   onLogged,
   onClose,
 }: Props) {
@@ -88,10 +91,10 @@ export function AddMealModal({
   useEffect(() => {
     if (!visible) return;
     setQuery("");
-    setStep("search");
+    setStep(initialStep);
     setSelectedFood(null);
     setErrorMessage(null);
-  }, [visible]);
+  }, [visible, initialStep]);
 
   // Arama metnini debounce ederek backend'e istek atıyoruz.
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -38,6 +38,15 @@ function toDateParam(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+/** Fotografla ogun kisayolunda ogun turu gunun saatine gore secilir. */
+function mealTypeForNow(): MealType {
+  const hour = new Date().getHours();
+  if (hour < 11) return "Kahvaltı";
+  if (hour < 16) return "Öğle Yemeği";
+  if (hour < 21) return "Akşam Yemeği";
+  return "Atıştırmalık";
+}
+
 function mapToNutritionData(response: NutritionResponse): NutritionData {
   return {
     hasLoggedFirstMeal: response.hasLoggedFirstMeal,
@@ -62,9 +71,27 @@ export function NutritionScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [addMealType, setAddMealType] = useState<MealType | null>(null);
+  const [addMealStep, setAddMealStep] = useState<"search" | "photo">("search");
   const [isAddingWater, setIsAddingWater] = useState(false);
   const [assistantOpen, setAssistantOpen] = useState(false);
   const assistant = useNutritionAssistant(toDateParam(selectedDate));
+  const { action } = useLocalSearchParams<{ action?: string }>();
+
+  const openAddMeal = useCallback((type: MealType) => {
+    setAddMealStep("search");
+    setAddMealType(type);
+  }, []);
+
+  // Dashboard'daki "Öğün Gir" kisayolu bu sekmeye action=photo ile gelir: bugunun gunlugunde Ogun Ekle
+  // penceresi dogrudan fotograf adiminda acilir. Parametre tuketildikten sonra temizlenir ki sekmeye
+  // tekrar donuldugunde pencere yeniden acilmasin.
+  useEffect(() => {
+    if (action !== "photo") return;
+    router.setParams({ action: undefined } as never);
+    setSelectedDate((prev) => (toDateParam(prev) === toDateParam(new Date()) ? prev : new Date()));
+    setAddMealStep("photo");
+    setAddMealType(mealTypeForNow());
+  }, [action, router]);
 
   const loadNutrition = useCallback(
     async (date: Date, signal?: AbortSignal) => {
@@ -275,7 +302,7 @@ export function NutritionScreen() {
               <View style={[styles.padded, styles.sectionGap]}>
                 <MealsSection
                   meals={data.meals}
-                  onAddMeal={setAddMealType}
+                  onAddMeal={openAddMeal}
                   onSelectMeal={() => {
                     // TODO: meal detay ekranı eklendiğinde buradan yönlendir.
                   }}
@@ -303,7 +330,7 @@ export function NutritionScreen() {
               ]}
             >
               <NutritionEmptyState
-                onAddFirstMeal={() => setAddMealType("Kahvaltı")}
+                onAddFirstMeal={() => openAddMeal("Kahvaltı")}
               />
               <View style={styles.sectionGap}>
                 <NutritionInsight
@@ -319,6 +346,7 @@ export function NutritionScreen() {
       <AddMealModal
         visible={addMealType !== null}
         mealType={addMealType}
+        initialStep={addMealStep}
         selectedDate={selectedDate}
         onLogged={handleMealLogged}
         onClose={() => setAddMealType(null)}
