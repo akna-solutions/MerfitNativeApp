@@ -22,6 +22,7 @@ import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { MealEntry, MealType } from "../types";
 import { displayUnit } from "../servingUnits";
 import { BarcodeScanner } from "./BarcodeScanner";
+import { FoodPhotoAnalysis } from "./FoodPhotoAnalysis";
 import { FoodPortionPicker, PortionSelection } from "./FoodPortionPicker";
 
 const MEAL_TYPE_TO_API: Record<MealType, ApiMealType> = {
@@ -39,8 +40,8 @@ function toDateParam(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-/** Modal icindeki adim: arama listesi, kamera ile barkod okuma, miktar secimi. */
-type Step = "search" | "scan" | "portion";
+/** Modal icindeki adim: arama listesi, kamera ile barkod okuma, miktar secimi, fotograftan analiz. */
+type Step = "search" | "scan" | "portion" | "photo";
 
 /** Barkod sorgusu hatasini kullaniciya anlasilir bir mesaja cevirir. */
 function barcodeErrorMessage(error: unknown): string {
@@ -61,7 +62,8 @@ type Props = {
   visible: boolean;
   mealType: MealType | null;
   selectedDate: Date;
-  onLogged: (entry: MealEntry) => void;
+  /** Gunluge eklenen kayitlar (listeden tek besin; fotograf analizinde birden fazla olabilir). */
+  onLogged: (entries: MealEntry[]) => void;
   onClose: () => void;
 };
 
@@ -141,12 +143,12 @@ export function AddMealModal({
         date: toDateParam(selectedDate),
         ...selection,
       });
-      onLogged({
+      onLogged([{
         id: String(entry.id),
         type: entry.type,
         name: entry.name,
         calories: entry.calories,
-      });
+      }]);
     } catch (error) {
       setErrorMessage(
         error instanceof ApiError ? error.message : "Öğün eklenemedi. Lütfen tekrar deneyin.",
@@ -186,7 +188,14 @@ export function AddMealModal({
             </Pressable>
           </View>
 
-          {step === "scan" ? (
+          {step === "photo" && mealType ? (
+            <FoodPhotoAnalysis
+              mealType={MEAL_TYPE_TO_API[mealType]}
+              date={toDateParam(selectedDate)}
+              onLogged={onLogged}
+              onBack={() => setStep("search")}
+            />
+          ) : step === "scan" ? (
             isLookingUpBarcode ? (
               <View style={styles.lookupBox}>
                 <ActivityIndicator color={colors.primary} />
@@ -239,6 +248,24 @@ export function AddMealModal({
                   <Ionicons
                     name="barcode-outline"
                     size={26}
+                    color={colors.primary}
+                  />
+                </Pressable>
+
+                <Pressable
+                  style={[styles.scanButton, { backgroundColor: colors.card, borderColor: colors.primary }]}
+                  onPress={() => {
+                    setErrorMessage(null);
+                    setStep("photo");
+                  }}
+                  hitSlop={6}
+                  accessibilityRole="button"
+                  accessibilityLabel="Fotoğrafla ekle"
+                  testID="add-meal-photo"
+                >
+                  <Ionicons
+                    name="camera-outline"
+                    size={24}
                     color={colors.primary}
                   />
                 </Pressable>

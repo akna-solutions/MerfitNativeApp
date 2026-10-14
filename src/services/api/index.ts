@@ -2,6 +2,7 @@ export * as authApi from "./auth";
 export * from "./client";
 export * as dashboardApi from "./dashboard";
 export * as equipmentApi from "./equipment";
+export * as foodAnalysisApi from "./foodAnalysis";
 export * as foodsApi from "./foods";
 export * as leaderboardApi from "./leaderboard";
 export * as miniGamesApi from "./miniGames";
