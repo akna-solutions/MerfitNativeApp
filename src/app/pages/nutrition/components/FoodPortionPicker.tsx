@@ -18,6 +18,10 @@ type Props = {
   isSubmitting: boolean;
   onConfirm: (selection: PortionSelection) => void;
   onBack: () => void;
+  /** Duzenlemede mevcut miktar (g/ml ya da porsiyon); verilmezse bir porsiyon. */
+  initialValue?: number;
+  /** Onay butonunun etiketi; varsayilan "Ekle". */
+  confirmLabel?: string;
 };
 
 /** "37", "37,5" ve "37.5" girislerini sayiya cevirir; gecersizse null. */
@@ -30,7 +34,7 @@ function formatNumber(value: number): string {
   return value.toLocaleString("tr-TR", { maximumFractionDigits: 1 });
 }
 
-export function FoodPortionPicker({ food, isSubmitting, onConfirm, onBack }: Props) {
+export function FoodPortionPicker({ food, isSubmitting, onConfirm, onBack, initialValue, confirmLabel = "Ekle" }: Props) {
   const { colors, isDark } = useTheme();
   const weighable = isWeighableUnit(food.servingUnit) && food.servingSize > 0;
   const unit = displayUnit(food.servingUnit);
@@ -39,7 +43,9 @@ export function FoodPortionPicker({ food, isSubmitting, onConfirm, onBack }: Pro
   const referenceSize = weighable ? 100 : food.servingSize;
   const perReference = (value: number) => (weighable ? (value * 100) / food.servingSize : value);
 
-  const [text, setText] = useState(weighable ? String(food.servingSize) : "1");
+  const [text, setText] = useState(
+    initialValue != null ? formatNumber(initialValue).replace(/\./g, "") : weighable ? String(food.servingSize) : "1",
+  );
   const value = parseAmount(text);
   const limit = weighable ? MAX_AMOUNT : MAX_PORTIONS;
   const isValid = value !== null && value <= limit;
@@ -125,7 +131,7 @@ export function FoodPortionPicker({ food, isSubmitting, onConfirm, onBack }: Pro
         {isSubmitting ? (
           <ActivityIndicator color="#FFFFFF" />
         ) : (
-          <Text style={styles.submitLabel}>Ekle · {totalCalories} kcal</Text>
+          <Text style={styles.submitLabel}>{confirmLabel} · {totalCalories} kcal</Text>
         )}
       </Pressable>
     </View>

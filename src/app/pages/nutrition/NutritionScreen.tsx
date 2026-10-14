@@ -20,6 +20,7 @@ import { AddMealModal } from "./components/AddMealModal";
 import { CalorieBreakdown } from "./components/CalorieBreakdown";
 import { CalorieCard } from "./components/CalorieCard";
 import { DateSelector } from "./components/DateSelector";
+import { EditMealItemModal } from "./components/EditMealItemModal";
 import { MacroOverview } from "./components/MacroOverview";
 import { MealsSection } from "./components/MealsSection";
 import { NutritionEmptyState } from "./components/NutritionEmptyState";
@@ -71,6 +72,7 @@ export function NutritionScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [addMealType, setAddMealType] = useState<MealType | null>(null);
+  const [editingMealId, setEditingMealId] = useState<string | null>(null);
   const [addMealStep, setAddMealStep] = useState<"search" | "photo">("search");
   const [isAddingWater, setIsAddingWater] = useState(false);
   const [assistantOpen, setAssistantOpen] = useState(false);
@@ -219,6 +221,20 @@ export function NutritionScreen() {
     void refreshNutritionSilently(selectedDate);
   };
 
+  const handleMealUpdated = (entry: MealEntry) => {
+    setData((prev) =>
+      prev ? { ...prev, meals: prev.meals.map((m) => (m.id === entry.id ? entry : m)) } : prev,
+    );
+    setEditingMealId(null);
+    void refreshNutritionSilently(selectedDate);
+  };
+
+  const handleMealDeleted = (id: string) => {
+    setData((prev) => (prev ? { ...prev, meals: prev.meals.filter((m) => m.id !== id) } : prev));
+    setEditingMealId(null);
+    void refreshNutritionSilently(selectedDate);
+  };
+
   const hasLoggedFirstMeal = (data?.meals.length ?? 0) > 0;
 
   return (
@@ -303,9 +319,7 @@ export function NutritionScreen() {
                 <MealsSection
                   meals={data.meals}
                   onAddMeal={openAddMeal}
-                  onSelectMeal={() => {
-                    // TODO: meal detay ekranı eklendiğinde buradan yönlendir.
-                  }}
+                  onSelectMeal={(meal) => setEditingMealId(meal.id)}
                 />
               </View>
 
@@ -350,6 +364,13 @@ export function NutritionScreen() {
         selectedDate={selectedDate}
         onLogged={handleMealLogged}
         onClose={() => setAddMealType(null)}
+      />
+
+      <EditMealItemModal
+        mealId={editingMealId}
+        onUpdated={handleMealUpdated}
+        onDeleted={handleMealDeleted}
+        onClose={() => setEditingMealId(null)}
       />
 
       <NutritionAssistantSheet

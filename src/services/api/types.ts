@@ -570,6 +570,23 @@ export type LogMealItemRequest = {
   amount?: number;
 };
 
+/** GET /api/nutrition/meals/{id} - gunlukteki kaydin duzenleme detayi. */
+export type MealItemDetail = {
+  id: number;
+  type: MealEntryType;
+  name: string;
+  calories: number;
+  /** Porsiyon carpani (food.servingSize'a gore). */
+  quantity: number;
+  /** g/ml birimli besinlerde tuketilen miktar; digerlerinde null. */
+  amount: number | null;
+  /** Kaydin porsiyon basina degerleri (kayit anindaki anlik goruntu). */
+  food: FoodListItem;
+};
+
+/** PUT /api/nutrition/meals/{id} govdesi; amount verilirse quantity kullanilmaz. */
+export type UpdateMealItemRequest = { quantity?: number; amount?: number };
+
 export type LogWaterRequest = {
   amountMl: number;
   date?: string;
