@@ -38,7 +38,7 @@ export function DashboardShortcuts({ points, onMealPhotoPress, onGamePress, onAs
     {
       id: "game",
       icon: "game-controller",
-      label: "Oyun",
+      label: "DumbbellDash",
       accessibilityLabel: "Dumbbell Dash oyununu aç",
       onPress: onGamePress,
     },
@@ -81,7 +81,12 @@ export function DashboardShortcuts({ points, onMealPhotoPress, onGamePress, onAs
               {item.value}
             </Text>
           ) : null}
-          <Text style={[styles.label, { color: item.value ? colors.textSecondary : colors.text }]} numberOfLines={1}>
+          <Text
+            style={[styles.label, { color: item.value ? colors.textSecondary : colors.text }]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.8}
+          >
             {item.label}
           </Text>
         </Pressable>
