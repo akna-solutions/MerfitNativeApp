@@ -13,17 +13,22 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ApiError } from "../../../services/api/client";
 import { getDashboard } from "../../../services/api/dashboard";
+import { getLeaderboard } from "../../../services/api/leaderboard";
 import { getTodayPlan } from "../../../services/api/myPlan";
 import { getUnreadNotificationCount } from "../../../services/api/notifications";
 import {
   DashboardResponse,
   MyTodayWorkoutPlanResponse,
 } from "../../../services/api/types";
+import { MiniGameModal } from "../../../shared/miniGame/dumbbellDash/MiniGameModal";
+import { useNutritionAssistant } from "../../../shared/nutritionAssistant/useNutritionAssistant";
 import { usePersonalizationStatus } from "../../../shared/personalization/usePersonalizationStatus";
 import { PremiumFeature } from "../../../shared/plus/components/PremiumFeature";
 import { useTheme } from "../../../shared/theme/ThemeContext";
+import { NutritionAssistantSheet } from "../nutrition/components/assistant/NutritionAssistantSheet";
 import { AiWorkoutCard } from "./components/AiWorkoutCard";
 import { DashboardHeader } from "./components/DashboardHeader";
+import { DashboardShortcuts } from "./components/DashboardShortcuts";
 import { EmptyState } from "./components/EmptyState";
 import { GoalProgressCard } from "./components/GoalProgressCard";
 import { PersonalizationPendingState } from "./components/PersonalizationPendingState";
@@ -34,6 +39,15 @@ import { RestDayCard } from "./components/RestDayCard";
 import { TodayPersonalWorkoutCard } from "./components/TodayPersonalWorkoutCard";
 import { WorkoutCard } from "./components/WorkoutCard";
 import { DashboardData, WorkoutSummary } from "./types";
+
+/** "yyyy-MM-dd" - bugunun tarihi (yerel saat diliminde); beslenme asistani gun bazinda calisir. */
+function todayParam(): string {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
 /** Backend'in CustomerDashboardResponse'unu (services/api/types.ts) ekranin bekledigi DashboardData sekline cevirir. */
 function mapToDashboardData(response: DashboardResponse): DashboardData {
@@ -75,6 +89,11 @@ export function DashboardScreen() {
     null,
   );
   const [unreadCount, setUnreadCount] = useState(0);
+  // Kisayoldaki MB FIT puani, puan sayfasiyla ayni (aylik) donemden gelir.
+  const [monthlyPoints, setMonthlyPoints] = useState<number | null>(null);
+  const [gameOpen, setGameOpen] = useState(false);
+  const [assistantOpen, setAssistantOpen] = useState(false);
+  const assistant = useNutritionAssistant(todayParam());
 
   const personalization = usePersonalizationStatus(true);
   const previousPersonalizationStatus = useRef(personalization.status);
@@ -104,6 +123,15 @@ export function DashboardScreen() {
     [router],
   );
 
+  const loadMonthlyPoints = useCallback(async (signal?: AbortSignal) => {
+    try {
+      const response = await getLeaderboard("month", signal);
+      setMonthlyPoints(response.currentUser.points);
+    } catch {
+      // Puan alinamazsa kisayol "—" gosterir; dokununca puan sayfasi yine acilir.
+    }
+  }, []);
+
   const loadTodayPlan = useCallback(async (signal?: AbortSignal) => {
     try {
       const response = await getTodayPlan(signal);
@@ -122,13 +150,14 @@ export function DashboardScreen() {
       const controller = new AbortController();
       loadDashboard(controller.signal);
       loadTodayPlan(controller.signal);
+      loadMonthlyPoints(controller.signal);
       getUnreadNotificationCount(undefined, controller.signal)
         .then(setUnreadCount)
         .catch(() => {
           // Sayi alinamazsa zil noktasiz gosterilir.
         });
       return () => controller.abort();
-    }, [loadDashboard, loadTodayPlan]),
+    }, [loadDashboard, loadTodayPlan, loadMonthlyPoints]),
   );
 
   // PersonalizationJob Pending/Processing -> Completed'e gectiginde, artik gercek kisisel
@@ -202,6 +231,16 @@ export function DashboardScreen() {
 
   const goToWorkoutPlan = () => {
     router.push("/pages/workout/plan" as never);
+  };
+
+  // Beslenme sekmesi Ogun Ekle penceresini dogrudan fotograf adiminda acar; kayit orada listeye eklenir.
+  const goToMealPhoto = () => {
+    router.navigate({ pathname: "/pages/nutrition", params: { action: "photo" } } as never);
+  };
+
+  const handleGameReward = () => {
+    void loadDashboard();
+    void loadMonthlyPoints();
   };
 
   const goToWorkoutHistory = () => {
@@ -289,6 +328,16 @@ export function DashboardScreen() {
             />
           </Animated.View>
 
+          <Animated.View style={[styles.padded, styles.shortcutsGap, fadeUp(headerAnim, -8)]}>
+            <DashboardShortcuts
+              points={monthlyPoints}
+              onMealPhotoPress={goToMealPhoto}
+              onGamePress={() => setGameOpen(true)}
+              onAssistantPress={() => setAssistantOpen(true)}
+              onScorePress={() => router.push("/pages/leaderboard" as never)}
+            />
+          </Animated.View>
+
           {personalization.isPending || personalization.isFailed ? (
             <Animated.View style={[styles.padded, fadeUp(workoutAnim)]}>
               <PersonalizationPendingState
@@ -314,7 +363,7 @@ export function DashboardScreen() {
 
           {isRestDay ? (
             <Animated.View style={[styles.padded, styles.gapTop, fadeUp(workoutAnim)]}>
-              <RestDayCard onRewardGranted={() => void loadDashboard()} />
+              <RestDayCard onRewardGranted={handleGameReward} />
             </Animated.View>
           ) : null}
 
@@ -414,6 +463,18 @@ export function DashboardScreen() {
           ) : null}
         </ScrollView>
       </SafeAreaView>
+
+      <MiniGameModal
+        visible={gameOpen}
+        onClose={() => setGameOpen(false)}
+        onRewardGranted={handleGameReward}
+      />
+
+      <NutritionAssistantSheet
+        visible={assistantOpen}
+        onClose={() => setAssistantOpen(false)}
+        controller={assistant}
+      />
     </View>
   );
 }
@@ -437,6 +498,7 @@ const styles = StyleSheet.create({
   scrollContent: { paddingTop: 16, paddingBottom: 156 },
   padded: { paddingHorizontal: 24 },
   gapTop: { marginTop: 28 },
+  shortcutsGap: { marginTop: 20, marginBottom: 8 },
   historyLinkGap: { marginTop: 16 },
   historyLink: {
     flexDirection: "row",
