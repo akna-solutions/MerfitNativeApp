@@ -21,20 +21,46 @@ type Props = {
  * Kayit sonrasi PersonalizationJob henuz Completed olmadiginda dashboard'da gosterilen
  * profesyonel yukleniyor/hata durumu. usePersonalizationStatus hook'u ile birlikte kullanilir.
  */
-export function PersonalizationPendingState({ isTimedOut, isFailed, errorMessage, onRetry }: Props) {
+export function PersonalizationPendingState({
+  isTimedOut,
+  isFailed,
+  errorMessage,
+  onRetry,
+}: Props) {
   const { colors } = useTheme();
 
   if (isFailed) {
     return (
-      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <View style={[styles.badge, styles.badgeError, { backgroundColor: colors.cardActive }]}>
+      <View
+        style={[
+          styles.card,
+          {
+            backgroundColor: colors.card,
+            borderColor: colors.border,
+            marginBottom: 8,
+          },
+        ]}
+      >
+        <View
+          style={[
+            styles.badge,
+            styles.badgeError,
+            { backgroundColor: colors.cardActive },
+          ]}
+        >
           <Text style={styles.badgeGlyph}>!</Text>
         </View>
-        <Text style={[styles.title, { color: colors.text }]}>Program hazırlanırken bir sorun oluştu.</Text>
-        <Text style={[styles.description, { color: colors.textSecondary }]}>
-          {errorMessage ?? "Lütfen birazdan tekrar dene. Sorun devam ederse destek ekibimizle iletişime geç."}
+        <Text style={[styles.title, { color: colors.text }]}>
+          Program hazırlanırken bir sorun oluştu.
         </Text>
-        <Text style={[styles.retryLink, { color: colors.primary }]} onPress={onRetry}>
+        <Text style={[styles.description, { color: colors.textSecondary }]}>
+          {errorMessage ??
+            "Lütfen birazdan tekrar dene. Sorun devam ederse destek ekibimizle iletişime geç."}
+        </Text>
+        <Text
+          style={[styles.retryLink, { color: colors.primary }]}
+          onPress={onRetry}
+        >
           Tekrar dene
         </Text>
       </View>
@@ -42,10 +68,21 @@ export function PersonalizationPendingState({ isTimedOut, isFailed, errorMessage
   }
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-      <ActivityIndicator color={colors.primary} size="small" style={styles.spinner} />
+    <View
+      style={[
+        styles.card,
+        { backgroundColor: colors.card, borderColor: colors.border },
+      ]}
+    >
+      <ActivityIndicator
+        color={colors.primary}
+        size="small"
+        style={styles.spinner}
+      />
       <Text style={[styles.title, { color: colors.text }]}>
-        {isTimedOut ? "Programın hazırlanması biraz uzun sürüyor." : "Programın hazırlanıyor."}
+        {isTimedOut
+          ? "Programın hazırlanması biraz uzun sürüyor."
+          : "Programın hazırlanıyor."}
       </Text>
       <Text style={[styles.description, { color: colors.textSecondary }]}>
         {isTimedOut
@@ -53,7 +90,10 @@ export function PersonalizationPendingState({ isTimedOut, isFailed, errorMessage
           : "Profiline göre kişisel antrenman ve beslenme programın oluşturuluyor. Bu birkaç dakika sürebilir."}
       </Text>
       {isTimedOut ? (
-        <Text style={[styles.retryLink, { color: colors.primary }]} onPress={onRetry}>
+        <Text
+          style={[styles.retryLink, { color: colors.primary }]}
+          onPress={onRetry}
+        >
           Şimdi kontrol et
         </Text>
       ) : null}
