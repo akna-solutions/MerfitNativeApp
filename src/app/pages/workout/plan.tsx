@@ -16,6 +16,7 @@ import { getMyPlan, getTodayPlan } from "../../../services/api/myPlan";
 import {
   MyPlanDay,
   MyPlanExercise,
+  MyPlanWorkout,
   MyTodayWorkoutPlanResponse,
   MyWorkoutPlanResponse,
 } from "../../../services/api/types";
@@ -37,13 +38,14 @@ const DAY_NAMES: Record<string, string> = {
 const JS_DAY_TO_NAME = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 // Profil API'si hedefi BUILD_MUSCLE gibi, plan API'si ise enum adi (BuildMuscle) olarak dondurur.
+// Eski hedefler Kas Gelistirme olarak gosterilir (backend ile ayni esleme).
 const PLAN_GOAL_TO_GOAL: Record<string, Goal> = {
   LoseWeight: "LOSE_WEIGHT",
   BuildMuscle: "BUILD_MUSCLE",
-  MaintainWeight: "MAINTAIN_WEIGHT",
-  ImproveEndurance: "IMPROVE_ENDURANCE",
   GetStronger: "GET_STRONGER",
-  ImproveFitness: "GENERAL_FITNESS",
+  MaintainWeight: "BUILD_MUSCLE",
+  ImproveEndurance: "BUILD_MUSCLE",
+  ImproveFitness: "BUILD_MUSCLE",
 };
 
 function formatExercise(exercise: MyPlanExercise): string {
@@ -52,7 +54,9 @@ function formatExercise(exercise: MyPlanExercise): string {
     const amount = seconds >= 60 && seconds % 60 === 0 ? `${seconds / 60} dk` : `${seconds} sn`;
     return `${exercise.sets} × ${amount}`;
   }
-  return exercise.reps ? `${exercise.sets} × ${exercise.reps}` : `${exercise.sets} set`;
+  if (!exercise.reps) return `${exercise.sets} set`;
+  const reps = exercise.repsMax && exercise.repsMax > exercise.reps ? `${exercise.reps}-${exercise.repsMax}` : `${exercise.reps}`;
+  return `${exercise.sets} × ${reps}`;
 }
 
 /** Kullanicinin aktif kisisel antrenman programinin haftalik gorunumu (GET /api/my-plan). */
@@ -119,6 +123,14 @@ export default function WorkoutPlanScreen() {
         title: day.workout.title,
         workoutPlanDayId: isServerToday ? String(today?.workoutPlanDayId) : undefined,
       },
+    } as never);
+  };
+
+  // Kardiyo bitirici ayri bir katalog antrenmanidir; plan gunune baglanmadan serbest antrenman olarak baslar.
+  const startCardio = (workout: MyPlanWorkout) => {
+    router.push({
+      pathname: "/pages/workout/active/[id]",
+      params: { id: String(workout.id), title: workout.title },
     } as never);
   };
 
@@ -254,6 +266,7 @@ export default function WorkoutPlanScreen() {
                     <Text style={[styles.workoutTitle, { color: colors.text }]}>{day.workout.title}</Text>
                     <Text style={[styles.workoutMeta, { color: colors.textSecondary }]}>
                       {day.workout.durationMin} dk · {day.exercises.length} egzersiz
+                      {day.cardioFinisher ? ` · + ${day.cardioFinisher.durationMin} dk kardiyo` : ""}
                     </Text>
                   </Pressable>
 
@@ -278,6 +291,23 @@ export default function WorkoutPlanScreen() {
                       >
                         <Text style={styles.startLabel}>Antrenmana Başla</Text>
                       </Pressable>
+                      {day.cardioFinisher ? (
+                        <View style={[styles.cardioCard, { borderColor: colors.border }]}>
+                          <Text style={[styles.exerciseName, { color: colors.text }]}>
+                            Kardiyo bitirici: {day.cardioFinisher.title}
+                          </Text>
+                          <Text style={[styles.exerciseMeta, { color: colors.textSecondary }]}>
+                            Ana antrenmandan sonra · {day.cardioFinisher.durationMin} dk
+                          </Text>
+                          <Pressable
+                            style={[styles.cardioButton, { backgroundColor: colors.inputBackground }]}
+                            onPress={() => startCardio(day.cardioFinisher!)}
+                            accessibilityRole="button"
+                          >
+                            <Text style={[styles.cardioLabel, { color: colors.text }]}>Kardiyoyu Başlat</Text>
+                          </Pressable>
+                        </View>
+                      ) : null}
                     </View>
                   ) : null}
                 </View>
@@ -316,6 +346,9 @@ const styles = StyleSheet.create({
   exerciseMeta: { fontSize: 12 },
   startButton: { marginTop: 8, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   startLabel: { color: "#FFFFFF", fontSize: 14, fontWeight: "700" },
+  cardioCard: { marginTop: 8, borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 12, gap: 4 },
+  cardioButton: { marginTop: 6, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  cardioLabel: { fontSize: 13, fontWeight: "700" },
   restRow: {
     flexDirection: "row",
     alignItems: "center",

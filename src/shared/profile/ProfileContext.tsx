@@ -10,15 +10,28 @@ import {
 } from "react";
 
 import { useAuth } from "../auth/AuthContext";
-import { ApiError } from "../../services/api/client";
+import { ApiError, isApiError } from "../../services/api/client";
+import { isLowBodyFatConfirmationError } from "../bodyComposition/bodyFat";
 import * as profileApi from "../../services/api/profile";
 import { ProfileResponse, UpdateProfileRequest as ApiUpdateProfileRequest } from "../../services/api/types";
 import { EMPTY_PROFILE_DATA } from "./mockData";
-import { ProfileData, TrainingLocation, Weekday, WEEKDAYS } from "./types";
+import { Goal, ProfileData, TrainingLocation, Weekday, WEEKDAYS } from "./types";
+
+/** Hedef degisikliginin sonucu. */
+export type ChangeGoalResult =
+  | { status: "saved" }
+  /** Sunucu dusuk yag orani uyarisinin acikca onaylanmasini istiyor; hedef kaydedilmedi. */
+  | { status: "confirmationRequired"; message: string }
+  | { status: "error"; message: string };
 
 type ProfileContextValue = {
   profile: ProfileData;
   updateProfile: (patch: Partial<ProfileData>) => void;
+  /**
+   * Hedefi kaydeder. Iyimser guncelleme yapilmaz: sunucu dusuk yag orani onayi isteyebilir ve hedef
+   * kullanici acikca onaylamadan degismemelidir.
+   */
+  changeGoal: (goal: Goal, options?: { confirmLowBodyFatWarning?: boolean }) => Promise<ChangeGoalResult>;
   /** GET /api/profile su an calisiyor mu. */
   isLoading: boolean;
   /** Bu oturumda profil en az bir kez basariyla yuklendi mi. false iken `profile` bos veridir. */
@@ -200,9 +213,40 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       });
   }, []);
 
+  const changeGoal = useCallback(
+    async (goal: Goal, options?: { confirmLowBodyFatWarning?: boolean }): Promise<ChangeGoalResult> => {
+      const requestId = requestIdRef.current;
+      pendingWritesRef.current++;
+      try {
+        const response = await profileApi.updateProfile({
+          goal,
+          ...(options?.confirmLowBodyFatWarning ? { confirmLowBodyFatWarning: true } : {}),
+        });
+        if (requestId === requestIdRef.current) {
+          const next = mapToProfileData(response);
+          profileRef.current = next;
+          setProfile(next);
+        }
+        return { status: "saved" };
+      } catch (err) {
+        if (isLowBodyFatConfirmationError(err)) {
+          return { status: "confirmationRequired", message: (err as ApiError).message };
+        }
+        console.warn("Hedef kaydedilemedi:", err);
+        return {
+          status: "error",
+          message: isApiError(err) && err.message ? err.message : "Hedefin kaydedilemedi. Lütfen tekrar dene.",
+        };
+      } finally {
+        pendingWritesRef.current--;
+      }
+    },
+    [],
+  );
+
   const value = useMemo(
-    () => ({ profile, updateProfile, isLoading, isLoaded, error, reload }),
-    [profile, updateProfile, isLoading, isLoaded, error, reload],
+    () => ({ profile, updateProfile, changeGoal, isLoading, isLoaded, error, reload }),
+    [profile, updateProfile, changeGoal, isLoading, isLoaded, error, reload],
   );
 
   return (

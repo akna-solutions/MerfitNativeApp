@@ -82,13 +82,23 @@ export type ProfileData = {
   };
 };
 
+/** Profilde secilebilen hedefler. Diger kodlar yalnizca eski kayitlar icin tipte kalir. */
+export const PRIMARY_GOALS: Goal[] = ["BUILD_MUSCLE", "GET_STRONGER", "LOSE_WEIGHT"];
+
+/** Eski hedef kodlarini ana hedefe esler (backend FitnessGoals.Normalize ile ayni: Kas Gelistirme). */
+export function normalizeGoal(goal: Goal | null | undefined): Goal | null {
+  if (!goal) return null;
+  return PRIMARY_GOALS.includes(goal) ? goal : "BUILD_MUSCLE";
+}
+
 export const GOAL_LABELS: Record<Goal, string> = {
-  LOSE_WEIGHT: "Kilo Vermek",
-  BUILD_MUSCLE: "Kas Yapmak",
-  MAINTAIN_WEIGHT: "Kiloyu Korumak",
-  IMPROVE_ENDURANCE: "Dayanıklılığı Artırmak",
-  GET_STRONGER: "Daha Güçlü Olmak",
-  GENERAL_FITNESS: "Genel Fitness",
+  BUILD_MUSCLE: "Kas Geliştirme",
+  GET_STRONGER: "Güçlenme",
+  LOSE_WEIGHT: "Yağ Kaybı",
+  // Eski hedefler (sunucu Kas Geliştirme'ye esler):
+  MAINTAIN_WEIGHT: "Kas Geliştirme",
+  IMPROVE_ENDURANCE: "Kas Geliştirme",
+  GENERAL_FITNESS: "Kas Geliştirme",
 };
 
 export const EXPERIENCE_LABELS: Record<ExperienceLevel, string> = {

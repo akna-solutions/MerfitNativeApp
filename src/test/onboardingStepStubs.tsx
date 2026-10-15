@@ -16,10 +16,15 @@ function autoSelect<T>(value: T) {
 
 export const NameStep = ({ value }: { value: string }) => <Text>{`ad:${value}`}</Text>;
 export const LastNameStep = ({ value }: { value: string }) => <Text>{`soyad:${value}`}</Text>;
+/** Ad/soyad on doldurulmayan akislar icin: degeri kendisi girer. */
+export const FilledNameStep = autoSelect("Ayşe");
+export const FilledLastNameStep = autoSelect("Yılmaz");
 export const GenderStep = autoSelect("male");
 export const AgeStep = autoSelect("25");
 export const WeightStep = autoSelect("78");
 export const GoalStep = autoSelect("build_muscle");
+/** Opsiyonel olcum adimi: bos birakilir (yag orani bilgisi yok, uyari gosterilmez). */
+export const BodyCompositionStep = () => null;
 export const ActivityStep = autoSelect("moderate");
 export const ExperienceStep = autoSelect("beginner");
 export const FrequencyStep = autoSelect(3);

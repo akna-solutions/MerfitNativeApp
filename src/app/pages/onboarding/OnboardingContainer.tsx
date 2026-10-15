@@ -13,6 +13,15 @@ import {
   RegisterRequest,
 } from "../../../services/api/types";
 import { useAuth } from "../../../shared/auth/AuthContext";
+import {
+  assessBodyFat,
+  BodyMeasurementField,
+  isLowBodyFatConfirmationError,
+  parseDecimal,
+  requiresLowBodyFatWarning,
+  validateMeasurement,
+} from "../../../shared/bodyComposition/bodyFat";
+import { LowBodyFatWarningModal } from "../../../shared/bodyComposition/LowBodyFatWarningModal";
 import { refreshGoogleIdToken } from "../../../shared/auth/googleSignIn";
 import { goToDashboardAfterAuth, goToEmailVerificationAfterAuth } from "../../../shared/auth/navigation";
 import {
@@ -27,6 +36,7 @@ import { SuccessScreen } from "./components/SuccessScreen";
 import { AccountStep } from "./steps/AccountStep";
 import { ActivityStep } from "./steps/ActivityStep";
 import { AgeStep } from "./steps/AgeStep";
+import { BodyCompositionStep, BodyCompositionValues } from "./steps/BodyCompositionStep";
 import { EquipmentLoadStatus, EquipmentStep } from "./steps/EquipmentStep";
 import { ExperienceStep } from "./steps/ExperienceStep";
 import { FrequencyStep } from "./steps/FrequencyStep";
@@ -38,7 +48,56 @@ import { NameStep } from "./steps/NameStep";
 import { WeightStep } from "./steps/WeightStep";
 import { initialOnboardingData, OnboardingData } from "./types";
 
-const TOTAL_STEPS = 12;
+const TOTAL_STEPS = 13;
+const GOAL_STEP = 7;
+const BODY_COMPOSITION_STEP = 8;
+
+// Bu alanlardan biri degisirse dusuk yag orani onayi gecersiz olur ve uyari yeniden degerlendirilir.
+const BODY_FAT_INPUT_KEYS: (keyof OnboardingData)[] = [
+  "goal", "gender", "age", "height", "heightUnit", "heightFeet", "heightInches", "bodyFat", "neck", "waist", "hip",
+];
+
+const MEASUREMENT_FIELDS: Record<keyof BodyCompositionValues, BodyMeasurementField> = {
+  bodyFat: "bodyFat",
+  neck: "neck",
+  waist: "waist",
+  hip: "hip",
+};
+
+function heightCmOf(data: OnboardingData): number | null {
+  if (data.heightUnit === "cm") return parseDecimal(data.height);
+  const feet = parseDecimal(data.heightFeet);
+  if (feet === null) return null;
+  return Math.round((feet * 30.48 + (parseDecimal(data.heightInches) ?? 0) * 2.54) * 10) / 10;
+}
+
+/** Onboarding verisinden yag orani degerlendirmesi (sunucudaki kayit akisiyla ayni kural). */
+function bodyFatAssessmentOf(data: OnboardingData) {
+  const age = parseInt(data.age, 10);
+  return assessBodyFat({
+    gender: data.gender,
+    age: Number.isNaN(age) ? null : age,
+    heightCm: heightCmOf(data),
+    bodyFatPercentage: parseDecimal(data.bodyFat),
+    neckCm: parseDecimal(data.neck),
+    waistCm: parseDecimal(data.waist),
+    hipCm: data.gender === "female" ? parseDecimal(data.hip) : null,
+  });
+}
+
+function measurementErrors(data: OnboardingData) {
+  const errors: Partial<Record<keyof BodyCompositionValues, string>> = {};
+  (Object.keys(MEASUREMENT_FIELDS) as (keyof BodyCompositionValues)[]).forEach((key) => {
+    const raw = data[key];
+    if (!raw.trim()) return;
+    const value = parseDecimal(raw);
+    const error = value === null ? "Geçerli bir sayı gir." : validateMeasurement(MEASUREMENT_FIELDS[key], value);
+    if (error) errors[key] = error;
+  });
+  return errors;
+}
+
+type LowBodyFatPrompt = { origin: "local" } | { origin: "server"; message: string };
 
 type ProfileFields = Omit<RegisterRequest, "email" | "password" | "confirmPassword">;
 
@@ -68,6 +127,11 @@ function toProfileFields(data: OnboardingData, allEquipmentIds: number[]): Profi
     weightUnit: data.weightUnit,
     weight,
     goal: data.goal,
+    bodyFatPercentage: parseDecimal(data.bodyFat),
+    neckCm: parseDecimal(data.neck),
+    waistCm: parseDecimal(data.waist),
+    hipCm: data.gender === "female" ? parseDecimal(data.hip) : null,
+    confirmLowBodyFatWarning: data.confirmLowBodyFatWarning ? true : null,
     activityLevel: data.activityLevel,
     trainingExperience: data.trainingExperience,
     trainingDays: data.trainingDays,
@@ -135,6 +199,7 @@ export function OnboardingContainer() {
   const [equipmentList, setEquipmentList] = useState<EquipmentListItem[]>([]);
   const [equipmentStatus, setEquipmentStatus] = useState<EquipmentLoadStatus>("loading");
   const [equipmentAttempt, setEquipmentAttempt] = useState(0);
+  const [lowBodyFatPrompt, setLowBodyFatPrompt] = useState<LowBodyFatPrompt | null>(null);
   const usernameAvailability = useUsernameAvailability(data.username);
 
   // Ekipman listesini akisin basinda cekiyoruz; EquipmentStep secenekleri bu listeden uretir
@@ -160,7 +225,13 @@ export function OnboardingContainer() {
   const update = <K extends keyof OnboardingData>(
     key: K,
     value: OnboardingData[K],
-  ) => setData((prev) => ({ ...prev, [key]: value }));
+  ) =>
+    setData((prev) => ({
+      ...prev,
+      [key]: value,
+      confirmLowBodyFatWarning:
+        BODY_FAT_INPUT_KEYS.includes(key) && prev[key] !== value ? false : prev.confirmLowBodyFatWarning,
+    }));
 
   const goNext = () => {
     if (step < TOTAL_STEPS) {
@@ -179,17 +250,17 @@ export function OnboardingContainer() {
     setStep(step - 1);
   };
 
-  const handleCreateAccount = async () => {
+  const handleCreateAccount = async (submitData: OnboardingData = data) => {
     if (isSubmitting) return;
     if (googleSignup) {
-      await handleCreateGoogleAccount(googleSignup);
+      await handleCreateGoogleAccount(googleSignup, submitData);
       return;
     }
 
     setSubmitError(null);
     setIsSubmitting(true);
     try {
-      const result = await register(toRegisterRequest(data, equipmentList.map((item) => item.id)));
+      const result = await register(toRegisterRequest(submitData, equipmentList.map((item) => item.id)));
       // E-posta dogrulanmadan uygulamaya gecilmez: kayittan sonra dogrudan kod ekranina gidilir;
       // kod dogrulaninca "Hazırsın" ekrani gosterilir.
       goToEmailVerificationAfterAuth(router, {
@@ -198,6 +269,11 @@ export function OnboardingContainer() {
         name: `${data.name} ${data.lastName}`.trim(),
       });
     } catch (error) {
+      if (isLowBodyFatConfirmationError(error)) {
+        // Sunucu (son olcumlerle) uyari gerektiriyor: kullanici acikca secim yapana kadar kayit yapilmaz.
+        setLowBodyFatPrompt({ origin: "server", message: (error as ApiError).message });
+        return;
+      }
       console.error("Kayıt hatası:", error);
       setSubmitError(registrationErrorMessage(error));
     } finally {
@@ -205,14 +281,14 @@ export function OnboardingContainer() {
     }
   };
 
-  const handleCreateGoogleAccount = async (signup: PendingGoogleSignup) => {
+  const handleCreateGoogleAccount = async (signup: PendingGoogleSignup, submitData: OnboardingData) => {
     setSubmitError(null);
     setIsSubmitting(true);
     try {
       // ID token ~1 saat gecerli; onboarding uzun surduyse sessizce yenisi alinir.
       const idToken = (await refreshGoogleIdToken()) ?? signup.idToken;
       const request: GoogleRegisterRequest = {
-        ...toProfileFields(data, equipmentList.map((item) => item.id)),
+        ...toProfileFields(submitData, equipmentList.map((item) => item.id)),
         idToken,
       };
       const result = await googleRegister(request);
@@ -231,6 +307,10 @@ export function OnboardingContainer() {
         goToDashboardAfterAuth(router);
       }
     } catch (error) {
+      if (isLowBodyFatConfirmationError(error)) {
+        setLowBodyFatPrompt({ origin: "server", message: (error as ApiError).message });
+        return;
+      }
       console.error("Google ile kayıt hatası:", error);
       if (isApiError(error) && error.status === 401) {
         // Google kimligi dogrulanamadi (suresi dolmus olabilir): Google butonu tekrar gorunsun.
@@ -279,264 +359,337 @@ export function OnboardingContainer() {
     ? usernameValid && usernameUsable
     : usernameValid && usernameUsable && emailValid && passwordValid && passwordsMatch;
 
+  const bodyFatAssessment = bodyFatAssessmentOf(data);
+  const bodyCompositionErrors = measurementErrors(data);
+
+  const continueFromBodyComposition = () => {
+    if (requiresLowBodyFatWarning(data.goal, bodyFatAssessment) && !data.confirmLowBodyFatWarning) {
+      setLowBodyFatPrompt({ origin: "local" });
+      return;
+    }
+    goNext();
+  };
+
+  const skipBodyComposition = () => {
+    setData((prev) => ({ ...prev, bodyFat: "", neck: "", waist: "", hip: "", confirmLowBodyFatWarning: false }));
+    setStep(BODY_COMPOSITION_STEP + 1);
+  };
+
+  // "Hedefimi yeniden degerlendirecegim": hicbir sey kaydedilmez, kullanici hedef adimina doner.
+  const reconsiderGoal = () => {
+    setLowBodyFatPrompt(null);
+    setSubmitError(null);
+    setStep(GOAL_STEP);
+  };
+
+  // "Uyariyi anladim, devam et": acik onay kaydedilir; sunucu istediyse kayit onayla tekrar gonderilir.
+  const confirmLowBodyFatWarning = () => {
+    const prompt = lowBodyFatPrompt;
+    const confirmed = { ...data, confirmLowBodyFatWarning: true };
+    setData(confirmed);
+    setLowBodyFatPrompt(null);
+    if (prompt?.origin === "server") {
+      void handleCreateAccount(confirmed);
+    } else {
+      setStep(BODY_COMPOSITION_STEP + 1);
+    }
+  };
+
   if (completedName !== null) {
     return <SuccessScreen name={completedName} onStart={() => goToDashboardAfterAuth(router)} />;
   }
 
-  switch (step) {
-    case 1:
-      return (
-        <OnboardingScreen
-          step={1}
-          totalSteps={TOTAL_STEPS}
-          title="Adın nedir?"
-          description="Adını, MB FIT deneyimini kişiselleştirmek için kullanacağız."
-          onBack={goBack}
-          onContinue={goNext}
-          continueDisabled={!data.name.trim()}
-        >
-          <NameStep
-            value={data.name}
-            onChange={(value) => update("name", value)}
-          />
-        </OnboardingScreen>
-      );
+  return (
+    <>
+      {renderStep()}
+      <LowBodyFatWarningModal
+        visible={lowBodyFatPrompt !== null}
+        message={lowBodyFatPrompt?.origin === "server" ? lowBodyFatPrompt.message : null}
+        onReconsider={reconsiderGoal}
+        onConfirm={confirmLowBodyFatWarning}
+        confirming={isSubmitting}
+      />
+    </>
+  );
 
-    case 2:
-      return (
-        <OnboardingScreen
-          step={2}
-          totalSteps={TOTAL_STEPS}
-          title="Soyadın nedir?"
-          description="Soyadını, profilini tamamlamak için kullanacağız."
-          onBack={goBack}
-          onContinue={goNext}
-          continueDisabled={!data.lastName.trim()}
-        >
-          <LastNameStep
-            value={data.lastName}
-            onChange={(value) => update("lastName", value)}
-          />
-        </OnboardingScreen>
-      );
+  function renderStep() {
+    switch (step) {
+      case 1:
+        return (
+          <OnboardingScreen
+            step={1}
+            totalSteps={TOTAL_STEPS}
+            title="Adın nedir?"
+            description="Adını, MB FIT deneyimini kişiselleştirmek için kullanacağız."
+            onBack={goBack}
+            onContinue={goNext}
+            continueDisabled={!data.name.trim()}
+          >
+            <NameStep
+              value={data.name}
+              onChange={(value) => update("name", value)}
+            />
+          </OnboardingScreen>
+        );
 
-    case 3:
-      return (
-        <OnboardingScreen
-          step={3}
-          totalSteps={TOTAL_STEPS}
-          title="Cinsiyetin nedir?"
-          description="Bu, fitness önerilerini kişiselleştirmemize yardımcı olur."
-          onBack={goBack}
-          onContinue={goNext}
-          continueDisabled={!data.gender}
-        >
-          <GenderStep
-            value={data.gender}
-            onChange={(value) => update("gender", value)}
-          />
-        </OnboardingScreen>
-      );
+      case 2:
+        return (
+          <OnboardingScreen
+            step={2}
+            totalSteps={TOTAL_STEPS}
+            title="Soyadın nedir?"
+            description="Soyadını, profilini tamamlamak için kullanacağız."
+            onBack={goBack}
+            onContinue={goNext}
+            continueDisabled={!data.lastName.trim()}
+          >
+            <LastNameStep
+              value={data.lastName}
+              onChange={(value) => update("lastName", value)}
+            />
+          </OnboardingScreen>
+        );
 
-    case 4:
-      return (
-        <OnboardingScreen
-          step={4}
-          totalSteps={TOTAL_STEPS}
-          title="Kaç yaşındasın?"
-          description="Yaşın, antrenman ve beslenme önerilerini kişiselleştirmemize yardımcı olur."
-          onBack={goBack}
-          onContinue={goNext}
-          continueDisabled={!ageValid}
-        >
-          <AgeStep
-            value={data.age}
-            onChange={(value) => update("age", value)}
-          />
-        </OnboardingScreen>
-      );
+      case 3:
+        return (
+          <OnboardingScreen
+            step={3}
+            totalSteps={TOTAL_STEPS}
+            title="Cinsiyetin nedir?"
+            description="Bu, fitness önerilerini kişiselleştirmemize yardımcı olur."
+            onBack={goBack}
+            onContinue={goNext}
+            continueDisabled={!data.gender}
+          >
+            <GenderStep
+              value={data.gender}
+              onChange={(value) => update("gender", value)}
+            />
+          </OnboardingScreen>
+        );
 
-    case 5:
-      return (
-        <OnboardingScreen
-          step={5}
-          totalSteps={TOTAL_STEPS}
-          title="Boyun kaç?"
-          description="Boyunu, fitness metriklerini hesaplamak için kullanacağız."
-          onBack={goBack}
-          onContinue={goNext}
-          continueDisabled={!heightValid}
-        >
-          <HeightStep
-            unit={data.heightUnit}
-            onUnitChange={(value) => update("heightUnit", value)}
-            cmValue={data.height}
-            onCmChange={(value) => update("height", value)}
-            feetValue={data.heightFeet}
-            onFeetChange={(value) => update("heightFeet", value)}
-            inchesValue={data.heightInches}
-            onInchesChange={(value) => update("heightInches", value)}
-          />
-        </OnboardingScreen>
-      );
+      case 4:
+        return (
+          <OnboardingScreen
+            step={4}
+            totalSteps={TOTAL_STEPS}
+            title="Kaç yaşındasın?"
+            description="Yaşın, antrenman ve beslenme önerilerini kişiselleştirmemize yardımcı olur."
+            onBack={goBack}
+            onContinue={goNext}
+            continueDisabled={!ageValid}
+          >
+            <AgeStep
+              value={data.age}
+              onChange={(value) => update("age", value)}
+            />
+          </OnboardingScreen>
+        );
 
-    case 6:
-      return (
-        <OnboardingScreen
-          step={6}
-          totalSteps={TOTAL_STEPS}
-          title="Şu anki kilon nedir?"
-          description="Bu, hedeflerini kişiselleştirmemize ve ilerlemeni takip etmemize yardımcı olur."
-          onBack={goBack}
-          onContinue={goNext}
-          continueDisabled={!data.weight}
-        >
-          <WeightStep
-            unit={data.weightUnit}
-            onUnitChange={(value) => update("weightUnit", value)}
-            value={data.weight}
-            onChange={(value) => update("weight", value)}
-          />
-        </OnboardingScreen>
-      );
+      case 5:
+        return (
+          <OnboardingScreen
+            step={5}
+            totalSteps={TOTAL_STEPS}
+            title="Boyun kaç?"
+            description="Boyunu, fitness metriklerini hesaplamak için kullanacağız."
+            onBack={goBack}
+            onContinue={goNext}
+            continueDisabled={!heightValid}
+          >
+            <HeightStep
+              unit={data.heightUnit}
+              onUnitChange={(value) => update("heightUnit", value)}
+              cmValue={data.height}
+              onCmChange={(value) => update("height", value)}
+              feetValue={data.heightFeet}
+              onFeetChange={(value) => update("heightFeet", value)}
+              inchesValue={data.heightInches}
+              onInchesChange={(value) => update("heightInches", value)}
+            />
+          </OnboardingScreen>
+        );
 
-    case 7:
-      return (
-        <OnboardingScreen
-          step={7}
-          totalSteps={TOTAL_STEPS}
-          title="Ana hedefin nedir?"
-          description="MB FIT'in odaklanmasını istediğin hedefi seç."
-          onBack={goBack}
-          onContinue={goNext}
-          continueDisabled={!data.goal}
-        >
-          <GoalStep
-            value={data.goal}
-            onChange={(value) => update("goal", value)}
-          />
-        </OnboardingScreen>
-      );
+      case 6:
+        return (
+          <OnboardingScreen
+            step={6}
+            totalSteps={TOTAL_STEPS}
+            title="Şu anki kilon nedir?"
+            description="Bu, hedeflerini kişiselleştirmemize ve ilerlemeni takip etmemize yardımcı olur."
+            onBack={goBack}
+            onContinue={goNext}
+            continueDisabled={!data.weight}
+          >
+            <WeightStep
+              unit={data.weightUnit}
+              onUnitChange={(value) => update("weightUnit", value)}
+              value={data.weight}
+              onChange={(value) => update("weight", value)}
+            />
+          </OnboardingScreen>
+        );
 
-    case 8:
-      return (
-        <OnboardingScreen
-          step={8}
-          totalSteps={TOTAL_STEPS}
-          title="Ne kadar aktifsin?"
-          description="Mevcut aktivite seviyeni bize anlat."
-          onBack={goBack}
-          onContinue={goNext}
-          continueDisabled={!data.activityLevel}
-        >
-          <ActivityStep
-            value={data.activityLevel}
-            onChange={(value) => update("activityLevel", value)}
-          />
-        </OnboardingScreen>
-      );
+      case 7:
+        return (
+          <OnboardingScreen
+            step={7}
+            totalSteps={TOTAL_STEPS}
+            title="Ana hedefin nedir?"
+            description="MB FIT'in odaklanmasını istediğin hedefi seç."
+            onBack={goBack}
+            onContinue={goNext}
+            continueDisabled={!data.goal}
+          >
+            <GoalStep
+              value={data.goal}
+              onChange={(value) => update("goal", value)}
+            />
+          </OnboardingScreen>
+        );
 
-    case 9:
-      return (
-        <OnboardingScreen
-          step={9}
-          totalSteps={TOTAL_STEPS}
-          title="Antrenman tecrüben nedir?"
-          onBack={goBack}
-          onContinue={goNext}
-          continueDisabled={!data.trainingExperience}
-        >
-          <ExperienceStep
-            value={data.trainingExperience}
-            onChange={(value) => update("trainingExperience", value)}
-          />
-        </OnboardingScreen>
-      );
+      case BODY_COMPOSITION_STEP:
+        return (
+          <OnboardingScreen
+            step={BODY_COMPOSITION_STEP}
+            totalSteps={TOTAL_STEPS}
+            title="Vücut ölçülerin (isteğe bağlı)"
+            description="Yağ oranını bilmek hedefini ve beslenme planını güvenle ayarlamamıza yardımcı olur."
+            onBack={goBack}
+            onContinue={continueFromBodyComposition}
+            onSkip={skipBodyComposition}
+            continueDisabled={Object.keys(bodyCompositionErrors).length > 0}
+          >
+            <BodyCompositionStep
+              gender={data.gender}
+              values={{ bodyFat: data.bodyFat, neck: data.neck, waist: data.waist, hip: data.hip }}
+              onChange={(key, value) => update(key, value)}
+              errors={bodyCompositionErrors}
+              assessment={bodyFatAssessment}
+            />
+          </OnboardingScreen>
+        );
 
-    case 10:
-      return (
-        <OnboardingScreen
-          step={10}
-          totalSteps={TOTAL_STEPS}
-          title="Ne sıklıkla antrenman yapmak istiyorsun?"
-          onBack={goBack}
-          onContinue={goNext}
-          continueDisabled={!data.trainingDays}
-        >
-          <FrequencyStep
-            value={data.trainingDays}
-            onChange={(value) => update("trainingDays", value)}
-          />
-        </OnboardingScreen>
-      );
+      case 9:
+        return (
+          <OnboardingScreen
+            step={9}
+            totalSteps={TOTAL_STEPS}
+            title="Ne kadar aktifsin?"
+            description="Mevcut aktivite seviyeni bize anlat."
+            onBack={goBack}
+            onContinue={goNext}
+            continueDisabled={!data.activityLevel}
+          >
+            <ActivityStep
+              value={data.activityLevel}
+              onChange={(value) => update("activityLevel", value)}
+            />
+          </OnboardingScreen>
+        );
 
-    case 11:
-      return (
-        <OnboardingScreen
-          step={11}
-          totalSteps={TOTAL_STEPS}
-          title="Nerede antrenman yapıyorsun?"
-          onBack={goBack}
-          onContinue={goNext}
-          continueDisabled={
-            !data.trainingLocation ||
-            equipmentStatus === "loading" ||
-            // Spor salonunda tum ekipman ID'leri gonderilir; liste gelmeden devam edilemez.
-            (data.trainingLocation === "gym" && equipmentStatus !== "ready") ||
-            // Liste alinamadiysa gercek secim yapilamaz; yalnizca "Ekipman yok" ile devam edilebilir.
-            (equipmentStatus === "error" && !data.equipment.includes("none"))
-          }
-        >
-          <EquipmentStep
-            location={data.trainingLocation}
-            onLocationChange={(value) => update("trainingLocation", value)}
-            options={equipmentList}
-            status={equipmentStatus}
-            onRetry={() => setEquipmentAttempt((n) => n + 1)}
-            equipment={data.equipment}
-            onEquipmentChange={(value) => update("equipment", value)}
-          />
-        </OnboardingScreen>
-      );
+      case 10:
+        return (
+          <OnboardingScreen
+            step={10}
+            totalSteps={TOTAL_STEPS}
+            title="Antrenman tecrüben nedir?"
+            onBack={goBack}
+            onContinue={goNext}
+            continueDisabled={!data.trainingExperience}
+          >
+            <ExperienceStep
+              value={data.trainingExperience}
+              onChange={(value) => update("trainingExperience", value)}
+            />
+          </OnboardingScreen>
+        );
 
-    case 12:
-    default:
-      return (
-        <OnboardingScreen
-          step={12}
-          totalSteps={TOTAL_STEPS}
-          title="MB FIT hesabını oluştur"
-          description={
-            googleSignup
-              ? "Son olarak bir kullanıcı adı seç."
-              : "Profilini kaydet ve kişiselleştirilmiş fitness yolculuğuna başla."
-          }
-          onBack={goBack}
-          onContinue={goNext}
-          continueLabel="Hesap oluştur"
-          continueDisabled={!accountValid || isSubmitting || google.isLoading}
-          continueLoading={isSubmitting}
-        >
-          <AccountStep
-            username={data.username}
-            onUsernameChange={(value) => update("username", value)}
-            usernameAvailability={usernameAvailability}
-            email={data.email}
-            onEmailChange={(value) => update("email", value)}
-            password={data.password}
-            onPasswordChange={(value) => update("password", value)}
-            confirmPassword={data.confirmPassword}
-            onConfirmPasswordChange={(value) =>
-              update("confirmPassword", value)
+      case 11:
+        return (
+          <OnboardingScreen
+            step={11}
+            totalSteps={TOTAL_STEPS}
+            title="Ne sıklıkla antrenman yapmak istiyorsun?"
+            onBack={goBack}
+            onContinue={goNext}
+            continueDisabled={!data.trainingDays}
+          >
+            <FrequencyStep
+              value={data.trainingDays}
+              onChange={(value) => update("trainingDays", value)}
+            />
+          </OnboardingScreen>
+        );
+
+      case 12:
+        return (
+          <OnboardingScreen
+            step={12}
+            totalSteps={TOTAL_STEPS}
+            title="Nerede antrenman yapıyorsun?"
+            onBack={goBack}
+            onContinue={goNext}
+            continueDisabled={
+              !data.trainingLocation ||
+              equipmentStatus === "loading" ||
+              // Spor salonunda tum ekipman ID'leri gonderilir; liste gelmeden devam edilemez.
+              (data.trainingLocation === "gym" && equipmentStatus !== "ready") ||
+              // Liste alinamadiysa gercek secim yapilamaz; yalnizca "Ekipman yok" ile devam edilebilir.
+              (equipmentStatus === "error" && !data.equipment.includes("none"))
             }
-            onGooglePress={handleGooglePress}
-            googleLoading={google.isLoading}
-            googleEmail={googleSignup?.profile.email || null}
-            onUseOtherMethod={handleUseOtherMethod}
-            onLoginPress={() => router.push("/pages/login")}
-            errorMessage={submitError ?? google.errorMessage}
-          />
-        </OnboardingScreen>
-      );
+          >
+            <EquipmentStep
+              location={data.trainingLocation}
+              onLocationChange={(value) => update("trainingLocation", value)}
+              options={equipmentList}
+              status={equipmentStatus}
+              onRetry={() => setEquipmentAttempt((n) => n + 1)}
+              equipment={data.equipment}
+              onEquipmentChange={(value) => update("equipment", value)}
+            />
+          </OnboardingScreen>
+        );
+
+      case 13:
+      default:
+        return (
+          <OnboardingScreen
+            step={13}
+            totalSteps={TOTAL_STEPS}
+            title="MB FIT hesabını oluştur"
+            description={
+              googleSignup
+                ? "Son olarak bir kullanıcı adı seç."
+                : "Profilini kaydet ve kişiselleştirilmiş fitness yolculuğuna başla."
+            }
+            onBack={goBack}
+            onContinue={goNext}
+            continueLabel="Hesap oluştur"
+            continueDisabled={!accountValid || isSubmitting || google.isLoading}
+            continueLoading={isSubmitting}
+          >
+            <AccountStep
+              username={data.username}
+              onUsernameChange={(value) => update("username", value)}
+              usernameAvailability={usernameAvailability}
+              email={data.email}
+              onEmailChange={(value) => update("email", value)}
+              password={data.password}
+              onPasswordChange={(value) => update("password", value)}
+              confirmPassword={data.confirmPassword}
+              onConfirmPasswordChange={(value) =>
+                update("confirmPassword", value)
+              }
+              onGooglePress={handleGooglePress}
+              googleLoading={google.isLoading}
+              googleEmail={googleSignup?.profile.email || null}
+              onUseOtherMethod={handleUseOtherMethod}
+              onLoginPress={() => router.push("/pages/login")}
+              errorMessage={submitError ?? google.errorMessage}
+            />
+          </OnboardingScreen>
+        );
+    }
   }
 }

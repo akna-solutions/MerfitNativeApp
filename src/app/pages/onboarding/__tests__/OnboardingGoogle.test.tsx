@@ -43,7 +43,7 @@ jest.mock("../../../../shared/auth/useUsernameAvailability", () => ({
 }));
 jest.mock("../../../../services/api/equipment", () => ({ getEquipmentList: jest.fn(async () => []) }));
 
-// Ilk 11 adim, gecerli bir deger secen taslaklarla degistirilir (bkz. test/onboardingStepStubs); testin konusu son adim.
+// Ilk 12 adim, gecerli bir deger secen taslaklarla degistirilir (bkz. test/onboardingStepStubs); testin konusu son adim.
 jest.mock("../steps/NameStep", () => ({ NameStep: require("../../../../test/onboardingStepStubs").NameStep }));
 jest.mock("../steps/LastNameStep", () => ({ LastNameStep: require("../../../../test/onboardingStepStubs").LastNameStep }));
 jest.mock("../steps/GenderStep", () => ({ GenderStep: require("../../../../test/onboardingStepStubs").GenderStep }));
@@ -51,12 +51,13 @@ jest.mock("../steps/AgeStep", () => ({ AgeStep: require("../../../../test/onboar
 jest.mock("../steps/HeightStep", () => ({ HeightStep: require("../../../../test/onboardingStepStubs").HeightStep }));
 jest.mock("../steps/WeightStep", () => ({ WeightStep: require("../../../../test/onboardingStepStubs").WeightStep }));
 jest.mock("../steps/GoalStep", () => ({ GoalStep: require("../../../../test/onboardingStepStubs").GoalStep }));
+jest.mock("../steps/BodyCompositionStep", () => ({ BodyCompositionStep: require("../../../../test/onboardingStepStubs").BodyCompositionStep }));
 jest.mock("../steps/ActivityStep", () => ({ ActivityStep: require("../../../../test/onboardingStepStubs").ActivityStep }));
 jest.mock("../steps/ExperienceStep", () => ({ ExperienceStep: require("../../../../test/onboardingStepStubs").ExperienceStep }));
 jest.mock("../steps/FrequencyStep", () => ({ FrequencyStep: require("../../../../test/onboardingStepStubs").FrequencyStep }));
 jest.mock("../steps/EquipmentStep", () => ({ EquipmentStep: require("../../../../test/onboardingStepStubs").EquipmentStep }));
 
-// 12 adimli akis ilk testte (soguk baslangic) varsayilan 5 sn sinirini asabiliyor.
+// 13 adimli akis ilk testte (soguk baslangic) varsayilan 5 sn sinirini asabiliyor.
 jest.setTimeout(20000);
 
 const GOOGLE_SIGNUP = {
@@ -73,7 +74,7 @@ beforeEach(() => {
 
 /** Ad/soyad Google'dan on doldurulmus olmali; diger adimlar taslaklarla dolar. */
 async function goToAccountStep() {
-  for (let step = 1; step < 12; step++) {
+  for (let step = 1; step < 13; step++) {
     await waitFor(() => expect(screen.getByText("Devam et")).toBeEnabled());
     fireEvent.press(screen.getByText("Devam et"));
   }

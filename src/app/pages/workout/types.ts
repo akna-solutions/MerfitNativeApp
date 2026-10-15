@@ -14,6 +14,10 @@ export type Exercise = {
   /** En son tamamlanan oturumdaki setler (set sirasina gore); hic yapilmadiysa bos. */
   lastSets: { weight: number | null; reps: number | null }[];
   previousBest: { weight: number; reps: number } | null;
+  /** Tekrar araliginin ust siniri (reps alt sinirdir); aralik yoksa null/undefined. */
+  repsMax?: number | null;
+  /** Bir sonraki hedef (cift progresyon): onerilen agirlik ve kullaniciya gosterilecek metin. */
+  progression?: { message: string; suggestedWeightKg: number | null } | null;
 };
 
 export type WorkoutSession = {

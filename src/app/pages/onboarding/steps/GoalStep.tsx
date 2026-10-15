@@ -3,13 +3,11 @@ import { View } from "react-native";
 import { OnboardingOption } from "../components/OnboardingOption";
 import { Goal } from "../types";
 
-const OPTIONS: { label: string; value: Goal }[] = [
-  { label: "Kilo vermek", value: "lose_weight" },
-  { label: "Kas yapmak", value: "build_muscle" },
-  { label: "Daha güçlü olmak", value: "get_stronger" },
-  { label: "Fitness seviyesini artırmak", value: "improve_fitness" },
-  { label: "Kilomu korumak", value: "maintain_weight" },
-  { label: "Dayanıklılığı artırmak", value: "improve_endurance" },
+// Yalnizca uc ana hedef sunulur; kardiyo bir hedef degil, programin bileseni olarak eklenir.
+const OPTIONS: { label: string; subtitle: string; value: Goal }[] = [
+  { label: "Kas Geliştirme", subtitle: "Kas kütleni artırmaya odaklan", value: "build_muscle" },
+  { label: "Güçlenme", subtitle: "Ana hareketlerde daha fazla ağırlık kaldır", value: "get_stronger" },
+  { label: "Yağ Kaybı", subtitle: "Kasını koruyarak yağ oranını azalt", value: "lose_weight" },
 ];
 
 type Props = {
@@ -24,6 +22,7 @@ export function GoalStep({ value, onChange }: Props) {
         <OnboardingOption
           key={option.value}
           label={option.label}
+          subtitle={option.subtitle}
           selected={value === option.value}
           onPress={() => onChange(option.value)}
         />
