@@ -36,6 +36,8 @@ export const MOCK_PROGRESS_DATA: ProgressData = {
     { id: "weight", label: "Kilo", value: "78.4 kg" },
     { id: "body-fat", label: "Vücut Yağı", value: "%17.8" },
   ],
+  bodyFatHistory: [],
+  waistHistory: [],
 
   recentActivity: [
     {

@@ -2,27 +2,36 @@ import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { useTheme } from "../../../../shared/theme/ThemeContext";
-import { BodyMetric } from "../types";
+import { describeBodyTrend } from "../bodyTrends";
+import { BodyMetric, BodyMetricPoint } from "../types";
 
 type Props = {
   metrics: BodyMetric[];
+  bodyFatHistory?: BodyMetricPoint[];
+  waistHistory?: BodyMetricPoint[];
   onViewAll: () => void;
 };
 
-export function BodyMetrics({ metrics, onViewAll }: Props) {
+export function BodyMetrics({ metrics, bodyFatHistory = [], waistHistory = [], onViewAll }: Props) {
   const { colors } = useTheme();
   return (
     <View>
       <Text style={[styles.sectionTitle, { color: colors.text }]}>Vücut Ölçümleri</Text>
 
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        {metrics.map((metric, index) => (
+        {[
+          ...metrics,
+          ...[
+            describeBodyTrend("body-fat-trend", "Yağ oranı değişimi", bodyFatHistory, "%"),
+            describeBodyTrend("waist-trend", "Bel değişimi", waistHistory, "cm"),
+          ].filter((row): row is BodyMetric => row !== null),
+        ].map((metric, index, rows) => (
           <View
             key={metric.id}
             style={[
               styles.row,
               { borderBottomColor: colors.border },
-              index === metrics.length - 1 && styles.rowLast,
+              index === rows.length - 1 && styles.rowLast,
             ]}
           >
             <Text style={[styles.label, { color: colors.textSecondary }]}>{metric.label}</Text>

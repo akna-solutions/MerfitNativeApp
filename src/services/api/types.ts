@@ -5,9 +5,9 @@
 // ---- Fitness hedefi ----
 /**
  * Kayit (RegisterRequest.goal) ve ilerleme (ProgressResponse.goalType) sozlesmesinde kullanilan
- * hedef kodlari. Backend AuthService.ParseFitnessGoal bu degerleri Domain.Enums.FitnessGoal'a
- * (LoseWeight, BuildMuscle, GetStronger, ImproveFitness, MaintainWeight, ImproveEndurance)
- * esler; hedef agirlik profili (AttributeWeightsByGoal) tamamen backend'de secilir.
+ * hedef kodlari. Uygulama yalnizca uc ana hedefi sunar (bkz. PRIMARY_FITNESS_GOALS): Kas Gelistirme,
+ * Guclenme ve Yag Kaybi. improve_fitness, maintain_weight ve improve_endurance eski kayitlar icin
+ * tipte kalir; backend bunlari Kas Gelistirme'ye esler. Hedef agirlik profili backend'de secilir.
  */
 export type FitnessGoalCode =
   | "lose_weight"
@@ -16,6 +16,17 @@ export type FitnessGoalCode =
   | "improve_fitness"
   | "maintain_weight"
   | "improve_endurance";
+
+/** Kullaniciya sunulan hedefler (siralama ekrandaki siralamadir). */
+export const PRIMARY_FITNESS_GOALS = ["build_muscle", "get_stronger", "lose_weight"] as const;
+
+export type PrimaryFitnessGoalCode = (typeof PRIMARY_FITNESS_GOALS)[number];
+
+/** Eski hedef kodlarini ana hedefe esler (backend FitnessGoals.Normalize ile ayni). */
+export function normalizeFitnessGoal(goal: FitnessGoalCode | null | undefined): PrimaryFitnessGoalCode | null {
+  if (!goal) return null;
+  return (PRIMARY_FITNESS_GOALS as readonly string[]).includes(goal) ? (goal as PrimaryFitnessGoalCode) : "build_muscle";
+}
 
 // ---- Antrenman ozellik puanlari ----
 /**
@@ -153,6 +164,17 @@ export type RegisterRequest = {
   weightUnit: "kg" | "lb";
   weight?: number | null;
   goal?: FitnessGoalCode | null;
+  /** Opsiyonel: kullanicinin bildigi vucut yag orani (%). */
+  bodyFatPercentage?: number | null;
+  /** Opsiyonel cevre olcumleri (cm); yag orani tahmini (US Navy) icin. */
+  neckCm?: number | null;
+  waistCm?: number | null;
+  hipCm?: number | null;
+  /**
+   * Yag Kaybi secilip yag orani dusuk araliktaysa backend 409 (LOW_BODY_FAT_CONFIRMATION_REQUIRED)
+   * doner; kullanici uyariyi onaylarsa istek true ile tekrar gonderilir.
+   */
+  confirmLowBodyFatWarning?: boolean | null;
   activityLevel?: string | null;
   trainingExperience?: string | null;
   trainingDays?: number | null;
@@ -245,7 +267,10 @@ export type MyPlanExercise = {
   name: string;
   order: number;
   sets: number;
+  /** Tekrar araliginin alt siniri (veya tek hedef). */
   reps: number | null;
+  /** Tekrar araliginin ust siniri; aralik yoksa null/undefined. */
+  repsMax?: number | null;
   restSeconds: number | null;
   durationSeconds: number | null;
 };
@@ -254,6 +279,8 @@ export type MyPlanDay = {
   dayOfWeek: string;
   workout: MyPlanWorkout;
   exercises: MyPlanExercise[];
+  /** Ana antrenmandan sonra yapilacak kardiyo bitirici (ayri katalog antrenmani); yoksa null. */
+  cardioFinisher?: MyPlanWorkout | null;
 };
 
 /** GET /api/my-plan */
@@ -415,6 +442,8 @@ export type WorkoutSessionExercise = {
   order: number;
   targetSets: number;
   targetReps: number | null;
+  /** Tekrar araliginin ust siniri (kisisel plan); aralik yoksa null/undefined. */
+  targetRepsMax?: number | null;
   restSeconds: number | null;
   durationSeconds: number | null;
   videoUrl: string | null;
@@ -425,6 +454,20 @@ export type WorkoutSessionExercise = {
   requiresWeight: boolean;
   /** Bu egzersizin en son tamamlanan oturumdaki setleri ("Geçen sefer"); hic yapilmadiysa null. */
   lastPerformance: LastPerformance | null;
+  /** Cift progresyon onerisi (bir sonraki hedef); eski backend gondermiyorsa undefined. */
+  progression?: ProgressionSuggestion | null;
+};
+
+/** Backend ProgressiveOverloadAdvisor onerisi. */
+export type ProgressionSuggestion = {
+  action: "start" | "increase_weight" | "keep_weight" | "increase_reps";
+  previousWeightKg: number | null;
+  suggestedWeightKg: number | null;
+  increaseKg: number | null;
+  targetRepsMin: number;
+  targetRepsMax: number;
+  /** Kullaniciya gosterilecek kisa metin. */
+  message: string;
 };
 
 export type LastPerformance = {
@@ -644,6 +687,9 @@ export type ProgressWeightPoint = { date: string; isoDate: string; weight: numbe
 
 export type ProgressBodyMetric = { id: string; label: string; value: string };
 
+/** Yag orani / bel cevresi gecmisindeki tek nokta; isEstimated, cevre olcumlerinden hesaplanan tahmindir. */
+export type ProgressBodyMetricPoint = { date: string; isoDate: string; value: number; isEstimated: boolean };
+
 export type ProgressRecentActivity = {
   id: number;
   title: string;
@@ -680,6 +726,10 @@ export type ProgressResponse = {
   weeklyWorkouts: boolean[];
   weightHistory: ProgressWeightPoint[];
   bodyMetrics: ProgressBodyMetric[];
+  /** Secilen araliktaki yag orani olcumleri (eski API surumlerinde yok). */
+  bodyFatHistory?: ProgressBodyMetricPoint[];
+  /** Secilen araliktaki bel cevresi olcumleri (cm). */
+  waistHistory?: ProgressBodyMetricPoint[];
   recentActivity: ProgressRecentActivity[];
   score: ProgressScoreSummary | null;
 };
@@ -829,6 +879,11 @@ export type UpdateProfileRequest = Partial<
 > & {
   notifications?: Partial<ProfileNotificationSettings>;
   privacy?: Partial<ProfilePrivacySettings>;
+  /**
+   * Yag Kaybi secilirken yag orani dusuk aralikta gorunuyorsa backend 409 (LOW_BODY_FAT_CONFIRMATION_REQUIRED)
+   * doner; kullanici uyariyi onaylarsa hedef bu alan true olarak tekrar gonderilir.
+   */
+  confirmLowBodyFatWarning?: boolean;
 };
 
 // ---- Notifications ----

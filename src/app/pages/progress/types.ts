@@ -25,6 +25,14 @@ export type BodyMetric = {
   value: string;
 };
 
+export type BodyMetricPoint = {
+  date: string;
+  isoDate: string;
+  value: number;
+  /** Cevre olcumlerinden hesaplanan tahmin (girilen degerden ayri gosterilir). */
+  isEstimated: boolean;
+};
+
 // Onboarding'den gelen hedef bilgisine göre Goal Progress kartının hangi
 // şekilde gösterileceğini backend ileride bu alanlardan hesaplayacak;
 // component'ler sadece hazır değeri render ediyor.
@@ -55,5 +63,7 @@ export type ProgressData = {
   weeklyWorkouts: boolean[]; // Pzt..Paz, length 7
   weightHistory: WeightPoint[];
   bodyMetrics: BodyMetric[];
+  bodyFatHistory: BodyMetricPoint[];
+  waistHistory: BodyMetricPoint[];
   recentActivity: RecentActivityItem[];
 };

@@ -39,6 +39,13 @@ export type OnboardingData = {
   weight: string;
   weightUnit: WeightUnit;
   goal: Goal | null;
+  /** Opsiyonel vucut kompozisyonu (BodyCompositionStep); bos string = girilmedi. */
+  bodyFat: string;
+  neck: string;
+  waist: string;
+  hip: string;
+  /** Dusuk yag orani uyarisini kullanici acikca onayladiysa true; hedef/olcum degisince sifirlanir. */
+  confirmLowBodyFatWarning: boolean;
   activityLevel: ActivityLevel | null;
   trainingExperience: TrainingExperience | null;
   trainingDays: number | null;
@@ -62,6 +69,11 @@ export const initialOnboardingData: OnboardingData = {
   weight: "",
   weightUnit: "kg",
   goal: null,
+  bodyFat: "",
+  neck: "",
+  waist: "",
+  hip: "",
+  confirmLowBodyFatWarning: false,
   activityLevel: null,
   trainingExperience: null,
   trainingDays: null,

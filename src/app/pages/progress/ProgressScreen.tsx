@@ -48,6 +48,8 @@ function mapToProgressData(response: ProgressResponse): ProgressData {
     weeklyWorkouts: response.weeklyWorkouts,
     weightHistory: response.weightHistory,
     bodyMetrics: response.bodyMetrics,
+    bodyFatHistory: response.bodyFatHistory ?? [],
+    waistHistory: response.waistHistory ?? [],
     recentActivity: response.recentActivity.map((item) => ({
       id: String(item.id),
       title: item.title,
@@ -272,13 +274,13 @@ export function ProgressScreen() {
                 </PremiumFeature>
               </View>
 
-              {data.bodyMetrics.length > 0 ? (
+              {data.bodyMetrics.length > 0 || data.bodyFatHistory.length > 0 || data.waistHistory.length > 0 ? (
                 <View style={[styles.padded, styles.sectionGap]}>
                   <BodyMetrics
                     metrics={data.bodyMetrics}
-                    onViewAll={() => {
-                      // TODO: tüm body metrics ekranı eklendiğinde yönlendir.
-                    }}
+                    bodyFatHistory={data.bodyFatHistory}
+                    waistHistory={data.waistHistory}
+                    onViewAll={() => router.push("/pages/profile/body-measurements" as never)}
                   />
                 </View>
               ) : null}

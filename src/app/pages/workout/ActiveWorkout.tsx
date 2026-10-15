@@ -38,6 +38,7 @@ import { WorkoutTopBar } from "./components/WorkoutTopBar";
 import { DumbbellDashPanel } from "../../../shared/miniGame/dumbbellDash/DumbbellDashPanel";
 import { useTheme } from "../../../shared/theme/ThemeContext";
 import { adjustRestEndsAt, remainingRestSeconds, restEndsAt } from "../../../shared/workout/restClock";
+import { initialWeight } from "../../../shared/workout/progression";
 import { estimateWorkoutCalories, formatKg } from "../../../shared/workoutHistory/format";
 import { Exercise, ExerciseProgress, WorkoutPhase, WorkoutSession } from "./types";
 import { WorkoutSummary } from "./WorkoutSummary";
@@ -74,8 +75,7 @@ function describeLastSet(exercise: Exercise, setNumber: number): string | null {
 }
 
 function initialWeightFor(exercise: Exercise): string {
-  const weight = exercise.lastSets.find((set) => set.weight && set.weight > 0)?.weight;
-  return weight ? String(weight) : "";
+  return initialWeight(exercise.progression, exercise.lastSets);
 }
 
 function formatDuration(totalSeconds: number) {
@@ -116,6 +116,10 @@ function mapApiSession(api: ApiWorkoutSession): {
         reps: set.reps,
       })),
       previousBest: best,
+      repsMax: ex.targetRepsMax ?? null,
+      progression: ex.progression
+        ? { message: ex.progression.message, suggestedWeightKg: ex.progression.suggestedWeightKg }
+        : null,
     };
   });
 
@@ -623,7 +627,9 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
                   name={currentExercise.name}
                   sets={currentExercise.sets}
                   reps={currentExercise.reps}
+                  repsMax={currentExercise.repsMax}
                   restSec={currentExercise.restSec}
+                  nextTarget={currentExercise.progression?.message}
                 />
                 <SetTracker
                   totalSets={currentExercise.sets}
