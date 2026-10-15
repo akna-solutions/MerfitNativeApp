@@ -51,6 +51,9 @@ export const BODY_MEASUREMENT_LIMITS = {
   neck: { min: 20, max: 80, label: "Boyun çevresi 20-80 cm arasında olmalıdır." },
   waist: { min: 40, max: 250, label: "Bel çevresi 40-250 cm arasında olmalıdır." },
   hip: { min: 50, max: 250, label: "Kalça çevresi 50-250 cm arasında olmalıdır." },
+  chest: { min: 50, max: 250, label: "Göğüs çevresi 50-250 cm arasında olmalıdır." },
+  arm: { min: 15, max: 80, label: "Kol çevresi 15-80 cm arasında olmalıdır." },
+  thigh: { min: 25, max: 150, label: "Uyluk çevresi 25-150 cm arasında olmalıdır." },
 } as const;
 
 export type BodyMeasurementField = keyof typeof BODY_MEASUREMENT_LIMITS;

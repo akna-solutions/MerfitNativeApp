@@ -20,16 +20,21 @@ import { OnboardingButton } from "../onboarding/components/OnboardingButton";
 import { OnboardingInput } from "../onboarding/components/OnboardingInput";
 import { useTheme } from "../../../shared/theme/ThemeContext";
 
-type MeasurementKey = "bodyFat" | "neck" | "waist" | "hip";
+type MeasurementKey = BodyMeasurementField;
 
-const MEASUREMENT_INPUTS: { key: MeasurementKey; label: string; field: BodyMeasurementField; femaleOnly?: boolean }[] = [
+const MEASUREMENT_INPUTS: { key: MeasurementKey; label: string; field: BodyMeasurementField }[] = [
   { key: "bodyFat", label: "Vücut yağ oranı (%, biliyorsan)", field: "bodyFat" },
   { key: "neck", label: "Boyun çevresi (cm)", field: "neck" },
   { key: "waist", label: "Bel çevresi (cm, göbek hizası)", field: "waist" },
-  { key: "hip", label: "Kalça çevresi (cm)", field: "hip", femaleOnly: true },
+  { key: "hip", label: "Kalça çevresi (cm)", field: "hip" },
+  { key: "chest", label: "Göğüs çevresi (cm)", field: "chest" },
+  { key: "arm", label: "Kol çevresi (cm)", field: "arm" },
+  { key: "thigh", label: "Uyluk çevresi (cm)", field: "thigh" },
 ];
 
-const EMPTY_MEASUREMENTS: Record<MeasurementKey, string> = { bodyFat: "", neck: "", waist: "", hip: "" };
+const EMPTY_MEASUREMENTS: Record<MeasurementKey, string> = {
+  bodyFat: "", neck: "", waist: "", hip: "", chest: "", arm: "", thigh: "",
+};
 
 function formatDate(iso: string) {
   const date = new Date(iso);
@@ -47,6 +52,9 @@ function describeMeasurement(item: BodyMeasurement): string {
   if (item.waistCm != null) parts.push(`bel ${item.waistCm} cm`);
   if (item.neckCm != null) parts.push(`boyun ${item.neckCm} cm`);
   if (item.hipCm != null) parts.push(`kalça ${item.hipCm} cm`);
+  if (item.chestCm != null) parts.push(`göğüs ${item.chestCm} cm`);
+  if (item.armCm != null) parts.push(`kol ${item.armCm} cm`);
+  if (item.thighCm != null) parts.push(`uyluk ${item.thighCm} cm`);
   return parts.join(" · ") || "Ölçüm";
 }
 
@@ -87,7 +95,7 @@ export default function BodyMeasurementsRoute() {
   const heightUnit = profile.unitSystem === "metric" ? "cm" : "ft";
   const weightUnit = profile.unitSystem === "metric" ? "kg" : "lb";
   const isFemale = (history?.gender ?? (profile.gender === "Kadın" ? "female" : null)) === "female";
-  const visibleInputs = MEASUREMENT_INPUTS.filter((input) => !input.femaleOnly || isFemale);
+  const visibleInputs = MEASUREMENT_INPUTS;
 
   const errors: Partial<Record<MeasurementKey, string>> = {};
   visibleInputs.forEach((input) => {
@@ -113,15 +121,20 @@ export default function BodyMeasurementsRoute() {
     const bodyFatPercentage = parseDecimal(measurements.bodyFat);
     const neckCm = parseDecimal(measurements.neck);
     const waistCm = parseDecimal(measurements.waist);
-    const hipCm = isFemale ? parseDecimal(measurements.hip) : null;
-    const hasMeasurement = [bodyFatPercentage, neckCm, waistCm, hipCm].some((value) => value !== null);
+    const hipCm = parseDecimal(measurements.hip);
+    const chestCm = parseDecimal(measurements.chest);
+    const armCm = parseDecimal(measurements.arm);
+    const thighCm = parseDecimal(measurements.thigh);
+    const hasMeasurement = [bodyFatPercentage, neckCm, waistCm, hipCm, chestCm, armCm, thighCm].some(
+      (value) => value !== null,
+    );
 
     if (hasMeasurement) {
       // Her kayit yeni bir olcum olarak eklenir; onceki olcumler degistirilmez.
       setIsSaving(true);
       setSaveError(null);
       try {
-        await createBodyMeasurement({ bodyFatPercentage, neckCm, waistCm, hipCm });
+        await createBodyMeasurement({ bodyFatPercentage, neckCm, waistCm, hipCm, chestCm, armCm, thighCm });
       } catch (error) {
         setSaveError(isApiError(error) ? error.message : "Ölçüm kaydedilemedi. Lütfen tekrar dene.");
         setIsSaving(false);
