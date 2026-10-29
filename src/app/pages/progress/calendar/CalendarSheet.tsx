@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { parseDateKey, shiftMonth, toDateKey } from "../../../../shared/calendar/dates";
 import { useNavigationGuard } from "../../../../shared/navigation/useNavigationGuard";
@@ -23,6 +23,9 @@ export function CalendarSheet({ visible, focusDate, onClose }: Props) {
   const { colors } = useTheme();
   const router = useRouter();
   const guard = useNavigationGuard();
+  // Modal ayri bir native pencerede acildigi icin SafeAreaView orada inset'leri 0 olcebiliyor
+  // (Android edge-to-edge'de icerik durum cubugunun altina kayiyordu); uygulama kokundeki inset'ler kullanilir.
+  const insets = useSafeAreaInsets();
 
   const localToday = toDateKey(new Date());
   const initial = parseDateKey(focusDate) ?? parseDateKey(localToday)!;
@@ -64,9 +67,16 @@ export function CalendarSheet({ visible, focusDate, onClose }: Props) {
   );
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="fullScreen"
+      statusBarTranslucent
+      navigationBarTranslucent
+      onRequestClose={onClose}
+    >
       <View style={[styles.root, { backgroundColor: colors.background }]}>
-        <SafeAreaView style={styles.root} edges={["top", "bottom"]}>
+        <View testID="calendar-safe-area" style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
           <View style={styles.topBar}>
             <Text style={[styles.topTitle, { color: colors.text }]}>Aktivite Takvimi</Text>
             <Pressable
@@ -106,7 +116,7 @@ export function CalendarSheet({ visible, focusDate, onClose }: Props) {
               />
             </View>
           </ScrollView>
-        </SafeAreaView>
+        </View>
       </View>
     </Modal>
   );

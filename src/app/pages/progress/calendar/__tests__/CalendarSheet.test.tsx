@@ -11,10 +11,9 @@ jest.mock("../../../../../shared/theme/ThemeContext", () => ({ useTheme: () => m
 jest.mock("@expo/vector-icons", () => ({ Ionicons: () => null }));
 const mockPush = jest.fn();
 jest.mock("expo-router", () => ({ useRouter: () => ({ push: mockPush }) }));
-jest.mock("react-native-safe-area-context", () => {
-  const { View } = jest.requireActual("react-native");
-  return { SafeAreaView: View };
-});
+jest.mock("react-native-safe-area-context", () => ({
+  useSafeAreaInsets: () => ({ top: 47, bottom: 34, left: 0, right: 0 }),
+}));
 jest.mock("../../../../../shared/calendar/calendarCache", () => ({
   fetchCalendar: jest.fn(),
   peekCalendar: () => undefined,
@@ -101,6 +100,13 @@ describe("CalendarSheet", () => {
     fireEvent.press(await screen.findByTestId("day-session-77"));
     expect(onClose).toHaveBeenCalled();
     expect(mockPush).toHaveBeenCalledWith({ pathname: "/pages/workout/history/[id]", params: { id: "77" } });
+  });
+
+  it("ust bari durum cubugunun altina itmek icin cihaz inset'lerini uygular", async () => {
+    await render(<CalendarSheet visible focusDate="2026-10-14" onClose={jest.fn()} />);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    expect(screen.getByTestId("calendar-safe-area")).toHaveStyle({ paddingTop: 47, paddingBottom: 34 });
   });
 
   it("kapaliyken istek atmaz", () => {
