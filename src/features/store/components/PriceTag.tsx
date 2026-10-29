@@ -35,7 +35,7 @@ export function DiscountBadge({ percent, testID }: { percent: number; testID?: s
   const { colors } = useTheme();
   if (percent <= 0) return null;
   return (
-    <View style={[styles.badge, { backgroundColor: colors.danger }]} testID={testID} accessibilityLabel={`Yüzde ${percent} indirim`}>
+    <View style={[styles.badge, { backgroundColor: colors.primary }]} testID={testID} accessibilityLabel={`Yüzde ${percent} indirim`}>
       <Text style={styles.badgeText}>%{percent}</Text>
     </View>
   );

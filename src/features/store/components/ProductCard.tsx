@@ -96,7 +96,7 @@ function ProductCardBase({ product, width }: Props) {
         accessibilityState={{ selected: favorite }}
         style={[styles.heart, { backgroundColor: colors.background }]}
       >
-        <Ionicons name={favorite ? "heart" : "heart-outline"} size={17} color={favorite ? colors.danger : colors.text} />
+        <Ionicons name={favorite ? "heart" : "heart-outline"} size={17} color={favorite ? colors.primary : colors.text} />
       </Pressable>
       <Pressable
         testID={`quick-add-${product.id}`}

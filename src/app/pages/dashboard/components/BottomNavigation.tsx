@@ -92,10 +92,9 @@ export function BottomNavigation({ variant = "main", active, onChange, onCircleO
   const tabCount = tabs.length;
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
-  // MB Fit tarafinin rengi mavi (primary), MB Shop tarafinin rengi kirmizi (accent): kapsuldeki gosterge
-  // bulunulan tarafin, yuvarlak buton gidilecek tarafin rengini alir.
-  const indicatorColor = variant === "store" ? colors.accent : colors.primary;
-  const circleColor = variant === "store" ? colors.primary : colors.accent;
+  // MB Fit ve MB Shop ayni mavi (primary) rengi kullanir: kapsuldeki gosterge de yuvarlak buton da mavidir.
+  const indicatorColor = colors.primary;
+  const circleColor = colors.primary;
   const reducedMotion = useReducedMotion();
   const navBottom = insets.bottom + NAV_BOTTOM_GAP;
   const fadeAreaHeight = navBottom + NAV_HEIGHT + FADE_START_ABOVE_NAV;
