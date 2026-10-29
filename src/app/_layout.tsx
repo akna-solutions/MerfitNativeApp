@@ -6,6 +6,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider } from "../shared/auth/AuthContext";
 import { useReducedMotion } from "../shared/motion/useReducedMotion";
 import { EmailVerificationGate } from "../shared/auth/EmailVerificationGate";
+import { StoreProvider } from "../features/store/state/StoreContext";
 import { PushNotificationsProvider } from "../shared/notifications/PushNotificationsProvider";
 import { PlusProvider } from "../shared/plus/PlusContext";
 import { ProfileProvider } from "../shared/profile/ProfileContext";
@@ -40,7 +41,9 @@ export default function RootLayout() {
           <ThemeProvider>
             <PlusProvider>
               <PushNotificationsProvider>
-                <RootNavigation />
+                <StoreProvider>
+                  <RootNavigation />
+                </StoreProvider>
               </PushNotificationsProvider>
             </PlusProvider>
           </ThemeProvider>

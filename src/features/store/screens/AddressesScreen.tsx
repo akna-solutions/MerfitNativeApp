@@ -1,0 +1,121 @@
+import { Ionicons } from "@expo/vector-icons";
+import { useState } from "react";
+import { Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+
+import { useTheme } from "../../../shared/theme/ThemeContext";
+import { AddressFormFields } from "../components/AddressFormFields";
+import { EmptyState } from "../components/EmptyState";
+import { GUTTER } from "../components/StoreSections";
+import { StoreScreenShell } from "../components/StoreScreenShell";
+import { useAddresses } from "../hooks";
+import { DeliveryAddress } from "../types";
+import { AddressErrors, AddressForm, EMPTY_ADDRESS_FORM, hasErrors, validateAddress } from "../utils/validation";
+
+export function AddressesScreen() {
+  const { colors } = useTheme();
+  const { addresses, save, remove } = useAddresses();
+  const [editing, setEditing] = useState<{ id?: string } | null>(null);
+  const [form, setForm] = useState<AddressForm>(EMPTY_ADDRESS_FORM);
+  const [errors, setErrors] = useState<AddressErrors>({});
+
+  const openNew = () => {
+    setForm(EMPTY_ADDRESS_FORM);
+    setErrors({});
+    setEditing({});
+  };
+  const openEdit = (a: DeliveryAddress) => {
+    setForm({ title: a.title, fullName: a.fullName, phone: a.phone, city: a.city, district: a.district, address: a.address });
+    setErrors({});
+    setEditing({ id: a.id });
+  };
+  const submit = async () => {
+    const found = validateAddress(form);
+    setErrors(found);
+    if (hasErrors(found)) return;
+    await save({ ...form, id: editing?.id });
+    setEditing(null);
+  };
+  const confirmRemove = (a: DeliveryAddress) =>
+    Alert.alert("Adresi sil", `“${a.title}” adresi silinsin mi?`, [
+      { text: "Vazgeç", style: "cancel" },
+      { text: "Sil", style: "destructive", onPress: () => void remove(a.id) },
+    ]);
+
+  if (editing) {
+    return (
+      <StoreScreenShell
+        title={editing.id ? "Adresi Düzenle" : "Yeni Adres"}
+        onBack={() => setEditing(null)}
+        testID="address-form"
+        footer={
+          <Pressable onPress={submit} accessibilityRole="button" testID="save-address" style={[styles.cta, { backgroundColor: colors.primary }]}>
+            <Text style={styles.ctaLabel}>Kaydet</Text>
+          </Pressable>
+        }
+      >
+        <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+            <AddressFormFields value={form} errors={errors} onChange={setForm} />
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </StoreScreenShell>
+    );
+  }
+
+  return (
+    <StoreScreenShell
+      title="Adreslerim"
+      testID="addresses-screen"
+      right={
+        <Pressable onPress={openNew} hitSlop={8} accessibilityRole="button" accessibilityLabel="Yeni adres ekle" testID="add-address" style={[styles.addButton, { backgroundColor: colors.primary }]}>
+          <Ionicons name="add" size={20} color="#FFFFFF" />
+        </Pressable>
+      }
+    >
+      <FlatList
+        data={addresses}
+        keyExtractor={(a) => a.id}
+        renderItem={({ item }) => (
+          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]} testID={`address-${item.id}`}>
+            <View style={styles.cardTop}>
+              <Ionicons name="location-outline" size={18} color={colors.primary} />
+              <Text style={[styles.cardTitle, { color: colors.text }]}>{item.title}</Text>
+              <Pressable onPress={() => openEdit(item)} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${item.title} adresini düzenle`}>
+                <Ionicons name="create-outline" size={18} color={colors.text} />
+              </Pressable>
+              <Pressable onPress={() => confirmRemove(item)} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${item.title} adresini sil`} testID={`delete-address-${item.id}`}>
+                <Ionicons name="trash-outline" size={18} color={colors.danger} />
+              </Pressable>
+            </View>
+            <Text style={[styles.meta, { color: colors.text }]}>{item.fullName}</Text>
+            <Text style={[styles.meta, { color: colors.textSecondary }]}>{item.address}</Text>
+            <Text style={[styles.meta, { color: colors.textSecondary }]}>
+              {item.district} / {item.city} · {item.phone}
+            </Text>
+          </View>
+        )}
+        ItemSeparatorComponent={Sep}
+        contentContainerStyle={styles.content}
+        ListEmptyComponent={<EmptyState icon="location-outline" title="Kayıtlı adresin yok" message="Siparişlerinde kullanmak için adres ekleyebilirsin." actionLabel="Adres ekle" onAction={openNew} testID="addresses-empty" />}
+        showsVerticalScrollIndicator={false}
+      />
+    </StoreScreenShell>
+  );
+}
+
+function Sep() {
+  return <View style={styles.sep} />;
+}
+
+const styles = StyleSheet.create({
+  flex: { flex: 1 },
+  content: { paddingHorizontal: GUTTER, paddingBottom: 32 },
+  sep: { height: 12 },
+  card: { borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, padding: 14, gap: 4 },
+  cardTop: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 4 },
+  cardTitle: { flex: 1, fontSize: 15, fontWeight: "700" },
+  meta: { fontSize: 13, lineHeight: 18 },
+  addButton: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },
+  cta: { height: 50, borderRadius: 25, alignItems: "center", justifyContent: "center" },
+  ctaLabel: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" },
+});

@@ -7,6 +7,8 @@ type Props = {
   name: string;
   /** Okunmamis bildirim sayisi; 0 ise zildeki nokta gosterilmez. */
   unreadCount?: number;
+  /** Ilerleme ekrani artik alt navbar'da degil; ana sayfanin sag ustunden acilir. */
+  onProgressPress: () => void;
   onNotificationsPress: () => void;
   onProfilePress: () => void;
 };
@@ -18,20 +20,30 @@ function getGreeting() {
   return "İyi akşamlar";
 }
 
-export function DashboardHeader({ name, unreadCount = 0, onNotificationsPress, onProfilePress }: Props) {
+export function DashboardHeader({ name, unreadCount = 0, onProgressPress, onNotificationsPress, onProfilePress }: Props) {
   const { colors } = useTheme();
   const initial = name.trim().charAt(0).toUpperCase() || "M";
 
   return (
     <View style={styles.row}>
       <View style={styles.textBlock}>
-        <Text style={[styles.greeting, { color: colors.text }]}>
+        <Text style={[styles.greeting, { color: colors.text }]} numberOfLines={1}>
           {getGreeting()}, {name}
         </Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Bugünü değerlendirelim.</Text>
       </View>
 
       <View style={styles.actions}>
+        <Pressable
+          testID="dashboard-progress-button"
+          onPress={onProgressPress}
+          hitSlop={8}
+          style={[styles.bellButton, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
+          accessibilityRole="button"
+          accessibilityLabel="İlerlemem"
+        >
+          <Ionicons name="stats-chart-outline" size={19} color={colors.text} />
+        </Pressable>
         <Pressable
           onPress={onNotificationsPress}
           hitSlop={8}
