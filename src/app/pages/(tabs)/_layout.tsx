@@ -1,11 +1,14 @@
 import { Tabs, useRouter } from "expo-router";
-import { Easing } from "react-native";
+import { useState } from "react";
+import { Easing, View } from "react-native";
 
 import {
     BottomNavigation,
     NavTab,
 } from "../dashboard/components/BottomNavigation";
 import { useReducedMotion } from "../../../shared/motion/useReducedMotion";
+import { ProfileReveal, RevealOrigin } from "../../../shared/navigation/ProfileReveal";
+import { useTheme } from "../../../shared/theme/ThemeContext";
 
 // Tab route dosya adları ile navbar'daki NavTab id'leri birebir aynı değil
 // ("dashboard" dosyası "home" tab'ına karşılık geliyor), bu yüzden ikisi
@@ -31,7 +34,11 @@ const TAB_TO_ROUTE: Record<NavTab, string> = {
 export default function TabsLayout() {
   const reducedMotion = useReducedMotion();
   const router = useRouter();
+  const { colors } = useTheme();
+  // Profil butonundan buyuyen daire animasyonunun baslangic noktasi; null iken animasyon yoktur.
+  const [revealOrigin, setRevealOrigin] = useState<RevealOrigin | null>(null);
   return (
+    <View style={{ flex: 1 }}>
     <Tabs
       screenOptions={{
         headerShown: false,
@@ -49,6 +56,8 @@ export default function TabsLayout() {
             // tabBar render-prop'undaki `navigation`'a baglanmak yerine router kullaniyoruz;
             // boylece prop eksik/bayat geldiginde bile gecis calisir.
             onChange={(tab) => router.navigate(`/pages/${TAB_TO_ROUTE[tab]}` as never)}
+            // "Hareketi azalt" acikken daire animasyonu atlanir, profil dogrudan acilir.
+            onProfileOpen={reducedMotion ? undefined : setRevealOrigin}
           />
         );
       }}
@@ -60,5 +69,12 @@ export default function TabsLayout() {
       <Tabs.Screen name="progress" />
       <Tabs.Screen name="profile" />
     </Tabs>
+    <ProfileReveal
+      origin={revealOrigin}
+      color={colors.accent}
+      onCovered={() => router.navigate("/pages/profile" as never)}
+      onDone={() => setRevealOrigin(null)}
+    />
+    </View>
   );
 }
