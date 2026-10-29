@@ -11,6 +11,9 @@ import { useReducedMotion } from "../../../shared/motion/useReducedMotion";
 import { CircleReveal, RevealOrigin } from "../../../shared/navigation/CircleReveal";
 import { circleTab, navbarRoute } from "../../../shared/navigation/navbarRoutes";
 import { useTheme } from "../../../shared/theme/ThemeContext";
+import { useStore } from "../../../features/store/hooks";
+
+const STORE_LOADER_ICONS = ["barbell", "bag-handle"] as const;
 
 // Tab route dosya adları ile navbar'daki NavTab id'leri birebir aynı değil
 // ("dashboard" dosyası "home" tab'ına karşılık geliyor), bu yüzden ikisi
@@ -21,14 +24,21 @@ const ROUTE_TO_TAB: Record<string, NavTab> = {
   workouts: "workouts",
   nutrition: "nutrition",
   store: "store",
+  "store-categories": "categories",
+  "store-orders": "orders",
   progress: "home",
   profile: "profile",
 };
+
+// Store bolumunun sekmeleri: bunlardayken navbar Store gorunumune gecer. Kategoriler ve Siparislerim de birer
+// sekmedir; boylece navbar ekranla birlikte kaymaz, yerinde sabit kalir.
+const STORE_ROUTES = new Set(["store", "store-categories", "store-orders"]);
 
 export default function TabsLayout() {
   const reducedMotion = useReducedMotion();
   const router = useRouter();
   const { colors } = useTheme();
+  const { isLoading: storeLoading } = useStore();
   // Yuvarlak navbar butonundan (Store / uygulamaya don) buyuyen daire animasyonu; null iken animasyon yoktur.
   const [reveal, setReveal] = useState<{ origin: RevealOrigin; target: NavTab; variant: NavVariant } | null>(null);
   return (
@@ -44,7 +54,7 @@ export default function TabsLayout() {
         const activeRouteName = state.routes[state.index].name;
         const active = ROUTE_TO_TAB[activeRouteName] ?? "home";
         // Store sekmesindeyken navbar Store'a ozel menuleri (Anasayfa, Kategoriler, Siparislerim, Profilim) gosterir.
-        const variant: NavVariant = activeRouteName === "store" ? "store" : "main";
+        const variant: NavVariant = STORE_ROUTES.has(activeRouteName) ? "store" : "main";
 
         return (
           <BottomNavigation
@@ -63,6 +73,8 @@ export default function TabsLayout() {
       <Tabs.Screen name="workouts" />
       <Tabs.Screen name="nutrition" />
       <Tabs.Screen name="store" />
+      <Tabs.Screen name="store-categories" />
+      <Tabs.Screen name="store-orders" />
       <Tabs.Screen name="progress" />
       <Tabs.Screen name="profile" />
     </Tabs>
@@ -71,6 +83,9 @@ export default function TabsLayout() {
       color={colors.accent}
       onCovered={() => reveal && router.navigate(navbarRoute(reveal.target, reveal.variant))}
       onDone={() => setReveal(null)}
+      // Store'a geciste mor ekranda dambil ve market ikonlari, Store verisi yuklenene kadar doner.
+      loaderIcons={reveal?.target === "store" ? STORE_LOADER_ICONS : undefined}
+      ready={!storeLoading}
     />
     </View>
   );

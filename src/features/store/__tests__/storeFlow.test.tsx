@@ -25,7 +25,6 @@ jest.mock("expo-router", () => {
   };
 });
 jest.mock("../../../shared/theme/ThemeContext", () => ({ useTheme: () => mockThemeValue }));
-jest.mock("../../../app/pages/dashboard/components/BottomNavigation", () => ({ BottomNavigation: () => null }));
 jest.mock("@expo/vector-icons", () => ({ Ionicons: () => null }));
 jest.mock("expo-image", () => {
   const { View } = jest.requireActual("react-native");

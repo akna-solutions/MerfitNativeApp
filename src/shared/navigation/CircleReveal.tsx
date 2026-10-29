@@ -1,6 +1,15 @@
-import { useEffect, useRef } from "react";
-import { StyleSheet, useWindowDimensions } from "react-native";
-import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withTiming } from "react-native-reanimated";
+import { Ionicons } from "@expo/vector-icons";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { StyleSheet, useWindowDimensions, View } from "react-native";
+import Animated, {
+  cancelAnimation,
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withTiming,
+} from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 
 import { RevealOrigin, revealRadius } from "./revealRadius";
@@ -12,6 +21,11 @@ export const REVEAL_BASE_SIZE = 64;
 export const REVEAL_GROW_MS = 380;
 const FADE_DELAY_MS = 140;
 const FADE_MS = 240;
+/** Yukleme gostergesi en az bu kadar gorunur; aninda kaybolup "goz kirpma" gibi durmasin. */
+export const LOADER_MIN_MS = 700;
+/** Hedef hic hazir olmasa bile ekran bu sureden sonra acilir; ortu dokunmalari sonsuza dek kilitlemesin. */
+export const LOADER_MAX_MS = 4000;
+const SPIN_MS = 1100;
 
 type Props = {
   /** Dairenin buyumeye basladigi nokta (pencere koordinatlari); null ise gosterilmez. */
@@ -21,58 +35,124 @@ type Props = {
   onCovered: () => void;
   /** Daire solup bittiginde cagrilir. */
   onDone: () => void;
+  /**
+   * Verilirse ekran kaplandiktan sonra ortasinda bu ikonlar doner ve `ready` olana kadar
+   * (en az LOADER_MIN_MS, en fazla LOADER_MAX_MS) ortu kalkmaz.
+   */
+  loaderIcons?: readonly (keyof typeof Ionicons.glyphMap)[];
+  /** Hedef ekranin verisi hazir mi; yalnizca `loaderIcons` ile anlamlidir. */
+  ready?: boolean;
 };
 
+type Phase = "idle" | "growing" | "holding" | "fading";
+
 /** Yuvarlak navbar butonundan baslayip ekrani kaplayan, sonra solarak yeni ekrani gosteren daire. */
-export function CircleReveal({ origin, color, onCovered, onDone }: Props) {
+export function CircleReveal({ origin, color, onCovered, onDone, loaderIcons, ready = true }: Props) {
   const { width, height } = useWindowDimensions();
   const scale = useSharedValue(1);
   const opacity = useSharedValue(0);
+  const spin = useSharedValue(0);
+  const [phase, setPhase] = useState<Phase>("idle");
+  const coveredAtRef = useRef(0);
   const coveredRef = useRef(onCovered);
   const doneRef = useRef(onDone);
   coveredRef.current = onCovered;
   doneRef.current = onDone;
+  const withLoader = Boolean(loaderIcons?.length);
+  const withLoaderRef = useRef(withLoader);
+  withLoaderRef.current = withLoader;
+
+  const startFade = useCallback(() => {
+    setPhase("fading");
+    const done = () => {
+      setPhase("idle");
+      doneRef.current();
+    };
+    opacity.set(
+      withDelay(
+        FADE_DELAY_MS,
+        withTiming(0, { duration: FADE_MS }, (finished) => {
+          if (finished) scheduleOnRN(done);
+        }),
+      ),
+    );
+  }, [opacity]);
+
+  const handleCovered = useCallback(() => {
+    coveredRef.current();
+    if (!withLoaderRef.current) {
+      startFade();
+      return;
+    }
+    coveredAtRef.current = Date.now();
+    setPhase("holding");
+  }, [startFade]);
 
   useEffect(() => {
     if (!origin) return;
     const endScale = (revealRadius(origin, width, height) * 2) / REVEAL_BASE_SIZE + 0.2;
-    const covered = () => coveredRef.current();
-    const done = () => doneRef.current();
+    setPhase("growing");
     scale.set(1);
     opacity.set(1);
     scale.set(
       withTiming(endScale, { duration: REVEAL_GROW_MS, easing: Easing.out(Easing.cubic) }, (finished) => {
-        if (!finished) return;
-        scheduleOnRN(covered);
-        opacity.set(
-          withDelay(
-            FADE_DELAY_MS,
-            withTiming(0, { duration: FADE_MS }, (fadeFinished) => {
-              if (fadeFinished) scheduleOnRN(done);
-            }),
-          ),
-        );
+        if (finished) scheduleOnRN(handleCovered);
       }),
     );
-  }, [origin, width, height, scale, opacity]);
+    // Boyut degisimi (dondurme) yeni bir animasyon baslatmasin; yalnizca yeni bir baslangic noktasi baslatir.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [origin]);
 
-  const style = useAnimatedStyle(() => ({
+  // Kapli bekleme: hedef hazir olunca (en az LOADER_MIN_MS sonra) ya da en gec LOADER_MAX_MS'de ortu kalkar.
+  useEffect(() => {
+    if (phase !== "holding") return;
+    const elapsed = Date.now() - coveredAtRef.current;
+    const wait = ready ? Math.max(0, LOADER_MIN_MS - elapsed) : Math.max(0, LOADER_MAX_MS - elapsed);
+    const timer = setTimeout(startFade, wait);
+    return () => clearTimeout(timer);
+  }, [phase, ready, startFade]);
+
+  const showLoader = withLoader && (phase === "holding" || phase === "fading");
+  useEffect(() => {
+    if (!showLoader) return;
+    spin.set(0);
+    spin.set(withRepeat(withTiming(1, { duration: SPIN_MS, easing: Easing.linear }), -1, false));
+    return () => cancelAnimation(spin);
+  }, [showLoader, spin]);
+
+  const circleStyle = useAnimatedStyle(() => ({
     opacity: opacity.get(),
     transform: [{ scale: scale.get() }],
   }));
+  const loaderStyle = useAnimatedStyle(() => ({ opacity: opacity.get() }));
+  const spinStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${spin.get() * 360}deg` }] }));
+  const counterSpinStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${-spin.get() * 360}deg` }] }));
 
   if (!origin) return null;
 
   return (
-    <Animated.View
-      testID="circle-reveal"
-      pointerEvents="auto"
-      style={[
-        styles.circle,
-        { backgroundColor: color, left: origin.x - REVEAL_BASE_SIZE / 2, top: origin.y - REVEAL_BASE_SIZE / 2 },
-        style,
-      ]}
-    />
+    <>
+      <Animated.View
+        testID="circle-reveal"
+        pointerEvents="auto"
+        style={[
+          styles.circle,
+          { backgroundColor: color, left: origin.x - REVEAL_BASE_SIZE / 2, top: origin.y - REVEAL_BASE_SIZE / 2 },
+          circleStyle,
+        ]}
+      />
+      {showLoader ? (
+        <Animated.View testID="circle-reveal-loader" pointerEvents="none" style={[StyleSheet.absoluteFill, styles.loader, loaderStyle]}>
+          <View style={styles.loaderRow} accessibilityRole="progressbar" accessibilityLabel="Yükleniyor">
+            {loaderIcons!.map((icon, index) => (
+              <Animated.View key={icon} style={index % 2 === 0 ? spinStyle : counterSpinStyle}>
+                <Ionicons name={icon} size={44} color="#FFFFFF" />
+              </Animated.View>
+            ))}
+          </View>
+        </Animated.View>
+      ) : null}
+    </>
   );
 }
 
@@ -83,4 +163,6 @@ const styles = StyleSheet.create({
     height: REVEAL_BASE_SIZE,
     borderRadius: REVEAL_BASE_SIZE / 2,
   },
+  loader: { alignItems: "center", justifyContent: "center" },
+  loaderRow: { flexDirection: "row", alignItems: "center", gap: 28 },
 });
