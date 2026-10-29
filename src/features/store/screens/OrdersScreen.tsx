@@ -52,7 +52,7 @@ export function OrdersScreen() {
   const router = useRouter();
   const { orders } = useOrders();
   return (
-    <StoreScreenShell title="Siparişlerim" subtitle="Demo siparişler" testID="orders-screen">
+    <StoreScreenShell title="Siparişlerim" subtitle="Demo siparişler" testID="orders-screen" navbar={{ active: "orders" }}>
       <FlatList
         data={orders}
         keyExtractor={(o) => o.id}
