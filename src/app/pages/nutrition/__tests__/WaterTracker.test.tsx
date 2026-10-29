@@ -11,6 +11,7 @@ describe("WaterTracker", () => {
     const onAdd = jest.fn();
     await render(<WaterTracker consumedL={1} targetL={2.5} onAdd={onAdd} />);
 
+    await fireEvent.press(screen.getByTestId("water-add-250"));
     await fireEvent.press(screen.getByTestId("water-add-500"));
     expect(onAdd).toHaveBeenNthCalledWith(1, 250);
     expect(onAdd).toHaveBeenNthCalledWith(2, 500);
