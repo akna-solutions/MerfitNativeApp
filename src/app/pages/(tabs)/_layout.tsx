@@ -1,4 +1,4 @@
-import { Tabs } from "expo-router";
+import { Tabs, useRouter } from "expo-router";
 import { Easing } from "react-native";
 
 import {
@@ -30,6 +30,7 @@ const TAB_TO_ROUTE: Record<NavTab, string> = {
 
 export default function TabsLayout() {
   const reducedMotion = useReducedMotion();
+  const router = useRouter();
   return (
     <Tabs
       screenOptions={{
@@ -38,14 +39,16 @@ export default function TabsLayout() {
         animation: reducedMotion ? "none" : "shift",
         transitionSpec: { animation: "timing", config: { duration: 220, easing: Easing.out(Easing.cubic) } },
       }}
-      tabBar={({ state, navigation }) => {
+      tabBar={({ state }) => {
         const activeRouteName = state.routes[state.index].name;
         const active = ROUTE_TO_TAB[activeRouteName] ?? "home";
 
         return (
           <BottomNavigation
             active={active}
-            onChange={(tab) => navigation.navigate(TAB_TO_ROUTE[tab])}
+            // tabBar render-prop'undaki `navigation`'a baglanmak yerine router kullaniyoruz;
+            // boylece prop eksik/bayat geldiginde bile gecis calisir.
+            onChange={(tab) => router.navigate(`/pages/${TAB_TO_ROUTE[tab]}` as never)}
           />
         );
       }}
