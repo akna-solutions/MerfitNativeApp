@@ -189,12 +189,12 @@ export function NutritionScreen() {
     });
   };
 
-  const handleAddWater = async () => {
+  const handleAddWater = async (amountMl: number) => {
     if (!data || isAddingWater) return;
     setIsAddingWater(true);
     try {
       const water = await logWater({
-        amountMl: 250,
+        amountMl,
         date: toDateParam(selectedDate),
       });
       setData((prev) => (prev ? { ...prev, water } : prev));
@@ -316,6 +316,7 @@ export function NutritionScreen() {
                   consumedL={data.water.consumedL}
                   targetL={data.water.targetL}
                   onAdd={handleAddWater}
+                  busy={isAddingWater}
                 />
               </View>
 

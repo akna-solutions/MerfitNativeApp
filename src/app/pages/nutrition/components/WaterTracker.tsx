@@ -5,13 +5,18 @@ import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 const SEGMENT_LITERS = 0.5;
 
+/** Tek dokunusla eklenebilen miktarlar (ml). */
+export const WATER_QUICK_AMOUNTS_ML = [250, 500] as const;
+
 type Props = {
   consumedL: number;
   targetL: number;
-  onAdd: () => void;
+  onAdd: (amountMl: number) => void;
+  /** Istek surerken butonlar pasif olur. */
+  busy?: boolean;
 };
 
-export function WaterTracker({ consumedL, targetL, onAdd }: Props) {
+export function WaterTracker({ consumedL, targetL, onAdd, busy = false }: Props) {
   const { colors } = useTheme();
   const totalSegments = Math.max(1, Math.round(targetL / SEGMENT_LITERS));
   const filledSegments = Math.min(
@@ -24,29 +29,40 @@ export function WaterTracker({ consumedL, targetL, onAdd }: Props) {
       <Text style={[styles.sectionTitle, { color: colors.text }]}>Su</Text>
 
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={styles.summary}>
+          <Text style={[styles.amount, { color: colors.text }]}>
+            {consumedL.toFixed(1)}
+            <Text style={[styles.target, { color: colors.textSecondary }]}> / {targetL.toFixed(1)} L</Text>
+          </Text>
+          <Ionicons name="water" size={28} color={colors.primary} />
+        </View>
+
         <View style={styles.row}>
           {Array.from({ length: totalSegments }).map((_, index) => (
-            <Pressable key={index} onPress={onAdd} hitSlop={4}>
-              <Ionicons
-                name={index < filledSegments ? "water" : "water-outline"}
-                size={20}
-                color={
-                  index < filledSegments
-                    ? colors.primary
-                    : colors.textSecondary
-                }
-              />
-            </Pressable>
+            <Ionicons
+              key={index}
+              name={index < filledSegments ? "water" : "water-outline"}
+              size={22}
+              color={index < filledSegments ? colors.primary : colors.textSecondary}
+            />
           ))}
         </View>
 
-        <View style={styles.footer}>
-          <Text style={[styles.amount, { color: colors.text }]}>
-            {consumedL.toFixed(1)} / {targetL.toFixed(1)} L
-          </Text>
-          <Pressable onPress={onAdd} style={[styles.addButton, { backgroundColor: colors.cardActive }]} hitSlop={8}>
-            <Text style={[styles.addLabel, { color: colors.primary }]}>+ 250 ml</Text>
-          </Pressable>
+        <View style={styles.buttons}>
+          {WATER_QUICK_AMOUNTS_ML.map((amount) => (
+            <Pressable
+              key={amount}
+              testID={`water-add-${amount}`}
+              accessibilityRole="button"
+              accessibilityLabel={`${amount} mililitre su ekle`}
+              disabled={busy}
+              onPress={() => onAdd(amount)}
+              style={[styles.addButton, { backgroundColor: colors.primary, opacity: busy ? 0.6 : 1 }]}
+            >
+              <Ionicons name="add" size={20} color="#FFFFFF" />
+              <Text style={styles.addLabel}>{amount} ml</Text>
+            </Pressable>
+          ))}
         </View>
       </View>
     </View>
@@ -55,8 +71,8 @@ export function WaterTracker({ consumedL, targetL, onAdd }: Props) {
 
 const styles = StyleSheet.create({
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: 20,
+    fontWeight: "800",
     marginBottom: 12,
   },
   card: {
@@ -64,20 +80,19 @@ const styles = StyleSheet.create({
     padding: 20,
     borderWidth: StyleSheet.hairlineWidth,
   },
-  row: { flexDirection: "row", justifyContent: "space-between" },
-  footer: {
+  summary: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  amount: { fontSize: 30, fontWeight: "700" },
+  target: { fontSize: 15, fontWeight: "600" },
+  row: { flexDirection: "row", justifyContent: "space-between", marginTop: 14 },
+  buttons: { flexDirection: "row", gap: 12, marginTop: 18 },
+  addButton: {
+    flex: 1,
+    height: 52,
+    borderRadius: 16,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 16,
-  },
-  amount: { fontSize: 13, fontWeight: "700" },
-  addButton: {
-    height: 32,
-    paddingHorizontal: 14,
-    borderRadius: 16,
-    alignItems: "center",
     justifyContent: "center",
+    gap: 4,
   },
-  addLabel: { fontSize: 12, fontWeight: "700" },
+  addLabel: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" },
 });
