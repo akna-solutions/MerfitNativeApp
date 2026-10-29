@@ -92,6 +92,10 @@ export function BottomNavigation({ variant = "main", active, onChange, onCircleO
   const tabCount = tabs.length;
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+  // MB Fit tarafinin rengi mavi (primary), MB Shop tarafinin rengi kirmizi (accent): kapsuldeki gosterge
+  // bulunulan tarafin, yuvarlak buton gidilecek tarafin rengini alir.
+  const indicatorColor = variant === "store" ? colors.accent : colors.primary;
+  const circleColor = variant === "store" ? colors.primary : colors.accent;
   const reducedMotion = useReducedMotion();
   const navBottom = insets.bottom + NAV_BOTTOM_GAP;
   const fadeAreaHeight = navBottom + NAV_HEIGHT + FADE_START_ABOVE_NAV;
@@ -261,7 +265,7 @@ export function BottomNavigation({ variant = "main", active, onChange, onCircleO
               <Animated.View
                 testID="navbar-indicator"
                 pointerEvents="none"
-                style={[styles.indicator, { backgroundColor: colors.primary }, indicatorStyle]}
+                style={[styles.indicator, { backgroundColor: indicatorColor }, indicatorStyle]}
               />
               {tabs.map((tab, index) => {
                 const selected = index === activeIndex;
@@ -299,9 +303,8 @@ export function BottomNavigation({ variant = "main", active, onChange, onCircleO
             style={[
               styles.circle,
               {
-                // Yuvarlak buton kapsuldaki mavi göstergeden ayrissin diye aksan (kirmizi) renkte dolu durur.
-                backgroundColor: colors.accent,
-                borderColor: circleActive ? ACTIVE_CONTENT : colors.accent,
+                backgroundColor: circleColor,
+                borderColor: circleActive ? ACTIVE_CONTENT : circleColor,
                 borderWidth: circleActive ? 2 : StyleSheet.hairlineWidth,
               },
             ]}

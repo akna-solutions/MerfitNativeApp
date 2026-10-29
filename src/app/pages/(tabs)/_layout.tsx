@@ -13,7 +13,7 @@ import { circleTab, navbarRoute } from "../../../shared/navigation/navbarRoutes"
 import { useTheme } from "../../../shared/theme/ThemeContext";
 import { useStore } from "../../../features/store/hooks";
 
-// Yuvarlak buton gecisinde kirmizi ekranda donen ikon ve altindaki baslik/aciklama.
+// Yuvarlak buton gecisinde renkli (MB Shop kirmizi, MB Fit mavi) ekranda donen ikon ve altindaki baslik/aciklama.
 const LOADERS: Partial<Record<NavTab, RevealLoader>> = {
   store: { icon: "bag-handle", title: "MB Shop", description: "Takviyeler, ekipmanlar ve kampanyalar" },
   home: { icon: "barbell", title: "MB Fit", description: "Antrenman, beslenme ve ilerlemen" },
@@ -86,7 +86,8 @@ export default function TabsLayout() {
     </Tabs>
     <CircleReveal
       origin={reveal?.origin ?? null}
-      color={colors.accent}
+      // MB Shop'a geciste kirmizi, MB Fit'e donuste mavi ekran.
+      color={reveal?.target === "store" ? colors.accent : colors.primary}
       onCovered={() => reveal && router.navigate(navbarRoute(reveal.target, reveal.variant))}
       onDone={() => setReveal(null)}
       // MB Shop'a geciste market, MB Fit'e donuste dambil ikonu doner; MB Shop verisi yuklenene kadar ortu kalkmaz.
