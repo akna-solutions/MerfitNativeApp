@@ -43,6 +43,7 @@ import { RestDayCard } from "./components/RestDayCard";
 import { TodayStartCard } from "./components/TodayStartCard";
 import { usableImageUrls } from "./components/useImageCycle";
 import { WeeklyActivitySection } from "./components/WeeklyActivitySection";
+import { CalendarSheet } from "../progress/calendar/CalendarSheet";
 import { DashboardData, WorkoutSummary } from "./types";
 
 /** Backend'in CustomerDashboardResponse'unu (services/api/types.ts) ekranin bekledigi DashboardData sekline cevirir. */
@@ -292,9 +293,9 @@ export function DashboardScreen() {
     } as never);
   };
 
-  const goToDay = (dateKey: string) => {
-    router.navigate({ pathname: "/pages/progress", params: { date: dateKey } } as never);
-  };
+  // Haftalik aktivitede bir gune dokununca takvim perdesi ana sayfanin ustunde acilir; Ilerleme'ye gecilmez.
+  const [calendar, setCalendar] = useState<{ open: boolean; focusDate: string | null }>({ open: false, focusDate: null });
+  const goToDay = (dateKey: string) => setCalendar({ open: true, focusDate: dateKey });
 
   if (isLoading) {
     return (
@@ -509,6 +510,12 @@ export function DashboardScreen() {
       <AchievementCelebration achievement={celebration.current} onClose={celebration.dismiss} />
 
       <WeightReminderModal controller={weightReminder} />
+
+      <CalendarSheet
+        visible={calendar.open}
+        focusDate={calendar.focusDate}
+        onClose={() => setCalendar((current) => ({ ...current, open: false }))}
+      />
     </View>
   );
 }

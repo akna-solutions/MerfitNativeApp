@@ -54,8 +54,8 @@ const CALORIE_LABEL: Record<CalorieState, string> = {
 
 /**
  * Ana sayfadaki haftalik aktivite: ustte antrenman, altta kalori hedefi satiri. Veriler
- * GET /api/progress/calendar'dan gelir; bugun vurgulanir ve bir gune dokununca Ilerleme ekraninda
- * o gunun ozeti acilir.
+ * GET /api/progress/calendar'dan gelir; bugun vurgulanir ve bir gune dokununca ana sayfada takvim
+ * perdesi o gune odakli acilir.
  */
 export function WeeklyActivitySection({ weekKeys, days, loading, error, onRetry, onDayPress }: Props) {
   const { colors } = useTheme();
