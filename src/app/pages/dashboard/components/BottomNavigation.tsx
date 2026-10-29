@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ComponentRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LayoutChangeEvent, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { Gesture, GestureDetector, GestureHandlerRootView } from "react-native-gesture-handler";
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
@@ -27,6 +27,11 @@ type Props = {
   /** Secili sekme. `null` ise kapsulde gosterge gizlenir. */
   active: NavTab | null;
   onChange: (tab: NavTab) => void;
+  /**
+   * Verilirse Profil butonuna basinca `onChange("profile")` yerine, butonun merkezi (pencere
+   * koordinatlari) ile cagrilir; boylece gecis butondan buyuyen bir animasyonla yapilabilir.
+   */
+  onProfileOpen?: (origin: { x: number; y: number }) => void;
 };
 
 // Navbar'in ekranin altindan uzakligi ve kapsul yuksekligi.
@@ -56,7 +61,7 @@ function withAlpha(hex: string, alpha: number) {
   return `${hex}${Math.round(alpha * 255).toString(16).padStart(2, "0")}`;
 }
 
-export function BottomNavigation({ active, onChange }: Props) {
+export function BottomNavigation({ active, onChange, onProfileOpen }: Props) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { profile } = useProfile();
@@ -197,6 +202,15 @@ export function BottomNavigation({ active, onChange }: Props) {
 
   const shownIndex = draggingOver ?? activeIndex;
   const profileActive = active === "profile";
+  const profileRef = useRef<ComponentRef<typeof Pressable>>(null);
+
+  const handleProfilePress = () => {
+    if (!onProfileOpen || profileActive || !profileRef.current) {
+      onChange("profile");
+      return;
+    }
+    profileRef.current.measureInWindow((x, y, width, height) => onProfileOpen({ x: x + width / 2, y: y + height / 2 }));
+  };
   const initial = profile.firstName.trim().charAt(0).toUpperCase();
 
   return (
@@ -249,23 +263,26 @@ export function BottomNavigation({ active, onChange }: Props) {
           </GestureDetector>
 
           <Pressable
+            ref={profileRef}
             testID="nav-profile"
-            onPress={() => onChange("profile")}
+            onPress={handleProfilePress}
             accessibilityRole="button"
             accessibilityLabel="Profilim"
             accessibilityState={{ selected: profileActive }}
             style={[
               styles.profile,
               {
-                backgroundColor: profileActive ? colors.primary : colors.surface,
-                borderColor: profileActive ? colors.primary : colors.border,
+                // Profil butonu kapsuldaki mavi gostergeden ayrissin diye aksan (mor) renkte dolu durur.
+                backgroundColor: colors.accent,
+                borderColor: profileActive ? ACTIVE_CONTENT : colors.accent,
+                borderWidth: profileActive ? 2 : StyleSheet.hairlineWidth,
               },
             ]}
           >
             {initial ? (
-              <Text style={[styles.profileInitial, { color: profileActive ? ACTIVE_CONTENT : colors.text }]}>{initial}</Text>
+              <Text style={[styles.profileInitial, { color: ACTIVE_CONTENT }]}>{initial}</Text>
             ) : (
-              <Ionicons name={profileActive ? "person" : "person-outline"} size={24} color={profileActive ? ACTIVE_CONTENT : colors.icon} />
+              <Ionicons name={profileActive ? "person" : "person-outline"} size={24} color={ACTIVE_CONTENT} />
             )}
           </Pressable>
         </View>
