@@ -64,6 +64,12 @@ type RequestOptions = {
   timeoutMs?: number;
 };
 
+function abortError(): Error {
+  const error = new Error("İstek iptal edildi.");
+  error.name = "AbortError";
+  return error;
+}
+
 function buildUrl(path: string, query?: RequestOptions["query"]): string {
   const url = new URL(`${API_BASE_URL}${path}`);
   if (query) {
@@ -123,8 +129,13 @@ export async function apiRequest<TResponse>(path: string, options: RequestOption
       signal: controller.signal,
     });
   } catch (error) {
+    // Cagiran istegi kendisi iptal ettiyse (ekran kapandi, oturum degisti) bu bir hata degildir:
+    // loglanmaz ve AbortError olarak iletilir; cagiran taraf iptal edilen yaniti zaten yok sayar.
+    if (signal?.aborted) {
+      throw abortError();
+    }
     console.error(`[API Hatası] ${method} ${targetUrl} adresine erişilemedi:`, error);
-    if ((error as Error).name === "AbortError") {
+    if (controller.signal.aborted || (error as Error).name === "AbortError") {
       throw new NetworkError(`İstek zaman aşımına uğradı (${targetUrl}). Lütfen tekrar deneyin.`);
     }
     throw new NetworkError(`Sunucuya ulaşılamadı (${targetUrl}). İnternet bağlantınızı ve backend adresini kontrol edin.`);
