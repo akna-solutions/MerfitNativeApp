@@ -48,6 +48,18 @@ describe("BottomNavigation", () => {
     expect(onChange).toHaveBeenLastCalledWith("home");
   });
 
+  it("Store gorunumunde ayri ekran acan menuler gostergeyi tasimaz", () => {
+    const onChange = jest.fn();
+    render(<BottomNavigation variant="store" active="store" onChange={onChange} />);
+    act(() => {
+      fireEvent(screen.getByTestId("navbar-pill"), "layout", { nativeEvent: { layout: { x: 0, y: 0, width: PILL_WIDTH, height: 64 } } });
+    });
+    fireEvent.press(screen.getByTestId("nav-orders"));
+    expect(onChange).toHaveBeenLastCalledWith("orders");
+    expect(screen.getByTestId("nav-store").props.accessibilityState.selected).toBe(true);
+    expect(screen.getByTestId("nav-orders").props.accessibilityState.selected).toBe(false);
+  });
+
   it("dokunma ile secim degistirir ve Store yuvarlak butonu bagimsiz calisir", () => {
     const { onChange } = setup();
     fireEvent.press(screen.getByTestId("nav-profile"));
