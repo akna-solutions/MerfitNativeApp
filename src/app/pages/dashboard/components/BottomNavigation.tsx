@@ -299,7 +299,7 @@ export function BottomNavigation({ variant = "main", active, onChange, onCircleO
             style={[
               styles.circle,
               {
-                // Yuvarlak buton kapsuldaki mavi göstergeden ayrissin diye aksan (mor) renkte dolu durur.
+                // Yuvarlak buton kapsuldaki mavi göstergeden ayrissin diye aksan (kirmizi) renkte dolu durur.
                 backgroundColor: colors.accent,
                 borderColor: circleActive ? ACTIVE_CONTENT : colors.accent,
                 borderWidth: circleActive ? 2 : StyleSheet.hairlineWidth,
