@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { ActivityIndicator, Pressable, StyleSheet, Text } from "react-native";
+import { Pressable, StyleSheet, Text } from "react-native";
+import { DumbbellSpinner } from "../../motion/DumbbellSpinner";
 
 import { useTheme } from "../../theme/ThemeContext";
 
@@ -28,7 +29,7 @@ export function GoogleButton({ onPress, loading = false, disabled = false }: Pro
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={colors.text} />
+        <DumbbellSpinner color={colors.text} />
       ) : (
         <>
           <Ionicons name="logo-google" size={18} color={colors.text} />

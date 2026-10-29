@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Animated,
   KeyboardAvoidingView,
@@ -13,6 +12,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { DumbbellSpinner } from "../../../../shared/motion/DumbbellSpinner";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ApiError } from "../../../../services/api/client";
@@ -140,7 +140,7 @@ export function EditMealItemModal({ mealId, onUpdated, onDeleted, onClose }: Pro
               </View>
             ) : !detail ? (
               <View style={styles.stateBox} testID="edit-meal-loading">
-                <ActivityIndicator color={colors.primary} />
+                <DumbbellSpinner color={colors.primary} />
               </View>
             ) : (
               <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
@@ -161,7 +161,7 @@ export function EditMealItemModal({ mealId, onUpdated, onDeleted, onClose }: Pro
                   style={[styles.deleteButton, { borderColor: colors.danger, opacity: busy ? 0.5 : 1 }]}
                 >
                   {isDeleting ? (
-                    <ActivityIndicator color={colors.danger} />
+                    <DumbbellSpinner color={colors.danger} />
                   ) : (
                     <>
                       <Ionicons name="trash-outline" size={16} color={colors.danger} />

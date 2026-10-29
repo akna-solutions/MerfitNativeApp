@@ -1,7 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Animated,
   Pressable,
   ScrollView,
@@ -9,6 +8,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { DumbbellSpinner } from "../../../shared/motion/DumbbellSpinner";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ApiError } from "../../../services/api/client";
@@ -266,7 +266,7 @@ export function NutritionScreen() {
 
           {isLoading ? (
             <View style={[styles.padded, styles.sectionGap, styles.dayState]}>
-              <ActivityIndicator color={colors.primary} size="large" />
+              <DumbbellSpinner color={colors.primary} size="large" />
             </View>
           ) : errorMessage || !data ? (
             <View style={[styles.padded, styles.sectionGap, styles.dayState]}>

@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Animated,
   FlatList,
@@ -16,6 +15,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { DumbbellSpinner } from "../../../../../shared/motion/DumbbellSpinner";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import type { ChatItem } from "../../../../../shared/nutritionAssistant/chatState";
@@ -254,7 +254,7 @@ export function NutritionAssistantSheet({ visible, onClose, controller }: Props)
           <View testID="assistant-body" style={[styles.body, { paddingBottom: keyboardHeight > 0 ? keyboardHeight : insets.bottom }]}>
             {state.status === "loading" || state.status === "idle" ? (
               <View style={styles.center} testID="assistant-loading">
-                <ActivityIndicator color={colors.primary} />
+                <DumbbellSpinner color={colors.primary} />
                 <Text style={[styles.centerText, { color: colors.textSecondary }]}>Sohbet yükleniyor…</Text>
               </View>
             ) : state.status === "error" ? (

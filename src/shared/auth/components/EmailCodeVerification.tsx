@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { DumbbellSpinner } from "../../motion/DumbbellSpinner";
 
 import { isApiError } from "../../../services/api/client";
 import { confirmEmail, resendVerificationEmail } from "../../../services/api/auth";
@@ -153,7 +154,7 @@ export function EmailCodeVerification({ email, initialState, onVerified }: Props
         style={styles.resend}
       >
         {isSending ? (
-          <ActivityIndicator color={colors.primary} />
+          <DumbbellSpinner color={colors.primary} />
         ) : (
           <Text style={[styles.resendLabel, { color: resendDisabled ? colors.textSecondary : colors.primary }]}>
             {resendLabel}

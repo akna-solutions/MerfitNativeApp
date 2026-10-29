@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
     Animated,
     FlatList,
     KeyboardAvoidingView,
@@ -13,6 +12,7 @@ import {
     TextInput,
     View,
 } from "react-native";
+import { DumbbellSpinner } from "../../../../shared/motion/DumbbellSpinner";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ApiError } from "../../../../services/api/client";
@@ -208,7 +208,7 @@ export function AddMealModal({
             ) : step === "scan" ? (
               isLookingUpBarcode ? (
                 <View style={styles.lookupBox}>
-                  <ActivityIndicator color={colors.primary} />
+                  <DumbbellSpinner color={colors.primary} />
                   <Text style={[styles.lookupText, { color: colors.textSecondary }]}>Ürün aranıyor...</Text>
                 </View>
               ) : (
@@ -286,7 +286,7 @@ export function AddMealModal({
                 ) : null}
 
                 {isSearching ? (
-                  <ActivityIndicator
+                  <DumbbellSpinner
                     color={colors.primary}
                     style={styles.loadingIndicator}
                   />

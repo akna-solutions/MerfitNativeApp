@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, Linking, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Linking, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { DumbbellSpinner } from "../../../shared/motion/DumbbellSpinner";
 
 import { SubscriptionInfo, SubscriptionProductItem } from "../../../services/api/types";
 import { PLUS_BENEFITS } from "../../../shared/plus/featureRegistry";
@@ -76,7 +77,7 @@ export default function SubscriptionRoute() {
       }
     >
       {isLoading ? (
-        <ActivityIndicator color={colors.primary} style={styles.loader} />
+        <DumbbellSpinner color={colors.primary} style={styles.loader} />
       ) : (
         <>
           {errorMessage ? (

@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { DumbbellSpinner } from "../../../shared/motion/DumbbellSpinner";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { MiniGameCard } from "../../../shared/miniGame/dumbbellDash/MiniGameCard";

@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from "react-native";
+import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import { DumbbellSpinner } from "../../../../../shared/motion/DumbbellSpinner";
 
 import { useTheme } from "../../../../../shared/theme/ThemeContext";
 
@@ -55,7 +56,7 @@ export function AssistantComposer({ disabled, sending, placeholder, onSend, onFo
           !canSend && styles.sendDisabled,
         ]}
       >
-        {sending ? <ActivityIndicator color="#FFFFFF" size="small" /> : <Ionicons name="arrow-up" size={20} color="#FFFFFF" />}
+        {sending ? <DumbbellSpinner color="#FFFFFF" size="small" /> : <Ionicons name="arrow-up" size={20} color="#FFFFFF" />}
       </Pressable>
     </View>
   );

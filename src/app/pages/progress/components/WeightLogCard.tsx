@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { DumbbellSpinner } from "../../../../shared/motion/DumbbellSpinner";
 
 import { ApiError } from "../../../../services/api/client";
 import { logWeight } from "../../../../services/api/progress";
@@ -92,7 +93,7 @@ export function WeightLogCard({ todayWeight, currentWeight, onLogged }: Props) {
           accessibilityRole="button"
         >
           {isSaving ? (
-            <ActivityIndicator color="#FFFFFF" />
+            <DumbbellSpinner color="#FFFFFF" />
           ) : (
             <Text style={styles.saveLabel}>{todayWeight !== null ? "Güncelle" : "Kaydet"}</Text>
           )}

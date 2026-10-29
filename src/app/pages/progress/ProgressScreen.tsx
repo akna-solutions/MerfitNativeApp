@@ -1,6 +1,7 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Animated, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { DumbbellSpinner } from "../../../shared/motion/DumbbellSpinner";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { PremiumFeature } from "../../../shared/plus/components/PremiumFeature";
@@ -175,7 +176,7 @@ export function ProgressScreen() {
   if (isLoading) {
     return (
       <View style={[styles.root, styles.centered, { backgroundColor: colors.background }]}>
-        <ActivityIndicator color={colors.primary} size="large" />
+        <DumbbellSpinner color={colors.primary} size="large" />
         {calendarSheet}
       </View>
     );

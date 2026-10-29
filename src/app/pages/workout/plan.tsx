@@ -2,13 +2,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { DumbbellSpinner } from "../../../shared/motion/DumbbellSpinner";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ApiError } from "../../../services/api/client";
@@ -159,7 +159,7 @@ export default function WorkoutPlanScreen() {
 
         {isLoading ? (
           <View style={styles.centered}>
-            <ActivityIndicator color={colors.primary} size="large" />
+            <DumbbellSpinner color={colors.primary} size="large" />
           </View>
         ) : errorMessage ? (
           <View style={styles.centered}>
@@ -178,7 +178,7 @@ export default function WorkoutPlanScreen() {
           <View style={styles.centered}>
             {personalization.isPending ? (
               <>
-                <ActivityIndicator color={colors.primary} />
+                <DumbbellSpinner color={colors.primary} />
                 <Text style={[styles.emptyTitle, { color: colors.text }]}>Programın hazırlanıyor</Text>
                 <Text style={[styles.muted, { color: colors.textSecondary }]}>
                   Kayıtta verdiğin bilgilere göre kişisel programını oluşturuyoruz. Hazır olunca burada görünecek.

@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useMemo } from "react";
-import { ActivityIndicator, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { DumbbellSpinner } from "../../../shared/motion/DumbbellSpinner";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useNavigationGuard } from "../../../shared/navigation/useNavigationGuard";
@@ -46,7 +47,7 @@ export function CategoriesScreen() {
   if (isLoading) {
     body = (
       <View style={styles.centered} testID="categories-loading">
-        <ActivityIndicator color={colors.primary} size="large" />
+        <DumbbellSpinner color={colors.primary} size="large" />
       </View>
     );
   } else if (error) {

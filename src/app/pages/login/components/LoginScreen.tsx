@@ -1,7 +1,6 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
-    ActivityIndicator,
     KeyboardAvoidingView,
     Platform,
     Pressable,
@@ -10,6 +9,7 @@ import {
     Text,
     View,
 } from "react-native";
+import { DumbbellSpinner } from "../../../../shared/motion/DumbbellSpinner";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../../../../shared/auth/AuthContext";
@@ -162,7 +162,7 @@ export function LoginScreen() {
         <View style={styles.footer}>
           {isSubmitting ? (
             <View style={[styles.loadingButton, { backgroundColor: colors.primaryPressed }]}>
-              <ActivityIndicator color="#FFFFFF" />
+              <DumbbellSpinner color="#FFFFFF" />
             </View>
           ) : (
             <OnboardingButton

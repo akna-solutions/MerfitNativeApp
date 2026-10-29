@@ -1,7 +1,6 @@
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Animated,
   Pressable,
   ScrollView,
@@ -9,6 +8,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { DumbbellSpinner } from "../../../shared/motion/DumbbellSpinner";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useStore } from "../../../features/store/hooks";
@@ -158,7 +158,7 @@ export function ProfileScreen() {
               </View>
             ) : (
               <View style={styles.stateBox}>
-                <ActivityIndicator color={colors.primary} size="large" />
+                <DumbbellSpinner color={colors.primary} size="large" />
               </View>
             )}
           </Animated.View>

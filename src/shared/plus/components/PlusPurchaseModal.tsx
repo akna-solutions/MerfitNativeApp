@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
     Modal,
     Pressable,
     ScrollView,
@@ -9,6 +8,7 @@ import {
     Text,
     View,
 } from "react-native";
+import { DumbbellSpinner } from "../../motion/DumbbellSpinner";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { PLUS_BENEFITS, PLUS_FEATURES } from "../featureRegistry";
@@ -98,7 +98,7 @@ export function PlusPurchaseModal({
 
           {state === "processing" ? (
             <View style={styles.centerState}>
-              <ActivityIndicator color={colors.primary} size="large" />
+              <DumbbellSpinner color={colors.primary} size="large" />
               <Text style={[styles.centerTitle, { color: colors.text }]}>İşleniyor...</Text>
             </View>
           ) : state === "success" ? (

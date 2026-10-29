@@ -1,4 +1,5 @@
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
+import { DumbbellSpinner } from "../../../../shared/motion/DumbbellSpinner";
 
 import { useTheme } from "../../../../shared/theme/ThemeContext";
 
@@ -74,7 +75,7 @@ export function PersonalizationPendingState({
         { backgroundColor: colors.card, borderColor: colors.border },
       ]}
     >
-      <ActivityIndicator
+      <DumbbellSpinner
         color={colors.primary}
         size="small"
         style={styles.spinner}

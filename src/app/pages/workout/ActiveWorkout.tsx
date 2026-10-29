@@ -1,7 +1,6 @@
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
     Alert,
     AppState,
     KeyboardAvoidingView,
@@ -11,6 +10,7 @@ import {
     Text,
     View,
 } from "react-native";
+import { DumbbellSpinner } from "../../../shared/motion/DumbbellSpinner";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ApiError } from "../../../services/api/client";
@@ -270,7 +270,7 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
   if (isLoading) {
     return (
       <View style={[styles.root, styles.centered, { backgroundColor: colors.background }]}>
-        <ActivityIndicator color={colors.primary} size="large" />
+        <DumbbellSpinner color={colors.primary} size="large" />
       </View>
     );
   }

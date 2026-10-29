@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { DumbbellSpinner } from "../../../../shared/motion/DumbbellSpinner";
 
 import { FoodListItem } from "../../../../services/api/types";
 import { useTheme } from "../../../../shared/theme/ThemeContext";
@@ -132,7 +133,7 @@ export function FoodPortionPicker({ food, isSubmitting, onConfirm, onBack, initi
         style={[styles.submitButton, { backgroundColor: colors.primary, opacity: !isValid || isSubmitting ? 0.5 : 1 }]}
       >
         {isSubmitting ? (
-          <ActivityIndicator color="#FFFFFF" />
+          <DumbbellSpinner color="#FFFFFF" />
         ) : (
           <Text style={styles.submitLabel}>{confirmLabel} · {totalCalories} kcal</Text>
         )}

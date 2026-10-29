@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { DumbbellSpinner } from "../../../../shared/motion/DumbbellSpinner";
 
 import { ApiError } from "../../../../services/api/client";
 import {
@@ -185,7 +186,7 @@ export function FoodPhotoAnalysis({ mealType, date, onLogged, onBack }: Props) {
   if (phase === "analyzing") {
     return (
       <View style={styles.centerBox} testID="food-photo-analyzing">
-        <ActivityIndicator color={colors.primary} size="large" />
+        <DumbbellSpinner color={colors.primary} size="large" />
         <Text style={[styles.centerTitle, { color: colors.text }]}>Fotoğraf analiz ediliyor...</Text>
         <Text style={[styles.centerText, { color: colors.textSecondary }]}>Bu işlem birkaç saniye sürebilir.</Text>
         <Pressable onPress={handleCancelAnalysis} hitSlop={8}>
@@ -264,7 +265,7 @@ export function FoodPhotoAnalysis({ mealType, date, onLogged, onBack }: Props) {
             style={[styles.primaryButton, styles.saveButton, { backgroundColor: colors.primary, opacity: canSave ? 1 : 0.5 }]}
           >
             {isSaving ? (
-              <ActivityIndicator color="#FFFFFF" />
+              <DumbbellSpinner color="#FFFFFF" />
             ) : (
               <Text style={styles.primaryLabel}>Öğüne kaydet · {Math.round(totals.calories)} kcal</Text>
             )}

@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, BackHandler, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { BackHandler, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { DumbbellSpinner } from "../../../shared/motion/DumbbellSpinner";
 
 import { useTheme } from "../../../shared/theme/ThemeContext";
 import { AddressFormFields } from "../components/AddressFormFields";
@@ -144,7 +145,7 @@ export function CheckoutScreen() {
             accessibilityState={{ disabled: submitting, busy: submitting }}
             style={[styles.cta, { backgroundColor: colors.primary, opacity: submitting ? 0.7 : 1 }]}
           >
-            {submitting ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.ctaLabel}>{cta}</Text>}
+            {submitting ? <DumbbellSpinner color="#FFFFFF" /> : <Text style={styles.ctaLabel}>{cta}</Text>}
           </Pressable>
         </View>
       }
