@@ -23,8 +23,6 @@ type TabConfig = {
   label: string;
   icon: keyof typeof Ionicons.glyphMap;
   activeIcon: keyof typeof Ionicons.glyphMap;
-  /** Menu, mevcut sekmenin ustune ayri bir ekran acar (secili sekme degismez); gosterge menuye tasinmaz. */
-  opensScreen?: boolean;
 };
 type CircleConfig = { id: NavTab; label: string; hint: string; icon: keyof typeof Ionicons.glyphMap; activeIcon: keyof typeof Ionicons.glyphMap };
 
@@ -41,11 +39,11 @@ const VARIANTS: Record<NavVariant, { tabs: TabConfig[]; circle: CircleConfig }> 
   store: {
     tabs: [
       { id: "store", label: "Anasayfa", icon: "storefront-outline", activeIcon: "storefront" },
-      { id: "categories", label: "Kategoriler", icon: "grid-outline", activeIcon: "grid", opensScreen: true },
-      { id: "orders", label: "Siparişlerim", icon: "receipt-outline", activeIcon: "receipt", opensScreen: true },
+      { id: "categories", label: "Kategoriler", icon: "grid-outline", activeIcon: "grid" },
+      { id: "orders", label: "Siparişlerim", icon: "receipt-outline", activeIcon: "receipt" },
       { id: "profile", label: "Profilim", icon: "person-outline", activeIcon: "person" },
     ],
-    circle: { id: "home", label: "Merfit", hint: "Uygulamaya döner", icon: "fitness-outline", activeIcon: "fitness" },
+    circle: { id: "home", label: "MBFit", hint: "MBFit'e geri döner", icon: "barbell-outline", activeIcon: "barbell" },
   },
 };
 
@@ -163,23 +161,15 @@ export function BottomNavigation({ variant = "main", active, onChange, onCircleO
   const commit = useCallback(
     (index: number) => {
       setDraggingOver(null);
-      if (tabs[index].opensScreen) {
-        // Ayri ekran acan menude secili sekme ayni kalir; gosterge birakilan yerde takili kalmasin.
-        const back = Math.max(activeIndex, 0);
-        hoverIndex.set(back);
-        moveTo(back, true);
-      }
       onChange(tabs[index].id);
     },
-    [onChange, tabs, activeIndex, hoverIndex, moveTo],
+    [onChange, tabs],
   );
 
   const handlePress = (index: number) => {
     if (suppressPressRef.current) return;
-    if (!tabs[index].opensScreen) {
-      hoverIndex.set(index);
-      moveTo(index, true);
-    }
+    hoverIndex.set(index);
+    moveTo(index, true);
     onChange(tabs[index].id);
   };
 

@@ -4,7 +4,7 @@ import type { NavTab, NavVariant } from "../../app/pages/dashboard/components/Bo
 
 const href = (value: string) => value as unknown as Href;
 
-/** Navbar'da secilen menunun gidecegi rota; Store menuleri ("categories", "orders") store rotalarina gider. */
+/** Navbar'da secilen menunun gidecegi sekme rotasi; Store menuleri de birer sekmedir, navbar sabit kalir. */
 export function navbarRoute(tab: NavTab, variant: NavVariant): Href {
   switch (tab) {
     case "home":
@@ -18,9 +18,9 @@ export function navbarRoute(tab: NavTab, variant: NavVariant): Href {
     case "store":
       return href("/pages/store");
     case "categories":
-      return { pathname: "/pages/store/products", params: { title: "Tüm Ürünler" } } as unknown as Href;
+      return href("/pages/store-categories");
     case "orders":
-      return href("/pages/store/orders");
+      return href("/pages/store-orders");
   }
 }
 

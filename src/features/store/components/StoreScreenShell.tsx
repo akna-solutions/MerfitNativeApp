@@ -4,8 +4,6 @@ import { ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { BottomNavigation, NavTab } from "../../../app/pages/dashboard/components/BottomNavigation";
-import { navbarRoute } from "../../../shared/navigation/navbarRoutes";
 import { useTheme } from "../../../shared/theme/ThemeContext";
 import { storeRoutes } from "../navigation";
 
@@ -17,15 +15,15 @@ type Props = {
   onBack?: () => void;
   footer?: ReactNode;
   testID?: string;
-  /** Verilirse altta Store navbar'i gosterilir; deger secili menudur (`null`: hicbiri). Footer ile birlikte kullanilmaz. */
-  navbar?: { active: NavTab | null };
+  /** Ekran bir sekme olarak (alt navbar'in altinda) gosterilir; icerige navbar kadar alt bosluk eklenir. */
+  tabBarClearance?: boolean;
 };
 
 /** Yuzen navbar'in icerigin ustune bindigi yukseklik (tab ekranlariyla ayni alt bosluk). */
 const NAVBAR_CLEARANCE = 100;
 
 /** Store'un yigin (stack) ekranlari icin ortak ust cubuk + guvenli alan. Icerik (liste/scroll) cagirana aittir. */
-export function StoreScreenShell({ title, subtitle, children, right, onBack, footer, testID, navbar }: Props) {
+export function StoreScreenShell({ title, subtitle, children, right, onBack, footer, testID, tabBarClearance }: Props) {
   const router = useRouter();
   const { colors } = useTheme();
 
@@ -60,12 +58,9 @@ export function StoreScreenShell({ title, subtitle, children, right, onBack, foo
           </View>
           <View style={styles.right}>{right}</View>
         </View>
-        <View style={[styles.flex, navbar && { paddingBottom: NAVBAR_CLEARANCE }]}>{children}</View>
+        <View style={[styles.flex, tabBarClearance && { paddingBottom: NAVBAR_CLEARANCE }]}>{children}</View>
         {footer ? <View style={[styles.footer, { borderTopColor: colors.border, backgroundColor: colors.background }]}>{footer}</View> : null}
       </SafeAreaView>
-      {navbar ? (
-        <BottomNavigation variant="store" active={navbar.active} onChange={(tab) => router.navigate(navbarRoute(tab, "store"))} />
-      ) : null}
     </View>
   );
 }

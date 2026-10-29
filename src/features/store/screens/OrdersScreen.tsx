@@ -48,11 +48,16 @@ const OrderRow = memo(function OrderRow({ order, onPress }: { order: Order; onPr
   );
 });
 
-export function OrdersScreen() {
+type Props = {
+  /** Store navbar'indaki "Siparişlerim" sekmesi olarak gosterilir (geri, Store ana sayfasina doner). */
+  inTabs?: boolean;
+};
+
+export function OrdersScreen({ inTabs = false }: Props) {
   const router = useRouter();
   const { orders } = useOrders();
   return (
-    <StoreScreenShell title="Siparişlerim" subtitle="Demo siparişler" testID="orders-screen" navbar={{ active: "orders" }}>
+    <StoreScreenShell title="Siparişlerim" subtitle="Demo siparişler" testID="orders-screen" tabBarClearance={inTabs} onBack={inTabs ? () => router.navigate(storeRoutes.home()) : undefined}>
       <FlatList
         data={orders}
         keyExtractor={(o) => o.id}

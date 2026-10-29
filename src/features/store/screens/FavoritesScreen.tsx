@@ -18,7 +18,7 @@ export function FavoritesScreen() {
   const { favorites } = useFavorites();
 
   return (
-    <StoreScreenShell title="Favorilerim" subtitle={favorites.length > 0 ? `${favorites.length} ürün` : undefined} right={<CartButton />} testID="favorites-screen" navbar={{ active: null }}>
+    <StoreScreenShell title="Favorilerim" subtitle={favorites.length > 0 ? `${favorites.length} ürün` : undefined} right={<CartButton />} testID="favorites-screen">
       <FlatList
         data={favorites}
         keyExtractor={(p: Product) => p.id}
