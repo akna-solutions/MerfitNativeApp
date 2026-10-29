@@ -9,29 +9,50 @@ import { scheduleOnRN } from "react-native-worklets";
 
 import { useReducedMotion } from "../../../../shared/motion/useReducedMotion";
 import { clampIndicatorX, indicatorXForIndex, nearestIndex, settleIndex } from "../../../../shared/navigation/navbarDrag";
-import { useProfile } from "../../../../shared/profile/ProfileContext";
 import { useTheme } from "../../../../shared/theme/ThemeContext";
 
-/** Kapsuldaki dort ana menu + sagdaki bagimsiz Profil dugmesi. */
-export type NavTab = "home" | "workouts" | "nutrition" | "store" | "profile";
-export type MainNavTab = Exclude<NavTab, "profile">;
+/**
+ * Navbar iki gorunumlu: "main" (uygulama) ve "store" (Store bolumu). Kapsulda dort menu, sagda tek yuvarlak buton
+ * vardir. Ana gorunumde yuvarlak buton Store'a, Store gorunumunde uygulamaya (Ana Sayfa) doner.
+ */
+export type NavTab = "home" | "workouts" | "nutrition" | "store" | "profile" | "categories" | "orders";
+export type NavVariant = "main" | "store";
 
-const MAIN_TABS: { id: MainNavTab; label: string; icon: keyof typeof Ionicons.glyphMap; activeIcon: keyof typeof Ionicons.glyphMap }[] = [
-  { id: "home", label: "Ana Sayfa", icon: "home-outline", activeIcon: "home" },
-  { id: "workouts", label: "Antrenman", icon: "barbell-outline", activeIcon: "barbell" },
-  { id: "nutrition", label: "Beslenme", icon: "restaurant-outline", activeIcon: "restaurant" },
-  { id: "store", label: "Store", icon: "bag-handle-outline", activeIcon: "bag-handle" },
-];
+type TabConfig = { id: NavTab; label: string; icon: keyof typeof Ionicons.glyphMap; activeIcon: keyof typeof Ionicons.glyphMap };
+type CircleConfig = { id: NavTab; label: string; hint: string; icon: keyof typeof Ionicons.glyphMap; activeIcon: keyof typeof Ionicons.glyphMap };
+
+const VARIANTS: Record<NavVariant, { tabs: TabConfig[]; circle: CircleConfig }> = {
+  main: {
+    tabs: [
+      { id: "home", label: "Ana Sayfa", icon: "home-outline", activeIcon: "home" },
+      { id: "workouts", label: "Antrenman", icon: "barbell-outline", activeIcon: "barbell" },
+      { id: "nutrition", label: "Beslenme", icon: "restaurant-outline", activeIcon: "restaurant" },
+      { id: "profile", label: "Profilim", icon: "person-outline", activeIcon: "person" },
+    ],
+    circle: { id: "store", label: "Store", hint: "Store'u açar", icon: "bag-handle-outline", activeIcon: "bag-handle" },
+  },
+  store: {
+    tabs: [
+      { id: "store", label: "Anasayfa", icon: "storefront-outline", activeIcon: "storefront" },
+      { id: "categories", label: "Kategoriler", icon: "grid-outline", activeIcon: "grid" },
+      { id: "orders", label: "Siparişlerim", icon: "receipt-outline", activeIcon: "receipt" },
+      { id: "profile", label: "Profilim", icon: "person-outline", activeIcon: "person" },
+    ],
+    circle: { id: "home", label: "Merfit", hint: "Uygulamaya döner", icon: "fitness-outline", activeIcon: "fitness" },
+  },
+};
 
 type Props = {
+  /** Gorunum; varsayilan "main". */
+  variant?: NavVariant;
   /** Secili sekme. `null` ise kapsulde gosterge gizlenir. */
   active: NavTab | null;
   onChange: (tab: NavTab) => void;
   /**
-   * Verilirse Profil butonuna basinca `onChange("profile")` yerine, butonun merkezi (pencere
+   * Verilirse yuvarlak butona basinca `onChange(<buton>)` yerine, butonun merkezi (pencere
    * koordinatlari) ile cagrilir; boylece gecis butondan buyuyen bir animasyonla yapilabilir.
    */
-  onProfileOpen?: (origin: { x: number; y: number }) => void;
+  onCircleOpen?: (origin: { x: number; y: number }) => void;
 };
 
 // Navbar'in ekranin altindan uzakligi ve kapsul yuksekligi.
@@ -61,17 +82,18 @@ function withAlpha(hex: string, alpha: number) {
   return `${hex}${Math.round(alpha * 255).toString(16).padStart(2, "0")}`;
 }
 
-export function BottomNavigation({ active, onChange, onProfileOpen }: Props) {
+export function BottomNavigation({ variant = "main", active, onChange, onCircleOpen }: Props) {
+  const { tabs, circle } = VARIANTS[variant];
+  const tabCount = tabs.length;
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
-  const { profile } = useProfile();
   const reducedMotion = useReducedMotion();
   const navBottom = insets.bottom + NAV_BOTTOM_GAP;
   const fadeAreaHeight = navBottom + NAV_HEIGHT + FADE_START_ABOVE_NAV;
   // Gradyanin tam opakliga ulastigi nokta: navbar'in ortasi.
   const fadeEnd = FADE_HEIGHT / fadeAreaHeight;
 
-  const activeIndex = active ? MAIN_TABS.findIndex((t) => t.id === active) : -1;
+  const activeIndex = active ? tabs.findIndex((t) => t.id === active) : -1;
 
   // Surukleme durumu UI thread'inde (shared value) tutulur; JS tarafi yalnizca gorsel vurgu ve gecis icin bilgilendirilir.
   const itemWidth = useSharedValue(0);
@@ -94,7 +116,7 @@ export function BottomNavigation({ active, onChange, onProfileOpen }: Props) {
 
   const onPillLayout = (e: LayoutChangeEvent) => {
     const width = e.nativeEvent.layout.width;
-    itemWidth.set((width - PAD * 2) / MAIN_TABS.length);
+    itemWidth.set((width - PAD * 2) / tabCount);
     setLayoutWidth(width);
   };
 
@@ -134,16 +156,16 @@ export function BottomNavigation({ active, onChange, onProfileOpen }: Props) {
   const commit = useCallback(
     (index: number) => {
       setDraggingOver(null);
-      onChange(MAIN_TABS[index].id);
+      onChange(tabs[index].id);
     },
-    [onChange],
+    [onChange, tabs],
   );
 
   const handlePress = (index: number) => {
     if (suppressPressRef.current) return;
     hoverIndex.set(index);
     moveTo(index, true);
-    onChange(MAIN_TABS[index].id);
+    onChange(tabs[index].id);
   };
 
   // Gosterge yalnizca kendi hucresinden tutulunca surulur; baska yerden baslayan yatay kaydirma yok sayilir.
@@ -166,9 +188,9 @@ export function BottomNavigation({ active, onChange, onProfileOpen }: Props) {
         .onUpdate((e) => {
           if (!armed.get()) return;
           const w = itemWidth.get();
-          const next = clampIndicatorX(dragStartX.get() + e.translationX, w, MAIN_TABS.length, PAD);
+          const next = clampIndicatorX(dragStartX.get() + e.translationX, w, tabCount, PAD);
           indicatorX.set(next);
-          const over = nearestIndex(next, w, MAIN_TABS.length, PAD);
+          const over = nearestIndex(next, w, tabCount, PAD);
           if (over !== hoverIndex.get()) {
             hoverIndex.set(over);
             scheduleOnRN(setDraggingOver, over);
@@ -177,7 +199,7 @@ export function BottomNavigation({ active, onChange, onProfileOpen }: Props) {
         .onEnd((e, success) => {
           if (!armed.get() || !success) return;
           const w = itemWidth.get();
-          const target = settleIndex(indicatorX.get(), e.velocityX, w, MAIN_TABS.length, PAD);
+          const target = settleIndex(indicatorX.get(), e.velocityX, w, tabCount, PAD);
           hoverIndex.set(target);
           indicatorX.set(withSpring(indicatorXForIndex(target, w, PAD), SPRING));
           scheduleOnRN(commit, target);
@@ -191,7 +213,7 @@ export function BottomNavigation({ active, onChange, onProfileOpen }: Props) {
           }
           armed.set(false);
         }),
-    [armed, beginDrag, commit, dragStartX, endDrag, hoverIndex, indicatorOpacity, indicatorX, itemWidth],
+    [armed, beginDrag, commit, dragStartX, endDrag, hoverIndex, indicatorOpacity, indicatorX, itemWidth, tabCount],
   );
 
   const indicatorStyle = useAnimatedStyle(() => ({
@@ -201,17 +223,16 @@ export function BottomNavigation({ active, onChange, onProfileOpen }: Props) {
   }));
 
   const shownIndex = draggingOver ?? activeIndex;
-  const profileActive = active === "profile";
-  const profileRef = useRef<ComponentRef<typeof Pressable>>(null);
+  const circleActive = active === circle.id;
+  const circleRef = useRef<ComponentRef<typeof Pressable>>(null);
 
-  const handleProfilePress = () => {
-    if (!onProfileOpen || profileActive || !profileRef.current) {
-      onChange("profile");
+  const handleCirclePress = () => {
+    if (!onCircleOpen || circleActive || !circleRef.current) {
+      onChange(circle.id);
       return;
     }
-    profileRef.current.measureInWindow((x, y, width, height) => onProfileOpen({ x: x + width / 2, y: y + height / 2 }));
+    circleRef.current.measureInWindow((x, y, width, height) => onCircleOpen({ x: x + width / 2, y: y + height / 2 }));
   };
-  const initial = profile.firstName.trim().charAt(0).toUpperCase();
 
   return (
     <>
@@ -237,7 +258,7 @@ export function BottomNavigation({ active, onChange, onProfileOpen }: Props) {
                 pointerEvents="none"
                 style={[styles.indicator, { backgroundColor: colors.primary }, indicatorStyle]}
               />
-              {MAIN_TABS.map((tab, index) => {
+              {tabs.map((tab, index) => {
                 const selected = index === activeIndex;
                 const highlighted = index === shownIndex;
                 const color = highlighted ? ACTIVE_CONTENT : colors.icon;
@@ -263,27 +284,24 @@ export function BottomNavigation({ active, onChange, onProfileOpen }: Props) {
           </GestureDetector>
 
           <Pressable
-            ref={profileRef}
-            testID="nav-profile"
-            onPress={handleProfilePress}
+            ref={circleRef}
+            testID="nav-circle"
+            onPress={handleCirclePress}
             accessibilityRole="button"
-            accessibilityLabel="Profilim"
-            accessibilityState={{ selected: profileActive }}
+            accessibilityLabel={circle.label}
+            accessibilityHint={circle.hint}
+            accessibilityState={{ selected: circleActive }}
             style={[
-              styles.profile,
+              styles.circle,
               {
-                // Profil butonu kapsuldaki mavi gostergeden ayrissin diye aksan (mor) renkte dolu durur.
+                // Yuvarlak buton kapsuldaki mavi göstergeden ayrissin diye aksan (mor) renkte dolu durur.
                 backgroundColor: colors.accent,
-                borderColor: profileActive ? ACTIVE_CONTENT : colors.accent,
-                borderWidth: profileActive ? 2 : StyleSheet.hairlineWidth,
+                borderColor: circleActive ? ACTIVE_CONTENT : colors.accent,
+                borderWidth: circleActive ? 2 : StyleSheet.hairlineWidth,
               },
             ]}
           >
-            {initial ? (
-              <Text style={[styles.profileInitial, { color: ACTIVE_CONTENT }]}>{initial}</Text>
-            ) : (
-              <Ionicons name={profileActive ? "person" : "person-outline"} size={24} color={ACTIVE_CONTENT} />
-            )}
+            <Ionicons name={circleActive ? circle.activeIcon : circle.icon} size={26} color={ACTIVE_CONTENT} />
           </Pressable>
         </View>
       </GestureHandlerRootView>
@@ -321,7 +339,7 @@ const styles = StyleSheet.create({
   },
   item: { flex: 1, height: INDICATOR_HEIGHT, alignItems: "center", justifyContent: "center", gap: 3, paddingHorizontal: 2 },
   label: { fontSize: 10, fontWeight: "700", letterSpacing: 0.1, maxWidth: "100%" },
-  profile: {
+  circle: {
     width: NAV_HEIGHT,
     height: NAV_HEIGHT,
     borderRadius: NAV_HEIGHT / 2,
@@ -330,5 +348,4 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     ...shadow,
   },
-  profileInitial: { fontSize: 22, fontWeight: "800" },
 });

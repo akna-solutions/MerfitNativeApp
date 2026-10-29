@@ -30,26 +30,35 @@ function setup(active: NavTab | null = "home") {
 }
 
 describe("BottomNavigation", () => {
-  it("dort ana menu ve ayri bir Profilim butonu gosterir", () => {
+  it("dort ana menu ve ayri bir Store yuvarlak butonu gosterir", () => {
     setup();
-    for (const id of ["home", "workouts", "nutrition", "store"]) expect(screen.getByTestId(`nav-${id}`)).toBeTruthy();
-    expect(screen.getByTestId("nav-profile")).toBeTruthy();
+    for (const id of ["home", "workouts", "nutrition", "profile"]) expect(screen.getByTestId(`nav-${id}`)).toBeTruthy();
+    expect(screen.getByTestId("nav-circle")).toBeTruthy();
     expect(screen.queryByTestId("nav-progress")).toBeNull();
     expect(screen.getByLabelText("Store")).toBeTruthy();
     expect(screen.getByLabelText("Profilim")).toBeTruthy();
   });
 
-  it("dokunma ile secim degistirir ve profil butonu bagimsiz calisir", () => {
-    const { onChange } = setup();
-    fireEvent.press(screen.getByTestId("nav-store"));
-    expect(onChange).toHaveBeenLastCalledWith("store");
-    fireEvent.press(screen.getByTestId("nav-workouts"));
-    expect(onChange).toHaveBeenLastCalledWith("workouts");
-    fireEvent.press(screen.getByTestId("nav-profile"));
-    expect(onChange).toHaveBeenLastCalledWith("profile");
+  it("Store gorunumunde Store menulerini ve uygulamaya donus butonunu gosterir", () => {
+    const onChange = jest.fn();
+    render(<BottomNavigation variant="store" active="orders" onChange={onChange} />);
+    for (const id of ["store", "categories", "orders", "profile"]) expect(screen.getByTestId(`nav-${id}`)).toBeTruthy();
+    expect(screen.getByTestId("nav-orders").props.accessibilityState.selected).toBe(true);
+    fireEvent.press(screen.getByTestId("nav-circle"));
+    expect(onChange).toHaveBeenLastCalledWith("home");
   });
 
-  it("secili menuyu erisilebilirlik durumunda isaretler; profil seciliyken gosterge gizlenir", () => {
+  it("dokunma ile secim degistirir ve Store yuvarlak butonu bagimsiz calisir", () => {
+    const { onChange } = setup();
+    fireEvent.press(screen.getByTestId("nav-profile"));
+    expect(onChange).toHaveBeenLastCalledWith("profile");
+    fireEvent.press(screen.getByTestId("nav-workouts"));
+    expect(onChange).toHaveBeenLastCalledWith("workouts");
+    fireEvent.press(screen.getByTestId("nav-circle"));
+    expect(onChange).toHaveBeenLastCalledWith("store");
+  });
+
+  it("secili menuyu erisilebilirlik durumunda isaretler", () => {
     const { rerender, onChange } = setup("nutrition");
     expect(screen.getByTestId("nav-nutrition").props.accessibilityState.selected).toBe(true);
     expect(screen.getByTestId("nav-home").props.accessibilityState.selected).toBe(false);
@@ -82,7 +91,7 @@ describe("BottomNavigation", () => {
         { x: 400, translationX: 900, velocityX: 0 },
       ]);
     });
-    await waitFor(() => expect(onChange).toHaveBeenCalledWith("store"));
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith("profile"));
   });
 
   it("gosterge disindan baslayan kaydirma menuyu degistirmez", async () => {

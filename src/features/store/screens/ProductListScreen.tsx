@@ -49,6 +49,8 @@ export function ProductListScreen() {
   const list = useMemo(() => (campaign ? all.filter((p) => campaign.productIds.includes(p.id)) : all), [all, campaign]);
 
   const category = categories.find((c) => c.id === categoryId);
+  // Kampanya, koleksiyon ve arama listeleri disindaki (kategori / tum urunler) listelerde navbar'da Kategoriler secili.
+  const inCategories = !campaign && !collection && !params.q;
   const title = params.title ?? category?.name ?? (collection ? COLLECTION_TITLES[collection] : params.q ? "Arama sonuçları" : "Tüm Ürünler");
   const activeFilterCount =
     (filters.inStockOnly ? 1 : 0) + (filters.discountedOnly ? 1 : 0) + filters.brands.length + (filters.priceRange !== "all" ? 1 : 0);
@@ -127,7 +129,7 @@ export function ProductListScreen() {
   }
 
   return (
-    <StoreScreenShell title={title} subtitle={campaign?.description} right={<CartButton />} onBack={() => (router.canGoBack() ? router.back() : router.replace("/pages/store" as never))}>
+    <StoreScreenShell title={title} subtitle={campaign?.description} right={<CartButton />} navbar={{ active: inCategories ? "categories" : null }} onBack={() => (router.canGoBack() ? router.back() : router.replace("/pages/store" as never))}>
       {content}
       <FilterSheet
         visible={sheetOpen}

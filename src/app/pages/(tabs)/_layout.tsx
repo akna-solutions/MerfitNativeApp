@@ -5,9 +5,11 @@ import { Easing, View } from "react-native";
 import {
     BottomNavigation,
     NavTab,
+    NavVariant,
 } from "../dashboard/components/BottomNavigation";
 import { useReducedMotion } from "../../../shared/motion/useReducedMotion";
-import { ProfileReveal, RevealOrigin } from "../../../shared/navigation/ProfileReveal";
+import { CircleReveal, RevealOrigin } from "../../../shared/navigation/CircleReveal";
+import { circleTab, navbarRoute } from "../../../shared/navigation/navbarRoutes";
 import { useTheme } from "../../../shared/theme/ThemeContext";
 
 // Tab route dosya adları ile navbar'daki NavTab id'leri birebir aynı değil
@@ -23,20 +25,12 @@ const ROUTE_TO_TAB: Record<string, NavTab> = {
   profile: "profile",
 };
 
-const TAB_TO_ROUTE: Record<NavTab, string> = {
-  home: "dashboard",
-  workouts: "workouts",
-  nutrition: "nutrition",
-  store: "store",
-  profile: "profile",
-};
-
 export default function TabsLayout() {
   const reducedMotion = useReducedMotion();
   const router = useRouter();
   const { colors } = useTheme();
-  // Profil butonundan buyuyen daire animasyonunun baslangic noktasi; null iken animasyon yoktur.
-  const [revealOrigin, setRevealOrigin] = useState<RevealOrigin | null>(null);
+  // Yuvarlak navbar butonundan (Store / uygulamaya don) buyuyen daire animasyonu; null iken animasyon yoktur.
+  const [reveal, setReveal] = useState<{ origin: RevealOrigin; target: NavTab; variant: NavVariant } | null>(null);
   return (
     <View style={{ flex: 1 }}>
     <Tabs
@@ -49,15 +43,18 @@ export default function TabsLayout() {
       tabBar={({ state }) => {
         const activeRouteName = state.routes[state.index].name;
         const active = ROUTE_TO_TAB[activeRouteName] ?? "home";
+        // Store sekmesindeyken navbar Store'a ozel menuleri (Anasayfa, Kategoriler, Siparislerim, Profilim) gosterir.
+        const variant: NavVariant = activeRouteName === "store" ? "store" : "main";
 
         return (
           <BottomNavigation
+            variant={variant}
             active={active}
             // tabBar render-prop'undaki `navigation`'a baglanmak yerine router kullaniyoruz;
             // boylece prop eksik/bayat geldiginde bile gecis calisir.
-            onChange={(tab) => router.navigate(`/pages/${TAB_TO_ROUTE[tab]}` as never)}
-            // "Hareketi azalt" acikken daire animasyonu atlanir, profil dogrudan acilir.
-            onProfileOpen={reducedMotion ? undefined : setRevealOrigin}
+            onChange={(tab) => router.navigate(navbarRoute(tab, variant))}
+            // "Hareketi azalt" acikken daire animasyonu atlanir, gecis dogrudan yapilir.
+            onCircleOpen={reducedMotion ? undefined : (origin) => setReveal({ origin, target: circleTab(variant), variant })}
           />
         );
       }}
@@ -69,11 +66,11 @@ export default function TabsLayout() {
       <Tabs.Screen name="progress" />
       <Tabs.Screen name="profile" />
     </Tabs>
-    <ProfileReveal
-      origin={revealOrigin}
+    <CircleReveal
+      origin={reveal?.origin ?? null}
       color={colors.accent}
-      onCovered={() => router.navigate("/pages/profile" as never)}
-      onDone={() => setRevealOrigin(null)}
+      onCovered={() => reveal && router.navigate(navbarRoute(reveal.target, reveal.variant))}
+      onDone={() => setReveal(null)}
     />
     </View>
   );

@@ -7,7 +7,7 @@ import { RevealOrigin, revealRadius } from "./revealRadius";
 
 export type { RevealOrigin };
 
-/** Dairenin baslangic capi; profil butonunun capiyla ayni olmalidir. */
+/** Dairenin baslangic capi; yuvarlak butonun capiyla ayni olmalidir. */
 export const REVEAL_BASE_SIZE = 64;
 export const REVEAL_GROW_MS = 380;
 const FADE_DELAY_MS = 140;
@@ -23,8 +23,8 @@ type Props = {
   onDone: () => void;
 };
 
-/** Profil butonundan baslayip ekrani kaplayan, sonra solarak yeni ekrani gosteren daire. */
-export function ProfileReveal({ origin, color, onCovered, onDone }: Props) {
+/** Yuvarlak navbar butonundan baslayip ekrani kaplayan, sonra solarak yeni ekrani gosteren daire. */
+export function CircleReveal({ origin, color, onCovered, onDone }: Props) {
   const { width, height } = useWindowDimensions();
   const scale = useSharedValue(1);
   const opacity = useSharedValue(0);
@@ -65,7 +65,7 @@ export function ProfileReveal({ origin, color, onCovered, onDone }: Props) {
 
   return (
     <Animated.View
-      testID="profile-reveal"
+      testID="circle-reveal"
       pointerEvents="auto"
       style={[
         styles.circle,
