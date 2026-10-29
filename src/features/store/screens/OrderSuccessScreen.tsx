@@ -23,7 +23,7 @@ export function OrderSuccessScreen() {
   if (!order) {
     return (
       <StoreScreenShell title="Sipariş" onBack={goStore}>
-        <EmptyState icon="alert-circle-outline" title="Sipariş bulunamadı" actionLabel="Store'a dön" onAction={goStore} />
+        <EmptyState icon="alert-circle-outline" title="Sipariş bulunamadı" actionLabel="MB Shop'a dön" onAction={goStore} />
       </StoreScreenShell>
     );
   }
@@ -39,7 +39,7 @@ export function OrderSuccessScreen() {
             <Text style={styles.ctaLabel}>Siparişlerime Git</Text>
           </Pressable>
           <Pressable onPress={goStore} accessibilityRole="button" testID="back-to-store" style={[styles.secondary, { borderColor: colors.border }]}>
-            <Text style={[styles.secondaryLabel, { color: colors.text }]}>{"Store'a Dön"}</Text>
+            <Text style={[styles.secondaryLabel, { color: colors.text }]}>{"MB Shop'a Dön"}</Text>
           </Pressable>
         </View>
       }

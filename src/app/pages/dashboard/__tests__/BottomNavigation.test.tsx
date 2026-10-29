@@ -35,7 +35,7 @@ describe("BottomNavigation", () => {
     for (const id of ["home", "workouts", "nutrition", "profile"]) expect(screen.getByTestId(`nav-${id}`)).toBeTruthy();
     expect(screen.getByTestId("nav-circle")).toBeTruthy();
     expect(screen.queryByTestId("nav-progress")).toBeNull();
-    expect(screen.getByLabelText("Store")).toBeTruthy();
+    expect(screen.getByLabelText("MB Shop")).toBeTruthy();
     expect(screen.getByLabelText("Profilim")).toBeTruthy();
   });
 

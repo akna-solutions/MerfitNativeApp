@@ -1,6 +1,6 @@
-import { ProductListScreen } from "../../../features/store/screens/ProductListScreen";
+import { CategoriesScreen } from "../../../features/store/screens/CategoriesScreen";
 
-/** Store navbar'indaki "Kategoriler" sekmesi: filtre ve kategori secimiyle tum urunler. */
+/** MB Shop navbar'indaki "Kategoriler" sekmesi: kampanyalar ve kategori listesi. */
 export default function StoreCategoriesTab() {
-  return <ProductListScreen inTabs />;
+  return <CategoriesScreen />;
 }

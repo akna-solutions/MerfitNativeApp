@@ -34,7 +34,7 @@ const VARIANTS: Record<NavVariant, { tabs: TabConfig[]; circle: CircleConfig }> 
       { id: "nutrition", label: "Beslenme", icon: "restaurant-outline", activeIcon: "restaurant" },
       { id: "profile", label: "Profilim", icon: "person-outline", activeIcon: "person" },
     ],
-    circle: { id: "store", label: "Store", hint: "Store'u açar", icon: "bag-handle-outline", activeIcon: "bag-handle" },
+    circle: { id: "store", label: "MB Shop", hint: "MB Shop'u açar", icon: "bag-handle-outline", activeIcon: "bag-handle" },
   },
   store: {
     tabs: [
@@ -43,7 +43,7 @@ const VARIANTS: Record<NavVariant, { tabs: TabConfig[]; circle: CircleConfig }> 
       { id: "orders", label: "Siparişlerim", icon: "receipt-outline", activeIcon: "receipt" },
       { id: "profile", label: "Profilim", icon: "person-outline", activeIcon: "person" },
     ],
-    circle: { id: "home", label: "MBFit", hint: "MBFit'e geri döner", icon: "barbell-outline", activeIcon: "barbell" },
+    circle: { id: "home", label: "MB Fit", hint: "MB Fit'e geri döner", icon: "barbell-outline", activeIcon: "barbell" },
   },
 };
 

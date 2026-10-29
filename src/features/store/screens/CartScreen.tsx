@@ -84,7 +84,7 @@ export function CartScreen() {
   if (items.length === 0) {
     return (
       <StoreScreenShell title="Sepetim" testID="cart-screen">
-        <EmptyState icon="cart-outline" title="Sepetin boş" message="Beğendiğin ürünleri sepete ekleyerek alışverişe başlayabilirsin." actionLabel="Store'a dön" onAction={goStore} testID="cart-empty" />
+        <EmptyState icon="cart-outline" title="Sepetin boş" message="Beğendiğin ürünleri sepete ekleyerek alışverişe başlayabilirsin." actionLabel="MB Shop'a dön" onAction={goStore} testID="cart-empty" />
       </StoreScreenShell>
     );
   }

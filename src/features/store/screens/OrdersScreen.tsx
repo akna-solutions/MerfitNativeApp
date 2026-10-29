@@ -64,7 +64,7 @@ export function OrdersScreen({ inTabs = false }: Props) {
         renderItem={({ item }) => <OrderRow order={item} onPress={(o) => router.push(storeRoutes.order(o.id))} />}
         ItemSeparatorComponent={Sep}
         contentContainerStyle={styles.content}
-        ListEmptyComponent={<EmptyState icon="receipt-outline" title="Henüz siparişin yok" message="Verdiğin siparişler burada listelenir." actionLabel="Store'a git" onAction={() => router.replace(storeRoutes.home())} testID="orders-empty" />}
+        ListEmptyComponent={<EmptyState icon="receipt-outline" title="Henüz siparişin yok" message="Verdiğin siparişler burada listelenir." actionLabel="MB Shop'a git" onAction={() => router.replace(storeRoutes.home())} testID="orders-empty" />}
         showsVerticalScrollIndicator={false}
       />
     </StoreScreenShell>
