@@ -1,11 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Animated, Modal, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { parseDateKey, shiftMonth, toDateKey } from "../../../../shared/calendar/dates";
 import { useNavigationGuard } from "../../../../shared/navigation/useNavigationGuard";
+import { useDragToClose } from "../../../../shared/sheet/useDragToClose";
 import { useTheme } from "../../../../shared/theme/ThemeContext";
 import { DaySummary } from "./DaySummary";
 import { MonthlyCalendar } from "./MonthlyCalendar";
@@ -26,6 +27,16 @@ export function CalendarSheet({ visible, focusDate, onClose }: Props) {
   // Modal ayri bir native pencerede acildigi icin SafeAreaView orada inset'leri 0 olcebiliyor
   // (Android edge-to-edge'de icerik durum cubugunun altina kayiyordu); uygulama kokundeki inset'ler kullanilir.
   const insets = useSafeAreaInsets();
+  const { height: screenHeight } = useWindowDimensions();
+  // Alttan acilan perde: ekranin ustunde durum cubugu kadar bosluk birakir, basliktan asagi cekince kapanir.
+  const sheetHeight = Math.round(screenHeight - insets.top - 24);
+  const { translateY, panHandlers } = useDragToClose(visible, onClose);
+
+  useEffect(() => {
+    if (!visible) return;
+    translateY.setValue(sheetHeight);
+    Animated.spring(translateY, { toValue: 0, useNativeDriver: true, bounciness: 0, speed: 16 }).start();
+  }, [visible, sheetHeight, translateY]);
 
   const localToday = toDateKey(new Date());
   const initial = parseDateKey(focusDate) ?? parseDateKey(localToday)!;
@@ -66,31 +77,50 @@ export function CalendarSheet({ visible, focusDate, onClose }: Props) {
     [view.month, view.year],
   );
 
+  const closeAnimated = useCallback(() => {
+    Animated.timing(translateY, { toValue: sheetHeight, duration: 220, useNativeDriver: true }).start(() => onClose());
+  }, [translateY, sheetHeight, onClose]);
+
+  const backdropOpacity = translateY.interpolate({ inputRange: [0, sheetHeight], outputRange: [1, 0], extrapolate: "clamp" });
+
   return (
     <Modal
       visible={visible}
-      animationType="slide"
-      presentationStyle="fullScreen"
+      transparent
+      animationType="none"
       statusBarTranslucent
       navigationBarTranslucent
-      onRequestClose={onClose}
+      onRequestClose={closeAnimated}
     >
-      <View style={[styles.root, { backgroundColor: colors.background }]}>
-        <View testID="calendar-safe-area" style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-          <View style={styles.topBar}>
-            <Text style={[styles.topTitle, { color: colors.text }]}>Aktivite Takvimi</Text>
-            <Pressable
-              testID="calendar-close"
-              onPress={onClose}
-              hitSlop={10}
-              accessibilityRole="button"
-              accessibilityLabel="Takvimi kapat"
-              style={[styles.close, { backgroundColor: colors.inputBackground }]}
-            >
-              <Ionicons name="close" size={20} color={colors.text} />
-            </Pressable>
+      <View style={styles.root}>
+        <Animated.View style={[StyleSheet.absoluteFill, styles.backdrop, { opacity: backdropOpacity }]}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={closeAnimated} accessibilityLabel="Takvimi kapat" testID="calendar-backdrop" />
+        </Animated.View>
+        <Animated.View
+          testID="calendar-sheet"
+          accessibilityViewIsModal
+          style={[
+            styles.sheet,
+            { height: sheetHeight, paddingBottom: insets.bottom, backgroundColor: colors.background, borderColor: colors.border, transform: [{ translateY }] },
+          ]}
+        >
+          <View {...panHandlers} testID="calendar-sheet-handle">
+            <View style={[styles.handle, { backgroundColor: colors.border }]} />
+            <View style={styles.topBar}>
+              <Text style={[styles.topTitle, { color: colors.text }]}>Aktivite Takvimi</Text>
+              <Pressable
+                testID="calendar-close"
+                onPress={closeAnimated}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel="Takvimi kapat"
+                style={[styles.close, { backgroundColor: colors.inputBackground }]}
+              >
+                <Ionicons name="close" size={20} color={colors.text} />
+              </Pressable>
+            </View>
           </View>
-          <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
             <MonthlyCalendar
               grid={grid}
               days={days}
@@ -116,7 +146,7 @@ export function CalendarSheet({ visible, focusDate, onClose }: Props) {
               />
             </View>
           </ScrollView>
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );
@@ -136,10 +166,20 @@ function futurePlaceholder(date: string) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
+  root: { flex: 1, justifyContent: "flex-end" },
+  backdrop: { backgroundColor: "rgba(0,0,0,0.55)" },
+  sheet: {
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 0,
+    overflow: "hidden",
+  },
+  handle: { alignSelf: "center", width: 40, height: 5, borderRadius: 3, marginTop: 10 },
   topBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingVertical: 12 },
   topTitle: { fontSize: 20, fontWeight: "800" },
   close: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },
+  scroll: { flex: 1 },
   content: { paddingHorizontal: 16, paddingBottom: 40 },
   summary: { marginTop: 20, paddingHorizontal: 4 },
 });

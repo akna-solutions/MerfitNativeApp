@@ -35,7 +35,7 @@ export function FavoritesScreen() {
             icon="heart-outline"
             title="Favori listen boş"
             message="Beğendiğin ürünlerdeki kalp simgesine dokunarak buraya ekleyebilirsin."
-            actionLabel="Store'a git"
+            actionLabel="MB Shop'a git"
             onAction={() => router.replace(storeRoutes.home())}
             testID="favorites-empty"
           />

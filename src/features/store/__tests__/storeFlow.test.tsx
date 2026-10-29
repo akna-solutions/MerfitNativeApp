@@ -5,6 +5,7 @@ import { mockThemeValue } from "../../../test/mockTheme";
 import { createDummyStoreServices } from "../services/dummy";
 import { StoreProvider, useStore } from "../state/StoreContext";
 import { CartScreen } from "../screens/CartScreen";
+import { CategoriesScreen } from "../screens/CategoriesScreen";
 import { CheckoutScreen } from "../screens/CheckoutScreen";
 import { FavoritesScreen } from "../screens/FavoritesScreen";
 import { OrderSuccessScreen } from "../screens/OrderSuccessScreen";
@@ -61,6 +62,19 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockParams = {};
   probe.store = null;
+});
+
+describe("Kategoriler sekmesi", () => {
+  it("ustte kampanyalari, altta urun gostermeden kategorileri listeler; kategoriye dokununca listeye gider", async () => {
+    await renderWithStore(<CategoriesScreen />);
+    expect(screen.getByText("Kampanyalar")).toBeTruthy();
+    expect(screen.getByTestId("campaign-camp-giyim")).toBeTruthy();
+    expect(screen.queryByTestId(/^product-card/)).toBeNull();
+
+    const protein = store().categories.find((c) => c.id === "cat-protein")!;
+    fireEvent.press(screen.getByTestId("category-row-cat-protein"));
+    expect(mockRouter.push).toHaveBeenCalledWith({ pathname: "/pages/store/products", params: { categoryId: "cat-protein", title: protein.name } });
+  });
 });
 
 describe("Store ana sayfa", () => {
@@ -255,7 +269,7 @@ describe("Sepet", () => {
   it("bos sepette bos durum ve Store'a don butonu gosterir", async () => {
     await renderWithStore(<CartScreen />);
     expect(screen.getByTestId("cart-empty")).toBeTruthy();
-    fireEvent.press(screen.getByText("Store'a dön"));
+    fireEvent.press(screen.getByText("MB Shop'a dön"));
     expect(mockRouter.replace).toHaveBeenCalledWith(expect.stringContaining("/pages/store"));
   });
 

@@ -75,7 +75,7 @@ export function CheckoutScreen() {
   if (items.length === 0 && !completed) {
     return (
       <StoreScreenShell title="Ödeme">
-        <EmptyState icon="cart-outline" title="Sepetin boş" message="Ödeme adımına geçmek için sepete ürün ekle." actionLabel="Store'a dön" onAction={() => router.replace(storeRoutes.home())} testID="checkout-empty" />
+        <EmptyState icon="cart-outline" title="Sepetin boş" message="Ödeme adımına geçmek için sepete ürün ekle." actionLabel="MB Shop'a dön" onAction={() => router.replace(storeRoutes.home())} testID="checkout-empty" />
       </StoreScreenShell>
     );
   }

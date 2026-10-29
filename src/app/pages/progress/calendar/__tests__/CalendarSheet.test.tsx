@@ -102,11 +102,12 @@ describe("CalendarSheet", () => {
     expect(mockPush).toHaveBeenCalledWith({ pathname: "/pages/workout/history/[id]", params: { id: "77" } });
   });
 
-  it("ust bari durum cubugunun altina itmek icin cihaz inset'lerini uygular", async () => {
+  it("alttan acilan perde olarak acilir: ustte bosluk birakir, alt inset'i uygular", async () => {
     await render(<CalendarSheet visible focusDate="2026-10-14" onClose={jest.fn()} />);
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    expect(screen.getByTestId("calendar-safe-area")).toHaveStyle({ paddingTop: 47, paddingBottom: 34 });
+    // Test ortaminda pencere 1334 px: perde 1334 - 47 (ust inset) - 24 = 1263 px.
+    expect(screen.getByTestId("calendar-sheet")).toHaveStyle({ height: 1263, paddingBottom: 34 });
   });
 
   it("kapaliyken istek atmaz", () => {

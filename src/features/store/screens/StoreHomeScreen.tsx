@@ -58,7 +58,7 @@ export function StoreHomeScreen() {
       </View>
     );
   } else if (error) {
-    body = <EmptyState icon="cloud-offline-outline" title="Store yüklenemedi" message={error} actionLabel="Tekrar dene" onAction={reload} testID="store-error" />;
+    body = <EmptyState icon="cloud-offline-outline" title="MB Shop yüklenemedi" message={error} actionLabel="Tekrar dene" onAction={reload} testID="store-error" />;
   } else if (searching) {
     body = (
       <View style={styles.padded}>
@@ -142,7 +142,7 @@ export function StoreHomeScreen() {
         >
           <View style={[styles.header, styles.padded]}>
             <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
-              Store
+              MB Shop
             </Text>
             <View style={styles.actions}>
               <FavoritesButton />

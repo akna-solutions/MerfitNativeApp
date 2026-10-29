@@ -8,12 +8,16 @@ import {
     NavVariant,
 } from "../dashboard/components/BottomNavigation";
 import { useReducedMotion } from "../../../shared/motion/useReducedMotion";
-import { CircleReveal, RevealOrigin } from "../../../shared/navigation/CircleReveal";
+import { CircleReveal, RevealLoader, RevealOrigin } from "../../../shared/navigation/CircleReveal";
 import { circleTab, navbarRoute } from "../../../shared/navigation/navbarRoutes";
 import { useTheme } from "../../../shared/theme/ThemeContext";
 import { useStore } from "../../../features/store/hooks";
 
-const STORE_LOADER_ICONS = ["barbell", "bag-handle"] as const;
+// Yuvarlak buton gecisinde mor ekranda donen ikon ve altindaki baslik/aciklama.
+const LOADERS: Partial<Record<NavTab, RevealLoader>> = {
+  store: { icon: "bag-handle", title: "MB Shop", description: "Takviyeler, ekipmanlar ve kampanyalar" },
+  home: { icon: "barbell", title: "MB Fit", description: "Antrenman, beslenme ve ilerlemen" },
+};
 
 // Tab route dosya adları ile navbar'daki NavTab id'leri birebir aynı değil
 // ("dashboard" dosyası "home" tab'ına karşılık geliyor), bu yüzden ikisi
@@ -26,13 +30,14 @@ const ROUTE_TO_TAB: Record<string, NavTab> = {
   store: "store",
   "store-categories": "categories",
   "store-orders": "orders",
+  "store-profile": "profile",
   progress: "home",
   profile: "profile",
 };
 
 // Store bolumunun sekmeleri: bunlardayken navbar Store gorunumune gecer. Kategoriler ve Siparislerim de birer
 // sekmedir; boylece navbar ekranla birlikte kaymaz, yerinde sabit kalir.
-const STORE_ROUTES = new Set(["store", "store-categories", "store-orders"]);
+const STORE_ROUTES = new Set(["store", "store-categories", "store-orders", "store-profile"]);
 
 export default function TabsLayout() {
   const reducedMotion = useReducedMotion();
@@ -75,6 +80,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="store" />
       <Tabs.Screen name="store-categories" />
       <Tabs.Screen name="store-orders" />
+      <Tabs.Screen name="store-profile" />
       <Tabs.Screen name="progress" />
       <Tabs.Screen name="profile" />
     </Tabs>
@@ -83,9 +89,9 @@ export default function TabsLayout() {
       color={colors.accent}
       onCovered={() => reveal && router.navigate(navbarRoute(reveal.target, reveal.variant))}
       onDone={() => setReveal(null)}
-      // Store'a geciste mor ekranda dambil ve market ikonlari, Store verisi yuklenene kadar doner.
-      loaderIcons={reveal?.target === "store" ? STORE_LOADER_ICONS : undefined}
-      ready={!storeLoading}
+      // MB Shop'a geciste market, MB Fit'e donuste dambil ikonu doner; MB Shop verisi yuklenene kadar ortu kalkmaz.
+      loader={reveal ? LOADERS[reveal.target] : undefined}
+      ready={reveal?.target === "store" ? !storeLoading : true}
     />
     </View>
   );

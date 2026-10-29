@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { StyleSheet, useWindowDimensions, View } from "react-native";
+import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import Animated, {
   cancelAnimation,
   Easing,
@@ -36,18 +36,20 @@ type Props = {
   /** Daire solup bittiginde cagrilir. */
   onDone: () => void;
   /**
-   * Verilirse ekran kaplandiktan sonra ortasinda bu ikonlar doner ve `ready` olana kadar
-   * (en az LOADER_MIN_MS, en fazla LOADER_MAX_MS) ortu kalkmaz.
+   * Verilirse ekran kaplandiktan sonra ortada bu ikon doner, altinda baslik ve kisa aciklama yazar;
+   * `ready` olana kadar (en az LOADER_MIN_MS, en fazla LOADER_MAX_MS) ortu kalkmaz.
    */
-  loaderIcons?: readonly (keyof typeof Ionicons.glyphMap)[];
-  /** Hedef ekranin verisi hazir mi; yalnizca `loaderIcons` ile anlamlidir. */
+  loader?: RevealLoader;
+  /** Hedef ekranin verisi hazir mi; yalnizca `loader` ile anlamlidir. */
   ready?: boolean;
 };
+
+export type RevealLoader = { icon: keyof typeof Ionicons.glyphMap; title: string; description: string };
 
 type Phase = "idle" | "growing" | "holding" | "fading";
 
 /** Yuvarlak navbar butonundan baslayip ekrani kaplayan, sonra solarak yeni ekrani gosteren daire. */
-export function CircleReveal({ origin, color, onCovered, onDone, loaderIcons, ready = true }: Props) {
+export function CircleReveal({ origin, color, onCovered, onDone, loader, ready = true }: Props) {
   const { width, height } = useWindowDimensions();
   const scale = useSharedValue(1);
   const opacity = useSharedValue(0);
@@ -58,7 +60,7 @@ export function CircleReveal({ origin, color, onCovered, onDone, loaderIcons, re
   const doneRef = useRef(onDone);
   coveredRef.current = onCovered;
   doneRef.current = onDone;
-  const withLoader = Boolean(loaderIcons?.length);
+  const withLoader = Boolean(loader);
   const withLoaderRef = useRef(withLoader);
   withLoaderRef.current = withLoader;
 
@@ -126,7 +128,6 @@ export function CircleReveal({ origin, color, onCovered, onDone, loaderIcons, re
   }));
   const loaderStyle = useAnimatedStyle(() => ({ opacity: opacity.get() }));
   const spinStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${spin.get() * 360}deg` }] }));
-  const counterSpinStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${-spin.get() * 360}deg` }] }));
 
   if (!origin) return null;
 
@@ -143,12 +144,12 @@ export function CircleReveal({ origin, color, onCovered, onDone, loaderIcons, re
       />
       {showLoader ? (
         <Animated.View testID="circle-reveal-loader" pointerEvents="none" style={[StyleSheet.absoluteFill, styles.loader, loaderStyle]}>
-          <View style={styles.loaderRow} accessibilityRole="progressbar" accessibilityLabel="Yükleniyor">
-            {loaderIcons!.map((icon, index) => (
-              <Animated.View key={icon} style={index % 2 === 0 ? spinStyle : counterSpinStyle}>
-                <Ionicons name={icon} size={44} color="#FFFFFF" />
-              </Animated.View>
-            ))}
+          <View style={styles.loaderBody} accessibilityRole="progressbar" accessibilityLabel={`${loader!.title} yükleniyor`}>
+            <Animated.View style={spinStyle}>
+              <Ionicons name={loader!.icon} size={56} color="#FFFFFF" />
+            </Animated.View>
+            <Text style={styles.loaderTitle}>{loader!.title}</Text>
+            <Text style={styles.loaderDescription}>{loader!.description}</Text>
           </View>
         </Animated.View>
       ) : null}
@@ -164,5 +165,7 @@ const styles = StyleSheet.create({
     borderRadius: REVEAL_BASE_SIZE / 2,
   },
   loader: { alignItems: "center", justifyContent: "center" },
-  loaderRow: { flexDirection: "row", alignItems: "center", gap: 28 },
+  loaderBody: { alignItems: "center", paddingHorizontal: 40 },
+  loaderTitle: { color: "#FFFFFF", fontSize: 26, fontWeight: "800", marginTop: 18, letterSpacing: 0.3 },
+  loaderDescription: { color: "rgba(255,255,255,0.8)", fontSize: 13, fontWeight: "500", marginTop: 6, textAlign: "center" },
 });

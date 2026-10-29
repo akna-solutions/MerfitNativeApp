@@ -14,7 +14,8 @@ export function navbarRoute(tab: NavTab, variant: NavVariant): Href {
     case "nutrition":
       return href("/pages/nutrition");
     case "profile":
-      return href("/pages/profile");
+      // MB Shop tarafindaki Profilim ayri bir sekmedir; boylece MB Shop'tan cikilmaz.
+      return href(variant === "store" ? "/pages/store-profile" : "/pages/profile");
     case "store":
       return href("/pages/store");
     case "categories":
