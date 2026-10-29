@@ -106,8 +106,8 @@ describe("CalendarSheet", () => {
     await render(<CalendarSheet visible focusDate="2026-10-14" onClose={jest.fn()} />);
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    // Test ortaminda pencere 1334 px: perde 1334 - 47 (ust inset) - 24 = 1263 px.
-    expect(screen.getByTestId("calendar-sheet")).toHaveStyle({ height: 1263, paddingBottom: 34 });
+    // Test ortaminda pencere 1334 px: perde ekranin %80'i = 1067 px.
+    expect(screen.getByTestId("calendar-sheet")).toHaveStyle({ height: 1067, paddingBottom: 34 });
   });
 
   it("kapaliyken istek atmaz", () => {

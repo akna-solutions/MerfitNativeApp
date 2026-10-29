@@ -28,9 +28,10 @@ export function CalendarSheet({ visible, focusDate, onClose }: Props) {
   // (Android edge-to-edge'de icerik durum cubugunun altina kayiyordu); uygulama kokundeki inset'ler kullanilir.
   const insets = useSafeAreaInsets();
   const { height: screenHeight } = useWindowDimensions();
-  // Alttan acilan perde: ekranin ustunde durum cubugu kadar bosluk birakir, basliktan asagi cekince kapanir.
-  const sheetHeight = Math.round(screenHeight - insets.top - 24);
-  const { translateY, panHandlers } = useDragToClose(visible, onClose);
+  // Alttan acilan perde ekranin %80'ini kaplar (kucuk ekranlarda durum cubugunun altinda kalir);
+  // tutamac ve "Aktivite Takvimi" basligindan asagi cekince kayarak kapanir.
+  const sheetHeight = Math.round(Math.min(screenHeight * 0.8, screenHeight - insets.top - 24));
+  const { translateY, panHandlers } = useDragToClose(visible, onClose, { slideOutDistance: sheetHeight });
 
   useEffect(() => {
     if (!visible) return;
@@ -104,7 +105,7 @@ export function CalendarSheet({ visible, focusDate, onClose }: Props) {
             { height: sheetHeight, paddingBottom: insets.bottom, backgroundColor: colors.background, borderColor: colors.border, transform: [{ translateY }] },
           ]}
         >
-          <View {...panHandlers} testID="calendar-sheet-handle">
+          <View {...panHandlers} collapsable={false} style={styles.dragArea} testID="calendar-sheet-handle">
             <View style={[styles.handle, { backgroundColor: colors.border }]} />
             <View style={styles.topBar}>
               <Text style={[styles.topTitle, { color: colors.text }]}>Aktivite Takvimi</Text>
@@ -175,6 +176,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0,
     overflow: "hidden",
   },
+  dragArea: { width: "100%" },
   handle: { alignSelf: "center", width: 40, height: 5, borderRadius: 3, marginTop: 10 },
   topBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingVertical: 12 },
   topTitle: { fontSize: 20, fontWeight: "800" },
