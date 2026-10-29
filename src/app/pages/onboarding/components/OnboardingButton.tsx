@@ -1,11 +1,11 @@
 import { useRef } from "react";
 import {
-  ActivityIndicator,
   Animated,
   Pressable,
   StyleSheet,
   Text,
 } from "react-native";
+import { DumbbellSpinner } from "../../../../shared/motion/DumbbellSpinner";
 
 import { useTheme } from "../../../../shared/theme/ThemeContext";
 
@@ -63,7 +63,7 @@ export function OnboardingButton({
         ]}
       >
         {isLoading ? (
-          <ActivityIndicator color="#FFFFFF" />
+          <DumbbellSpinner color="#FFFFFF" />
         ) : (
           <Text
             style={[

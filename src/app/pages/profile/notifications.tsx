@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { DumbbellSpinner } from "../../../shared/motion/DumbbellSpinner";
 
 import { ApiError } from "../../../services/api/client";
 import { getNotificationSettings, updateNotificationSettings } from "../../../services/api/notifications";
@@ -74,7 +75,7 @@ export default function NotificationsRoute() {
     <ProfileDetailShell title="Bildirimler">
       {isLoading ? (
         <View style={styles.centered}>
-          <ActivityIndicator color={colors.primary} />
+          <DumbbellSpinner color={colors.primary} />
         </View>
       ) : errorMessage ? (
         <View style={styles.centered}>

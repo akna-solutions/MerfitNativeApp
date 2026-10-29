@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
+import { DumbbellSpinner } from "../../../../shared/motion/DumbbellSpinner";
 
 import { getTodayNutritionPlan } from "../../../../services/api/myNutritionPlan";
 import { MyNutritionPlanDay } from "../../../../services/api/types";
@@ -43,7 +44,7 @@ export function TodayNutritionPlanCard() {
   if (isLoading) {
     return (
       <View style={[styles.card, styles.centered, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <ActivityIndicator color={colors.primary} size="small" />
+        <DumbbellSpinner color={colors.primary} size="small" />
       </View>
     );
   }

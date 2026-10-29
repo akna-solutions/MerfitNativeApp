@@ -2,7 +2,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { DumbbellSpinner } from "../../../shared/motion/DumbbellSpinner";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { getCampaign } from "../../../services/api/campaigns";
@@ -89,7 +90,7 @@ export default function CampaignDetailScreen() {
           </View>
         ) : !campaign ? (
           <View style={styles.centered}>
-            <ActivityIndicator color={colors.primary} />
+            <DumbbellSpinner color={colors.primary} />
           </View>
         ) : (
           <ScrollView contentContainerStyle={styles.content}>

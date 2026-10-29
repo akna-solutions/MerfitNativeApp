@@ -1,6 +1,7 @@
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { DumbbellSpinner } from "../../../shared/motion/DumbbellSpinner";
 
 import { getAchievements } from "../../../services/api/achievements";
 import { ApiError } from "../../../services/api/client";
@@ -48,7 +49,7 @@ export default function BadgesRoute() {
         </View>
       ) : !data ? (
         <View style={styles.center}>
-          <ActivityIndicator color={colors.primary} />
+          <DumbbellSpinner color={colors.primary} />
         </View>
       ) : data.totalCount === 0 ? (
         <View style={styles.center}>

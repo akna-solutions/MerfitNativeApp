@@ -2,13 +2,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { DumbbellSpinner } from "../../../../shared/motion/DumbbellSpinner";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ApiError } from "../../../../services/api/client";
@@ -68,7 +68,7 @@ export default function WorkoutHistoryDetailScreen() {
           </View>
         ) : !session ? (
           <View style={styles.centered}>
-            <ActivityIndicator color={colors.primary} size="large" />
+            <DumbbellSpinner color={colors.primary} size="large" />
           </View>
         ) : (
           <ScrollView contentContainerStyle={styles.content}>

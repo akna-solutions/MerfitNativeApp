@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { BarcodeScanningResult, CameraView, useCameraPermissions } from "expo-camera";
 import { useRef } from "react";
-import { ActivityIndicator, Linking, Pressable, StyleSheet, Text, View } from "react-native";
+import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
+import { DumbbellSpinner } from "../../../../shared/motion/DumbbellSpinner";
 
 import { useTheme } from "../../../../shared/theme/ThemeContext";
 
@@ -28,7 +29,7 @@ export function BarcodeScanner({ onScanned, onCancel }: Props) {
   };
 
   if (!permission) {
-    return <ActivityIndicator color={colors.primary} style={styles.loading} />;
+    return <DumbbellSpinner color={colors.primary} style={styles.loading} />;
   }
 
   if (!permission.granted) {

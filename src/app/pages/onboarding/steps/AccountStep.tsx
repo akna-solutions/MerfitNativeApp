@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { DumbbellSpinner } from "../../../../shared/motion/DumbbellSpinner";
 
 import { OnboardingInput } from "../components/OnboardingInput";
 import { GoogleButton } from "../../../../shared/auth/components/GoogleButton";
@@ -160,7 +161,7 @@ function UsernameStatus({ availability }: { availability: UsernameAvailability }
   if (availability.state === "checking") {
     return (
       <View style={styles.statusRow} accessibilityLiveRegion="polite">
-        <ActivityIndicator size="small" color={colors.textSecondary} />
+        <DumbbellSpinner size="small" color={colors.textSecondary} />
         <Text style={[styles.statusText, { color: colors.textSecondary }]}>Kontrol ediliyor…</Text>
       </View>
     );

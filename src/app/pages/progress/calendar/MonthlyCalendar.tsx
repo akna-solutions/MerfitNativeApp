@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { memo } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { DumbbellSpinner } from "../../../../shared/motion/DumbbellSpinner";
 
 import { CalendarDay } from "../../../../services/api/types";
 import { ActivityRings } from "../../../../shared/calendar/ActivityRings";
@@ -100,7 +101,7 @@ export function MonthlyCalendar({
           <Text testID="calendar-month-title" style={[styles.title, { color: colors.text }]} accessibilityRole="header">
             {MONTH_NAMES[grid.month]} {grid.year}
           </Text>
-          {loading ? <ActivityIndicator size="small" color={colors.primary} /> : null}
+          {loading ? <DumbbellSpinner size="small" color={colors.primary} /> : null}
         </View>
         <Pressable
           testID="calendar-next"

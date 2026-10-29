@@ -1,4 +1,5 @@
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
+import { DumbbellSpinner } from "../../../motion/DumbbellSpinner";
 
 import { useTheme } from "../../../theme/ThemeContext";
 import type { MiniGameRewardTier } from "../../../../services/api/types";
@@ -27,7 +28,7 @@ export function RoundSummary({ finish, tiers, notice }: Props) {
 
       {finish.kind === "submitting" ? (
         <View style={styles.inline}>
-          <ActivityIndicator size="small" color={colors.textSecondary} />
+          <DumbbellSpinner size="small" color={colors.textSecondary} />
           <Text style={[styles.body, { color: colors.textSecondary }]}>Sonuç doğrulanıyor…</Text>
         </View>
       ) : null}

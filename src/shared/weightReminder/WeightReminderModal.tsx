@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -11,6 +10,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { DumbbellSpinner } from "../motion/DumbbellSpinner";
 
 import { useTheme } from "../theme/ThemeContext";
 import { WeightReminderController } from "./useWeightReminder";
@@ -86,7 +86,7 @@ export function WeightReminderModal({ controller }: Props) {
             accessibilityRole="button"
             style={({ pressed }) => [styles.primary, { backgroundColor: colors.primary, opacity: pressed || saving ? 0.85 : 1 }]}
           >
-            {saving ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.primaryLabel}>Kaydet</Text>}
+            {saving ? <DumbbellSpinner color="#FFFFFF" /> : <Text style={styles.primaryLabel}>Kaydet</Text>}
           </Pressable>
           <View style={styles.secondaryRow}>
             <Pressable

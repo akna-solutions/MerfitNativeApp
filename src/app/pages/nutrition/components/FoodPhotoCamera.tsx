@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRef, useState } from "react";
-import { ActivityIndicator, Linking, Pressable, StyleSheet, Text, View } from "react-native";
+import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
+import { DumbbellSpinner } from "../../../../shared/motion/DumbbellSpinner";
 
 import { useTheme } from "../../../../shared/theme/ThemeContext";
 
@@ -37,7 +38,7 @@ export function FoodPhotoCamera({ onCaptured, onCancel }: Props) {
   };
 
   if (!permission) {
-    return <ActivityIndicator color={colors.primary} style={styles.loading} />;
+    return <DumbbellSpinner color={colors.primary} style={styles.loading} />;
   }
 
   if (!permission.granted) {
@@ -84,7 +85,7 @@ export function FoodPhotoCamera({ onCaptured, onCancel }: Props) {
         accessibilityLabel="Fotoğraf çek"
         style={[styles.shutter, { borderColor: colors.primary, opacity: isReady && !isTaking ? 1 : 0.5 }]}
       >
-        {isTaking ? <ActivityIndicator color={colors.primary} /> : <View style={[styles.shutterInner, { backgroundColor: colors.primary }]} />}
+        {isTaking ? <DumbbellSpinner color={colors.primary} /> : <View style={[styles.shutterInner, { backgroundColor: colors.primary }]} />}
       </Pressable>
       <Pressable onPress={onCancel} hitSlop={8} style={styles.cancelRow}>
         <Text style={[styles.linkLabel, { color: colors.primary }]}>Vazgeç</Text>

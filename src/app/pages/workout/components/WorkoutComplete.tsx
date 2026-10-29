@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { DumbbellSpinner } from "../../../../shared/motion/DumbbellSpinner";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { OnboardingButton } from "../../onboarding/components/OnboardingButton";
@@ -49,7 +50,7 @@ export function WorkoutComplete({
         <View style={styles.saveRow}>
           {saveStatus === "saving" ? (
             <>
-              <ActivityIndicator size="small" color={colors.textSecondary} />
+              <DumbbellSpinner size="small" color={colors.textSecondary} />
               <Text style={[styles.saveText, { color: colors.textSecondary }]}>Kaydediliyor…</Text>
             </>
           ) : saveStatus === "saved" ? (

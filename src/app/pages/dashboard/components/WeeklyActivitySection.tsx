@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { DumbbellSpinner } from "../../../../shared/motion/DumbbellSpinner";
 
 import { CalendarDay } from "../../../../services/api/types";
 import { WEEKDAY_LETTER } from "../../../../shared/calendar/dates";
@@ -111,7 +112,7 @@ export function WeeklyActivitySection({ weekKeys, days, loading, error, onRetry,
       <View testID="weekly-activity" style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
         {loading && days.size === 0 ? (
           <View style={styles.state}>
-            <ActivityIndicator color={colors.primary} />
+            <DumbbellSpinner color={colors.primary} />
           </View>
         ) : error && days.size === 0 ? (
           <Pressable style={styles.state} onPress={onRetry} accessibilityRole="button">

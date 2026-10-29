@@ -1,4 +1,5 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { DumbbellSpinner } from "../../../../shared/motion/DumbbellSpinner";
 import Svg, { Circle } from "react-native-svg";
 
 import { CalendarDay } from "../../../../services/api/types";
@@ -54,7 +55,7 @@ export function CalorieRingCard({ today, dailyTarget, loading, error, onPress }:
 
       <View style={styles.ringWrap}>
         {loading ? (
-          <ActivityIndicator color={colors.primary} />
+          <DumbbellSpinner color={colors.primary} />
         ) : (
           <>
             <Svg width={SIZE} height={SIZE}>
