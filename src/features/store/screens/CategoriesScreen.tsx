@@ -13,7 +13,7 @@ import { ProductImage } from "../components/ProductImage";
 import { CAMPAIGN_CARD_WIDTH, CampaignCard, GUTTER, SectionHeader } from "../components/StoreSections";
 import { useStore } from "../hooks";
 import { storeRoutes } from "../navigation";
-import { Campaign, Category, Product } from "../types";
+import { Campaign, Category } from "../types";
 
 /** Alt navbar (yuzen kapsul) icerigin ustune bindigi icin diger tab ekranlariyla ayni alt bosluk. */
 const NAVBAR_CLEARANCE = 156;
@@ -23,22 +23,9 @@ export function CategoriesScreen() {
   const router = useRouter();
   const guard = useNavigationGuard();
   const { colors } = useTheme();
-  const { isLoading, error, reload, categories, campaigns, products, productsById } = useStore();
-
-  const countByCategory = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const p of products) map.set(p.categoryId, (map.get(p.categoryId) ?? 0) + 1);
-    return map;
-  }, [products]);
-
-  const featuredProductByCampaign = useMemo(() => {
-    const map = new Map<string, Product | undefined>();
-    for (const c of campaigns) {
-      const items = c.productIds.map((id) => productsById.get(id)).filter((p): p is Product => Boolean(p));
-      map.set(c.id, items.sort((a, b) => b.discountPercentage - a.discountPercentage)[0]);
-    }
-    return map;
-  }, [campaigns, productsById]);
+  const { isLoading, error, reload, categories: allCategories, campaigns } = useStore();
+  // Alt kategorilerin urunleri ust kategori listesinde ve sayisinda yer alir (sunucu ayni kurali uygular).
+  const categories = useMemo(() => allCategories.filter((c) => !c.parentId), [allCategories]);
 
   const openCampaign = guard((campaign: Campaign) => router.push(storeRoutes.list({ campaignId: campaign.id, title: campaign.title })));
   const openCategory = guard((category: Category) => router.push(storeRoutes.list({ categoryId: category.id, title: category.name })));
@@ -52,6 +39,8 @@ export function CategoriesScreen() {
     );
   } else if (error) {
     body = <EmptyState icon="cloud-offline-outline" title="MB Shop yüklenemedi" message={error} actionLabel="Tekrar dene" onAction={reload} testID="categories-error" />;
+  } else if (categories.length === 0 && campaigns.length === 0) {
+    body = <EmptyState icon="storefront-outline" title="Henüz ürün yok" message="MB Shop'a yakında ürün eklenecek." actionLabel="Yenile" onAction={reload} testID="categories-empty" />;
   } else {
     body = (
       <>
@@ -62,7 +51,7 @@ export function CategoriesScreen() {
               horizontal
               data={campaigns}
               keyExtractor={(c) => c.id}
-              renderItem={({ item }) => <CampaignCard campaign={item} product={featuredProductByCampaign.get(item.id)} onPress={() => openCampaign(item)} />}
+              renderItem={({ item }) => <CampaignCard campaign={item} onPress={() => openCampaign(item)} />}
               showsHorizontalScrollIndicator={false}
               snapToInterval={CAMPAIGN_CARD_WIDTH + 12}
               decelerationRate="fast"
@@ -77,7 +66,7 @@ export function CategoriesScreen() {
           <SectionHeader title="Tüm Kategoriler" />
           <View style={[styles.padded, styles.list]}>
             {categories.map((category) => {
-              const count = countByCategory.get(category.id) ?? 0;
+              const count = category.productCount;
               return (
                 <Pressable
                   key={category.id}

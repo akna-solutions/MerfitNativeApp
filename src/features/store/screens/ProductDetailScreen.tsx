@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { FlatList, NativeScrollEvent, NativeSyntheticEvent, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 
 import { useTheme } from "../../../shared/theme/ThemeContext";
@@ -11,12 +11,13 @@ import { ProductImage } from "../components/ProductImage";
 import { QuantityStepper } from "../components/QuantityStepper";
 import { GUTTER, ProductRow, SectionHeader } from "../components/StoreSections";
 import { StoreScreenShell } from "../components/StoreScreenShell";
-import { categoryIconFor } from "../components/categoryIcons";
-import { useCart, useFavorites, useProduct, useStore } from "../hooks";
+import { DumbbellSpinner } from "../../../shared/motion/DumbbellSpinner";
+import { useCart, useCategoryIcon, useFavorites, useProductDetail, useProductQuery } from "../hooks";
 import { storeRoutes } from "../navigation";
 import { Product, SelectedVariant, VariantGroup } from "../types";
-import { relatedProducts, similarProducts } from "../utils/catalog";
 import { formatPrice, isVariantSelectionComplete, maxQuantityFor, originalUnitPriceFor, unitPriceFor } from "../utils/pricing";
+
+const RELATED_LIMIT = 8;
 
 function stockInfo(product: Product): { label: string; tone: "ok" | "low" | "out" } {
   if (product.stock <= 0) return { label: "Stokta yok", tone: "out" };
@@ -26,16 +27,20 @@ function stockInfo(product: Product): { label: string; tone: "ok" | "low" | "out
 
 export function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const product = useProduct(id);
-  const { isLoading } = useStore();
+  const { colors } = useTheme();
+  const { product, isLoading, error, notFound, reload } = useProductDetail(id);
 
   if (!product) {
     return (
       <StoreScreenShell title="Ürün">
-        {isLoading ? (
-          <EmptyState icon="hourglass-outline" title="Ürün yükleniyor" />
+        {notFound ? (
+          <EmptyState icon="alert-circle-outline" title="Ürün bulunamadı" message="Bu ürün satıştan kaldırılmış veya bağlantı hatalı olabilir." testID="product-not-found" />
+        ) : error && !isLoading ? (
+          <EmptyState icon="cloud-offline-outline" title="Ürün yüklenemedi" message={error} actionLabel="Tekrar dene" onAction={reload} testID="product-error" />
         ) : (
-          <EmptyState icon="alert-circle-outline" title="Ürün bulunamadı" message="Bu ürün kaldırılmış veya bağlantı hatalı olabilir." testID="product-not-found" />
+          <View style={styles.centered} testID="product-loading">
+            <DumbbellSpinner color={colors.primary} size="large" />
+          </View>
         )}
       </StoreScreenShell>
     );
@@ -48,40 +53,44 @@ function ProductDetailContent({ product }: { product: Product }) {
   const router = useRouter();
   const { colors } = useTheme();
   const { width } = useWindowDimensions();
-  const { products, categories } = useStore();
   const { addToCart } = useCart();
   const { isFavorite, toggle } = useFavorites();
 
   const [selected, setSelected] = useState<SelectedVariant>({});
   const [quantity, setQuantity] = useState(product.stock > 0 ? 1 : 0);
+  const [adding, setAdding] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const [notice, setNotice] = useState<{ text: string; error?: boolean } | null>(null);
   const [page, setPage] = useState(0);
 
   const outOfStock = product.stock <= 0;
-  const maxQty = maxQuantityFor(product);
+  const maxQty = maxQuantityFor(product.stock);
   const complete = isVariantSelectionComplete(product, selected);
   const unitPrice = unitPriceFor(product, selected);
   const originalUnit = originalUnitPriceFor(product, selected);
   const stock = stockInfo(product);
   const favorite = isFavorite(product.id);
-  const category = categories.find((c) => c.id === product.categoryId);
-  const icon = categoryIconFor(product.categoryId);
+  const icon = useCategoryIcon(product.categoryId);
 
   const slides = product.images.length > 0 ? product.images : [null];
-  const similar = useMemo(() => similarProducts(product, products), [product, products]);
-  const related = useMemo(() => relatedProducts(product, products), [product, products]);
+  const similar = useProductQuery({ categoryId: product.categoryId, excludeId: product.id }, { pageSize: RELATED_LIMIT });
+  const sameBrand = useProductQuery({ brands: [product.brand], excludeId: product.id }, { pageSize: RELATED_LIMIT });
+  // Ayni markadan seridinde benzer urunlerde zaten gosterilenler tekrar edilmez.
+  const similarIds = new Set(similar.items.map((p) => p.id));
+  const related = sameBrand.items.filter((p) => !similarIds.has(p.id));
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => setPage(Math.round(e.nativeEvent.contentOffset.x / width));
 
   const add = async (): Promise<boolean> => {
-    if (outOfStock) return false;
+    if (outOfStock || adding) return false;
     if (!complete) {
       setShowErrors(true);
       setNotice({ text: "Lütfen önce seçenekleri belirleyin.", error: true });
       return false;
     }
+    setAdding(true);
     const result = await addToCart({ productId: product.id, quantity, selectedVariant: selected });
+    setAdding(false);
     if (!result.ok) {
       setNotice({ text: result.message, error: true });
       return false;
@@ -119,10 +128,10 @@ function ProductDetailContent({ product }: { product: Product }) {
         <Pressable
           testID="add-to-cart"
           onPress={add}
-          disabled={outOfStock}
+          disabled={outOfStock || adding}
           accessibilityRole="button"
           accessibilityLabel={outOfStock ? "Stokta yok" : "Sepete ekle"}
-          accessibilityState={{ disabled: outOfStock }}
+          accessibilityState={{ disabled: outOfStock, busy: adding }}
           style={[styles.secondaryCta, { borderColor: outOfStock ? colors.border : colors.primary }]}
         >
           <Text style={[styles.secondaryLabel, { color: outOfStock ? colors.icon : colors.primary }]}>{outOfStock ? "Tükendi" : "Sepete Ekle"}</Text>
@@ -130,7 +139,7 @@ function ProductDetailContent({ product }: { product: Product }) {
         <Pressable
           testID="buy-now"
           onPress={buyNow}
-          disabled={outOfStock}
+          disabled={outOfStock || adding}
           accessibilityRole="button"
           accessibilityLabel="Hemen satın al"
           accessibilityState={{ disabled: outOfStock }}
@@ -144,7 +153,7 @@ function ProductDetailContent({ product }: { product: Product }) {
 
   return (
     <StoreScreenShell
-      title={category?.name ?? "Ürün"}
+      title={product.categoryName ?? "Ürün"}
       right={
         <>
           <Pressable
@@ -190,11 +199,6 @@ function ProductDetailContent({ product }: { product: Product }) {
           <Text style={[styles.name, { color: colors.text }]} accessibilityRole="header">
             {product.name}
           </Text>
-          <View style={styles.ratingRow}>
-            <Ionicons name="star" size={14} color="#F5B301" />
-            <Text style={[styles.rating, { color: colors.text }]}>{product.rating.toFixed(1)}</Text>
-            <Text style={[styles.reviews, { color: colors.textSecondary }]}>({product.reviewCount} değerlendirme)</Text>
-          </View>
 
           <View style={styles.priceRow}>
             <PriceTag price={unitPrice} originalPrice={product.discountPercentage > 0 ? originalUnit : undefined} size="lg" />
@@ -254,15 +258,15 @@ function ProductDetailContent({ product }: { product: Product }) {
           ) : null}
         </View>
 
-        {similar.length > 0 ? (
+        {similar.items.length > 0 ? (
           <View style={styles.relatedBlock} testID="similar-products">
             <SectionHeader title="Benzer Ürünler" />
-            <ProductRow products={similar} />
+            <ProductRow products={similar.items} />
           </View>
         ) : null}
         {related.length > 0 ? (
           <View style={styles.relatedBlock} testID="related-products">
-            <SectionHeader title="İlgili Ürünler" />
+            <SectionHeader title={`${product.brand} Ürünleri`} />
             <ProductRow products={related} />
           </View>
         ) : null}
@@ -320,9 +324,7 @@ const styles = StyleSheet.create({
   body: { paddingHorizontal: GUTTER, paddingTop: 16, gap: 6 },
   brand: { fontSize: 13, fontWeight: "700" },
   name: { fontSize: 21, fontWeight: "800", lineHeight: 27 },
-  ratingRow: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 2 },
-  rating: { fontSize: 13, fontWeight: "700" },
-  reviews: { fontSize: 12 },
+  centered: { flex: 1, minHeight: 240, alignItems: "center", justifyContent: "center" },
   priceRow: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 10 },
   stockChip: { alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, marginTop: 8 },
   stockText: { fontSize: 12, fontWeight: "700" },

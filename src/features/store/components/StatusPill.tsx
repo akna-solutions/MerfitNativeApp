@@ -6,10 +6,11 @@ import { ORDER_STATUS_LABELS } from "./labels";
 
 export function StatusPill({ status }: { status: OrderStatus }) {
   const { colors } = useTheme();
-  const delivered = status === "delivered";
+  const muted = status === "delivered";
+  const cancelled = status === "cancelled";
   return (
-    <View style={[styles.pill, { backgroundColor: delivered ? colors.inputBackground : colors.cardActive }]} testID={`status-${status}`}>
-      <Text style={[styles.label, { color: delivered ? colors.textSecondary : colors.primary }]}>{ORDER_STATUS_LABELS[status]}</Text>
+    <View style={[styles.pill, { backgroundColor: cancelled ? colors.dangerBackground : muted ? colors.inputBackground : colors.cardActive }]} testID={`status-${status}`}>
+      <Text style={[styles.label, { color: cancelled ? colors.danger : muted ? colors.textSecondary : colors.primary }]}>{ORDER_STATUS_LABELS[status]}</Text>
     </View>
   );
 }

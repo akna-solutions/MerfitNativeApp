@@ -2,13 +2,15 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
+import { DumbbellSpinner } from "../../../shared/motion/DumbbellSpinner";
 import { useTheme } from "../../../shared/theme/ThemeContext";
+import { BankTransferCard } from "../components/BankTransferCard";
 import { EmptyState } from "../components/EmptyState";
 import { OrderSummary } from "../components/OrderSummary";
 import { GUTTER } from "../components/StoreSections";
 import { StoreScreenShell } from "../components/StoreScreenShell";
-import { PAYMENT_LABELS } from "../components/labels";
-import { useOrders } from "../hooks";
+import { PAYMENT_LABELS, PAYMENT_STATUS_LABELS } from "../components/labels";
+import { useOrderDetail } from "../hooks";
 import { storeRoutes } from "../navigation";
 import { formatPrice } from "../utils/pricing";
 
@@ -16,21 +18,42 @@ export function OrderSuccessScreen() {
   const { orderId } = useLocalSearchParams<{ orderId: string }>();
   const router = useRouter();
   const { colors } = useTheme();
-  const { getOrder } = useOrders();
-  const order = orderId ? getOrder(orderId) : null;
+  const { order, isLoading, error, notFound, reload } = useOrderDetail(orderId);
   const goStore = () => router.replace(storeRoutes.home());
 
-  if (!order) {
+  if (isLoading && !order) {
     return (
       <StoreScreenShell title="Sipariş" onBack={goStore}>
-        <EmptyState icon="alert-circle-outline" title="Sipariş bulunamadı" actionLabel="MB Shop'a dön" onAction={goStore} />
+        <View style={styles.centered} testID="order-success-loading">
+          <DumbbellSpinner color={colors.primary} size="large" />
+        </View>
+      </StoreScreenShell>
+    );
+  }
+
+  if (!order) {
+    // Siparis olustu ama detay okunamadiysa (ag hatasi) kullaniciya siparisin kayboldugunu dusundurmeyelim.
+    return (
+      <StoreScreenShell title="Sipariş" onBack={goStore}>
+        {notFound ? (
+          <EmptyState icon="alert-circle-outline" title="Sipariş bulunamadı" actionLabel="MB Shop'a dön" onAction={goStore} testID="order-success-not-found" />
+        ) : (
+          <EmptyState
+            icon="cloud-offline-outline"
+            title="Sipariş bilgisi yüklenemedi"
+            message={`${error ?? ""} Siparişin oluşturuldu; Siparişlerim ekranından da görebilirsin.`.trim()}
+            actionLabel="Tekrar dene"
+            onAction={reload}
+            testID="order-success-error"
+          />
+        )}
       </StoreScreenShell>
     );
   }
 
   return (
     <StoreScreenShell
-      title="Sipariş Tamamlandı"
+      title="Sipariş Alındı"
       onBack={goStore}
       testID="order-success"
       footer={
@@ -49,43 +72,43 @@ export function OrderSuccessScreen() {
           <View style={[styles.check, { backgroundColor: colors.cardActive }]}>
             <Ionicons name="checkmark" size={38} color={colors.primary} />
           </View>
-          <Text style={[styles.heroTitle, { color: colors.text }]}>Demo siparişin alındı</Text>
+          <Text style={[styles.heroTitle, { color: colors.text }]}>Siparişin alındı</Text>
           <Text style={[styles.orderNo, { color: colors.primary }]} testID="order-number" selectable>
-            {order.id}
+            {order.orderNumber}
           </Text>
-          <Text style={[styles.demo, { color: colors.textSecondary }]}>Bu bir demo siparişidir; gerçek ödeme alınmadı ve gerçek bir gönderim yapılmayacak.</Text>
+          <Text style={[styles.paymentLine, { color: colors.textSecondary }]} testID="order-success-payment">
+            {PAYMENT_LABELS[order.paymentMethod]} · {PAYMENT_STATUS_LABELS[order.paymentStatus]}
+          </Text>
         </View>
 
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          {order.items.map((item) => (
-            <View key={`${item.productId}-${item.variantLabel}`} style={styles.itemRow}>
+          {order.items.map((item, index) => (
+            <View key={`${item.productId ?? "x"}-${item.variantLabel}-${index}`} style={styles.itemRow}>
               <View style={styles.itemText}>
                 <Text style={[styles.itemName, { color: colors.text }]} numberOfLines={2}>
                   {item.quantity} × {item.name}
                 </Text>
                 {item.variantLabel ? <Text style={[styles.meta, { color: colors.textSecondary }]}>{item.variantLabel}</Text> : null}
               </View>
-              <Text style={[styles.itemName, { color: colors.text }]}>{formatPrice(item.unitPrice * item.quantity)}</Text>
+              <Text style={[styles.itemName, { color: colors.text }]}>{formatPrice(item.lineTotal)}</Text>
             </View>
           ))}
         </View>
         <OrderSummary subtotal={order.subtotal} discount={order.discount} shippingCost={order.shippingCost} total={order.total} />
-        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.itemName, { color: colors.text }]}>{PAYMENT_LABELS[order.paymentMethod]}</Text>
-          <Text style={[styles.meta, { color: colors.textSecondary }]}>Tahmini teslimat: {order.estimatedDelivery}</Text>
-        </View>
+        {order.bankTransfer ? <BankTransferCard info={order.bankTransfer} total={order.total} /> : null}
       </ScrollView>
     </StoreScreenShell>
   );
 }
 
 const styles = StyleSheet.create({
+  centered: { flex: 1, minHeight: 240, alignItems: "center", justifyContent: "center" },
   content: { paddingHorizontal: GUTTER, paddingBottom: 24, gap: 16 },
   hero: { alignItems: "center", gap: 8, paddingVertical: 12 },
   check: { width: 76, height: 76, borderRadius: 38, alignItems: "center", justifyContent: "center", marginBottom: 6 },
   heroTitle: { fontSize: 20, fontWeight: "800" },
   orderNo: { fontSize: 16, fontWeight: "700", letterSpacing: 0.5 },
-  demo: { fontSize: 12, textAlign: "center", lineHeight: 17, paddingHorizontal: 12 },
+  paymentLine: { fontSize: 12, textAlign: "center", lineHeight: 17, paddingHorizontal: 12 },
   card: { borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, padding: 14, gap: 10 },
   itemRow: { flexDirection: "row", justifyContent: "space-between", gap: 12 },
   itemText: { flex: 1, gap: 2 },

@@ -1,13 +1,17 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react-native";
 import { ReactNode } from "react";
+import { Alert } from "react-native";
 
+import { ApiError, NetworkError } from "../../../services/api/client";
 import { mockThemeValue } from "../../../test/mockTheme";
-import { createDummyStoreServices } from "../services/dummy";
+import { createFakeStore, FakeStore } from "../../../test/storeFakes";
 import { StoreProvider, useStore } from "../state/StoreContext";
+import { AddressesScreen } from "../screens/AddressesScreen";
 import { CartScreen } from "../screens/CartScreen";
 import { CategoriesScreen } from "../screens/CategoriesScreen";
 import { CheckoutScreen } from "../screens/CheckoutScreen";
 import { FavoritesScreen } from "../screens/FavoritesScreen";
+import { OrderDetailScreen } from "../screens/OrderDetailScreen";
 import { OrderSuccessScreen } from "../screens/OrderSuccessScreen";
 import { OrdersScreen } from "../screens/OrdersScreen";
 import { ProductDetailScreen } from "../screens/ProductDetailScreen";
@@ -16,6 +20,7 @@ import { StoreHomeScreen } from "../screens/StoreHomeScreen";
 
 const mockRouter = { push: jest.fn(), replace: jest.fn(), back: jest.fn(), navigate: jest.fn(), canGoBack: jest.fn(() => true) };
 let mockParams: Record<string, string> = {};
+const mockAuth = { status: "signedIn", sessionVersion: 1, forceSignOut: jest.fn() };
 
 jest.mock("expo-router", () => {
   const React = jest.requireActual("react");
@@ -25,6 +30,7 @@ jest.mock("expo-router", () => {
     useFocusEffect: (cb: () => void | (() => void)) => React.useEffect(cb, [cb]),
   };
 });
+jest.mock("../../../shared/auth/AuthContext", () => ({ useAuth: () => mockAuth }));
 jest.mock("../../../shared/theme/ThemeContext", () => ({ useTheme: () => mockThemeValue }));
 jest.mock("@expo/vector-icons", () => ({ Ionicons: () => null }));
 jest.mock("expo-image", () => {
@@ -42,15 +48,15 @@ function Probe() {
   return null;
 }
 
-async function renderWithStore(ui: ReactNode, services = createDummyStoreServices()) {
-  const utils = render(
-    <StoreProvider services={services}>
+async function renderWithStore(ui: ReactNode, fake: FakeStore = createFakeStore()) {
+  const utils = await render(
+    <StoreProvider services={fake.services}>
       <Probe />
       {ui}
     </StoreProvider>,
   );
   await waitFor(() => expect(probe.store?.isLoading).toBe(false));
-  return utils;
+  return { ...utils, fake };
 }
 
 const store = () => {
@@ -58,342 +64,442 @@ const store = () => {
   return probe.store;
 };
 
+const text = (testID: string) => {
+  const children = screen.getByTestId(testID).props.children;
+  return Array.isArray(children) ? children.join("") : String(children);
+};
+
+const pressNext = () =>
+  act(async () => {
+    await fireEvent.press(screen.getByTestId("checkout-next"));
+  });
+
 beforeEach(() => {
   jest.clearAllMocks();
   mockParams = {};
+  mockAuth.status = "signedIn";
   probe.store = null;
 });
 
-describe("Kategoriler sekmesi", () => {
-  it("ustte kampanyalari, altta urun gostermeden kategorileri listeler; kategoriye dokununca listeye gider", async () => {
-    await renderWithStore(<CategoriesScreen />);
-    expect(screen.getByText("Kampanyalar")).toBeTruthy();
-    expect(screen.getByTestId("campaign-camp-giyim")).toBeTruthy();
-    expect(screen.queryByTestId(/^product-card/)).toBeNull();
-
-    const protein = store().categories.find((c) => c.id === "cat-protein")!;
-    fireEvent.press(screen.getByTestId("category-row-cat-protein"));
-    expect(mockRouter.push).toHaveBeenCalledWith({ pathname: "/pages/store/products", params: { categoryId: "cat-protein", title: protein.name } });
-  });
-});
-
-describe("Store ana sayfa", () => {
-  it("kampanyalari en ustte, sonra kategorileri ve urun gruplarini gosterir", async () => {
-    await renderWithStore(<StoreHomeScreen />);
-    expect(screen.getByText("İndirimler ve Kampanyalar")).toBeTruthy();
-    expect(screen.getByTestId("campaign-camp-giyim")).toBeTruthy();
-    expect(screen.getByTestId("category-cat-protein")).toBeTruthy();
-    for (const title of ["Çok Satanlar", "İndirimdekiler", "Senin İçin Seçtiklerimiz", "Yeni Gelenler"]) {
-      expect(screen.getByText(title)).toBeTruthy();
-    }
+describe("Oturum ve yukleme", () => {
+  it("oturum yokken sunucuya istek atmaz", async () => {
+    mockAuth.status = "signedOut";
+    const fake = createFakeStore();
+    const spy = jest.spyOn(fake.services.catalog, "getCategories");
+    await render(
+      <StoreProvider services={fake.services}>
+        <Probe />
+      </StoreProvider>,
+    );
+    expect(spy).not.toHaveBeenCalled();
+    expect(store().categories).toEqual([]);
   });
 
-  it("arama urun adi ve marka uzerinden gercekten filtreler", async () => {
-    await renderWithStore(<StoreHomeScreen />);
-    fireEvent.changeText(screen.getByTestId("store-search"), "kettlebell");
-    expect(screen.getByTestId("product-card-p-011")).toBeTruthy();
-    expect(screen.queryByTestId("product-card-p-001")).toBeNull();
-    expect(screen.queryByTestId("campaign-list")).toBeNull();
-
-    fireEvent.changeText(screen.getByTestId("store-search"), "purelab");
-    expect(screen.getByTestId("product-card-p-003")).toBeTruthy();
-    expect(screen.queryByTestId("product-card-p-011")).toBeNull();
-
-    fireEvent.changeText(screen.getByTestId("store-search"), "olmayan urun");
-    expect(screen.getByTestId("search-empty")).toBeTruthy();
-  });
-
-  it("kategoriye dokununca kategori listesi rotasina gider", async () => {
-    await renderWithStore(<StoreHomeScreen />);
-    fireEvent.press(screen.getByTestId("category-cat-giyim"));
-    expect(mockRouter.push).toHaveBeenCalledWith(expect.objectContaining({ pathname: "/pages/store/products", params: expect.objectContaining({ categoryId: "cat-giyim" }) }));
-  });
-
-  it("kampanya kartina dokununca kampanya urun listesine gider", async () => {
-    await renderWithStore(<StoreHomeScreen />);
-    fireEvent.press(screen.getByTestId("campaign-camp-ekipman"));
-    expect(mockRouter.push).toHaveBeenCalledWith(expect.objectContaining({ params: expect.objectContaining({ campaignId: "camp-ekipman" }) }));
-  });
-
-  it("favori ve hizli ekleme calisir; sepet sayaci guncellenir", async () => {
-    await renderWithStore(<StoreHomeScreen />);
-    expect(screen.queryByTestId("cart-badge")).toBeNull();
-    // p-014 shaker: varyantli (renk) oldugu icin hizli ekleme detay acar
-    fireEvent.press(screen.getAllByTestId("quick-add-p-014")[0]);
-    expect(mockRouter.push).toHaveBeenCalledWith(expect.stringContaining("/pages/store/product/p-014"));
-    expect(store().cartItems).toHaveLength(0);
-    // p-024 masaj tabancasi: varyantsiz -> dogrudan sepete
-    await act(async () => {
-      fireEvent.press(screen.getAllByTestId("quick-add-p-024")[0]);
-    });
-    expect(store().cartItems).toHaveLength(1);
-    expect(screen.getByTestId("cart-badge")).toBeTruthy();
-
-    await act(async () => {
-      fireEvent.press(screen.getAllByTestId("favorite-p-024")[0]);
-    });
-    expect(store().favoriteIds).toEqual(["p-024"]);
-    await act(async () => {
-      fireEvent.press(screen.getAllByTestId("favorite-p-024")[0]);
-    });
-    expect(store().favoriteIds).toEqual([]);
-  });
-
-  it("katalog yuklenemezse hata durumu ve tekrar dene gosterir", async () => {
-    const services = createDummyStoreServices();
-    const original = services.catalog.getProducts;
-    services.catalog.getProducts = jest.fn().mockRejectedValueOnce(new Error("Sunucuya ulaşılamadı.")).mockImplementation(original);
-    render(
-      <StoreProvider services={services}>
+  it("sunucuya ulasilamazsa dummy veri gostermez; hata ve tekrar dene gosterir", async () => {
+    const fake = createFakeStore();
+    const original = fake.services.catalog.getCategories;
+    fake.services.catalog.getCategories = jest.fn().mockRejectedValueOnce(new NetworkError("http://10.0.0.1/api")).mockImplementation(original);
+    await render(
+      <StoreProvider services={fake.services}>
         <Probe />
         <StoreHomeScreen />
       </StoreProvider>,
     );
     expect(await screen.findByTestId("store-error")).toBeTruthy();
-    expect(screen.getByText("Sunucuya ulaşılamadı.")).toBeTruthy();
-    await act(async () => {
-      fireEvent.press(screen.getByText("Tekrar dene"));
-    });
+    expect(screen.queryByTestId(/^product-card-/)).toBeNull();
+    // Ag hatasi mesaji sunucu adresini kullaniciya gostermez.
+    expect(screen.queryByText(/10\.0\.0\.1/)).toBeNull();
+    await fireEvent.press(screen.getByText("Tekrar dene"));
     await waitFor(() => expect(screen.queryByTestId("store-error")).toBeNull());
-    expect(screen.getByTestId("campaign-list")).toBeTruthy();
+    expect(await screen.findByTestId("campaign-1")).toBeTruthy();
+  });
+
+  it("401 yaniti oturumu kapatir", async () => {
+    const fake = createFakeStore();
+    fake.services.cart.get = jest.fn().mockRejectedValue(new ApiError(401, "Oturum süresi doldu"));
+    await render(
+      <StoreProvider services={fake.services}>
+        <Probe />
+      </StoreProvider>,
+    );
+    await waitFor(() => expect(mockAuth.forceSignOut).toHaveBeenCalled());
   });
 });
 
-describe("Urun listesi: kategori, arama, filtre, siralama", () => {
-  it("kategori filtresi ve siralama gercekten calisir", async () => {
-    mockParams = { categoryId: "cat-giyim" };
+describe("Kategoriler ve ana sayfa", () => {
+  it("yalnizca ust kategorileri sunucunun urun sayisiyla listeler (alt kategori urunleri dahil)", async () => {
+    await renderWithStore(<CategoriesScreen />);
+    expect(screen.getByTestId("category-row-1")).toBeTruthy();
+    expect(screen.queryByTestId("category-row-4")).toBeNull();
+    // Protein: 101, 102, 103 + alt kategori Protein Bar (106)
+    expect(screen.getByLabelText("Protein, 4 ürün")).toBeTruthy();
+    await fireEvent.press(screen.getByTestId("category-row-2"));
+    expect(mockRouter.push).toHaveBeenCalledWith({ pathname: "/pages/store/products", params: { categoryId: "2", title: "Giyim" } });
+  });
+
+  it("kampanyalari ve sunucudan gelen koleksiyonlari gosterir; bos koleksiyon gizlenir", async () => {
+    await renderWithStore(<StoreHomeScreen />);
+    expect(screen.getByTestId("campaign-1")).toBeTruthy();
+    await waitFor(() => expect(screen.getByTestId("row-discounted")).toBeTruthy());
+    expect(screen.getByTestId("collection-featured")).toBeTruthy();
+    expect(screen.getAllByTestId("product-card-104").length).toBeGreaterThan(0);
+  });
+
+  it("arama sunucu sorgusuyla calisir ve sonuc yoksa bos durum gosterir", async () => {
+    const { fake } = await renderWithStore(<StoreHomeScreen />);
+    const spy = jest.spyOn(fake.services.catalog, "getProducts");
+    await fireEvent.changeText(screen.getByTestId("store-search"), "kettle");
+    await waitFor(() => expect(screen.getByTestId("product-card-105")).toBeTruthy());
+    expect(spy).toHaveBeenCalledWith(expect.objectContaining({ query: "kettle" }), 1, expect.any(Number), expect.anything());
+    expect(screen.queryByTestId("campaign-list")).toBeNull();
+
+    await fireEvent.changeText(screen.getByTestId("store-search"), "olmayan urun");
+    await waitFor(() => expect(screen.getByTestId("search-empty")).toBeTruthy());
+  });
+
+  it("varyantli urunde hizli ekleme detaya gider, varyantsizda sunucu sepetine ekler; favori sunucuya yazilir", async () => {
+    const { fake } = await renderWithStore(<ProductListScreen />);
+    await waitFor(() => expect(screen.getByTestId("product-card-104")).toBeTruthy());
+    await fireEvent.press(screen.getByTestId("quick-add-104"));
+    expect(mockRouter.push).toHaveBeenCalledWith(expect.stringContaining("/pages/store/product/104"));
+    expect(fake.cartRows).toHaveLength(0);
+
+    await act(async () => {
+      await fireEvent.press(screen.getByTestId("quick-add-105"));
+    });
+    await waitFor(() => expect(store().cart.totals.itemCount).toBe(1));
+    expect(fake.cartRows).toEqual([expect.objectContaining({ productId: "105", quantity: 1 })]);
+
+    await act(async () => {
+      await fireEvent.press(screen.getByTestId("favorite-105"));
+    });
+    await waitFor(() => expect(fake.favorites).toEqual(["105"]));
+    expect(store().favoriteIds).toEqual(["105"]);
+    await act(async () => {
+      await fireEvent.press(screen.getByTestId("favorite-105"));
+    });
+    await waitFor(() => expect(fake.favorites).toEqual([]));
+  });
+});
+
+describe("Urun listesi", () => {
+  it("kategori filtresini sunucuya iletir ve alt kategori urunlerini de getirir", async () => {
+    mockParams = { categoryId: "1" };
     await renderWithStore(<ProductListScreen />);
-    expect(screen.getByTestId("product-card-p-005")).toBeTruthy();
-    expect(screen.queryByTestId("product-card-p-001")).toBeNull();
-
-    fireEvent.press(screen.getByTestId("chip-cat-protein"));
-    expect(screen.getByTestId("product-card-p-001")).toBeTruthy();
-    expect(screen.queryByTestId("product-card-p-005")).toBeNull();
-
-    fireEvent.press(screen.getByTestId("open-filters"));
-    fireEvent.press(screen.getByTestId("sort-price_asc"));
-    fireEvent.press(screen.getByTestId("switch-stock"));
-    fireEvent(screen.getByTestId("switch-stock"), "valueChange", true);
-    fireEvent.press(screen.getByTestId("filter-apply"));
-    const prices = screen.getAllByTestId(/^product-card-/).map((n) => n.props.accessibilityLabel as string);
-    // Stoksuz BCAA (p-003) stoktakiler filtresiyle listeden cikar.
-    expect(prices.some((l) => l.includes("BCAA"))).toBe(false);
-    expect(prices[0]).toContain("Kreatin"); // en ucuz protein urunu
+    await waitFor(() => expect(screen.getByTestId("product-card-101")).toBeTruthy());
+    expect(screen.getByTestId("product-card-106")).toBeTruthy();
+    expect(screen.queryByTestId("product-card-105")).toBeNull();
   });
 
   it("sonuc yoksa 'Ürün bulunamadı' gosterir", async () => {
     mockParams = { q: "yokboyleurun" };
     await renderWithStore(<ProductListScreen />);
-    expect(screen.getByTestId("list-empty")).toBeTruthy();
+    await waitFor(() => expect(screen.getByTestId("list-empty")).toBeTruthy());
   });
 });
 
 describe("Urun detay", () => {
   it("bulunamayan urunde anlasilir mesaj gosterir", async () => {
-    mockParams = { id: "yok" };
+    mockParams = { id: "999" };
     await renderWithStore(<ProductDetailScreen />);
-    expect(screen.getByTestId("product-not-found")).toBeTruthy();
+    await waitFor(() => expect(screen.getByTestId("product-not-found")).toBeTruthy());
   });
 
-  it("varyant secilmeden sepete eklemeyi engeller, secimle secilen urun/varyant/adedi aktarir", async () => {
-    mockParams = { id: "p-001" };
-    await renderWithStore(<ProductDetailScreen />);
+  it("varyant secilmeden eklemeyi engeller; secimle sunucu sepetine urun/varyant/adet gider, fiyat gonderilmez", async () => {
+    mockParams = { id: "101" };
+    const { fake } = await renderWithStore(<ProductDetailScreen />);
+    await waitFor(() => expect(screen.getByTestId("add-to-cart")).toBeTruthy());
+    const spy = jest.spyOn(fake.services.cart, "add");
 
     await act(async () => {
-      fireEvent.press(screen.getByTestId("add-to-cart"));
+      await fireEvent.press(screen.getByTestId("add-to-cart"));
     });
-    expect(store().cartItems).toHaveLength(0);
+    expect(spy).not.toHaveBeenCalled();
     expect(screen.getByTestId("detail-notice")).toBeTruthy();
 
-    fireEvent.press(screen.getByTestId("variant-package-3kg"));
-    fireEvent.press(screen.getByTestId("variant-flavor-vanilla"));
-    expect(screen.getByTestId("detail-total").props.children).toMatch(/1\.869,90/);
-
-    fireEvent.press(screen.getByTestId("detail-qty-plus"));
-    expect(screen.getByTestId("detail-qty-value").props.children).toBe(2);
-    expect(screen.getByTestId("detail-total").props.children).toMatch(/3\.739,80/);
+    expect(screen.getByTestId("variant-flavor-caramel").props.accessibilityState.disabled).toBe(true);
+    await fireEvent.press(screen.getByTestId("variant-package-2kg"));
+    await fireEvent.press(screen.getByTestId("variant-flavor-vanilla"));
+    await fireEvent.press(screen.getByTestId("detail-qty-plus"));
+    expect(text("detail-total")).toMatch(/2\.800,00/);
 
     await act(async () => {
-      fireEvent.press(screen.getByTestId("add-to-cart"));
+      await fireEvent.press(screen.getByTestId("add-to-cart"));
     });
-    expect(store().cartItems).toEqual([{ productId: "p-001", quantity: 2, selectedVariant: { package: "3kg", flavor: "vanilla" }, unitPrice: 1869.9 }]);
+    expect(spy).toHaveBeenCalledWith({ productId: "101", quantity: 2, selectedVariant: { package: "2kg", flavor: "vanilla" } });
+    await waitFor(() => expect(store().cart.items).toHaveLength(1));
+    expect(store().cart.items[0]).toMatchObject({ quantity: 2, unitPrice: 1400, variantLabel: "2 kg · Vanilya" });
 
-    // ayni urun + varyant tekrar eklenince birlesir
+    // Ayni urun + varyant sunucuda birlesir.
     await act(async () => {
-      fireEvent.press(screen.getByTestId("add-to-cart"));
+      await fireEvent.press(screen.getByTestId("add-to-cart"));
     });
-    expect(store().cartItems).toHaveLength(1);
-    expect(store().cartItems[0].quantity).toBe(4);
+    await waitFor(() => expect(store().cart.items[0].quantity).toBe(4));
+    expect(store().cart.items).toHaveLength(1);
   });
 
-  it("stokta olmayan varyanti secilemez yapar ve stoksuz urunde satin almayi kapatir", async () => {
-    mockParams = { id: "p-001" };
-    const first = await renderWithStore(<ProductDetailScreen />);
-    expect(screen.getByTestId("variant-flavor-caramel").props.accessibilityState.disabled).toBe(true);
-    first.unmount();
-
-    mockParams = { id: "p-003" };
+  it("stoksuz urunde satin almayi kapatir", async () => {
+    mockParams = { id: "103" };
     await renderWithStore(<ProductDetailScreen />);
+    await waitFor(() => expect(screen.getByTestId("add-to-cart")).toBeTruthy());
     expect(screen.getByTestId("add-to-cart").props.accessibilityState.disabled).toBe(true);
     expect(screen.getByTestId("buy-now").props.accessibilityState.disabled).toBe(true);
-    expect(screen.queryByTestId("detail-qty-plus")).toBeNull();
+  });
+
+  it("stok yetmezse sunucunun 409 mesajini gosterir", async () => {
+    mockParams = { id: "102" };
+    const fake = createFakeStore({ cart: [{ productId: "102", quantity: 5, selectedVariant: {} }] });
+    await renderWithStore(<ProductDetailScreen />, fake);
+    await waitFor(() => expect(screen.getByTestId("add-to-cart")).toBeTruthy());
+    await act(async () => {
+      await fireEvent.press(screen.getByTestId("add-to-cart"));
+    });
+    await waitFor(() => expect(screen.getByText("Stok yetersiz.")).toBeTruthy());
+    expect(fake.cartRows[0].quantity).toBe(5);
   });
 
   it("'Hemen Al' urunu sepete ekleyip odemeye gider", async () => {
-    mockParams = { id: "p-011" };
-    await renderWithStore(<ProductDetailScreen />);
+    mockParams = { id: "105" };
+    const { fake } = await renderWithStore(<ProductDetailScreen />);
+    await waitFor(() => expect(screen.getByTestId("buy-now")).toBeTruthy());
     await act(async () => {
-      fireEvent.press(screen.getByTestId("buy-now"));
+      await fireEvent.press(screen.getByTestId("buy-now"));
     });
-    expect(store().cartItems).toHaveLength(1);
-    expect(mockRouter.push).toHaveBeenCalledWith(expect.stringContaining("/pages/store/checkout"));
-  });
-
-  it("detaydaki favori, magaza durumuyla senkron calisir", async () => {
-    mockParams = { id: "p-002" };
-    await renderWithStore(<ProductDetailScreen />);
-    await act(async () => {
-      fireEvent.press(screen.getByTestId("detail-favorite"));
-    });
-    expect(store().favoriteIds).toContain("p-002");
+    await waitFor(() => expect(mockRouter.push).toHaveBeenCalledWith(expect.stringContaining("/pages/store/checkout")));
+    expect(fake.cartRows).toHaveLength(1);
   });
 });
 
 describe("Sepet", () => {
-  async function seed() {
-    const services = createDummyStoreServices();
-    await services.cart.addItem({ productId: "p-005", quantity: 1, selectedVariant: { size: "m", color: "black" } });
-    return services;
-  }
+  const seeded = () => createFakeStore({ cart: [{ productId: "104", quantity: 1, selectedVariant: { size: "m" } }] });
 
-  it("bos sepette bos durum ve Store'a don butonu gosterir", async () => {
+  it("bos sepette bos durum gosterir", async () => {
     await renderWithStore(<CartScreen />);
-    expect(screen.getByTestId("cart-empty")).toBeTruthy();
-    fireEvent.press(screen.getByText("MB Shop'a dön"));
+    await waitFor(() => expect(screen.getByTestId("cart-empty")).toBeTruthy());
+    await fireEvent.press(screen.getByText("MB Shop'a dön"));
     expect(mockRouter.replace).toHaveBeenCalledWith(expect.stringContaining("/pages/store"));
   });
 
-  it("adet degisince ve satir kalkinca toplamlar guncellenir", async () => {
-    await renderWithStore(<CartScreen />, await seed());
-    expect(screen.getByTestId("cart-variant-p-005").props.children).toBe("M · Siyah");
-    expect(screen.getByTestId("summary-subtotal").props.children).toMatch(/399,90/);
-    expect(screen.getByTestId("summary-discount").props.children).toMatch(/100,00/);
-    expect(screen.getByTestId("summary-shipping").props.children).toMatch(/49,90/);
-    expect(screen.getByTestId("summary-total").props.children).toMatch(/349,80/);
+  it("toplamlar sunucudan gelir; adet degisimi ve silme sunucuya gider", async () => {
+    const fake = seeded();
+    await renderWithStore(<CartScreen />, fake);
+    const line = fake.cartRows[0].id;
+    await waitFor(() => expect(screen.getByTestId(`cart-line-${line}`)).toBeTruthy());
+    expect(text(`cart-variant-${line}`)).toBe("M");
+    expect(text("summary-subtotal")).toMatch(/400,00/);
+    expect(text("summary-discount")).toMatch(/100,00/);
+    expect(text("summary-shipping")).toMatch(/49,90/);
+    expect(text("summary-total")).toMatch(/349,90/);
 
     await act(async () => {
-      fireEvent.press(screen.getByTestId("cart-qty-p-005-plus"));
+      await fireEvent.press(screen.getByTestId(`cart-qty-${line}-plus`));
     });
-    expect(screen.getByTestId("summary-total").props.children).toMatch(/599,80/); // 599,80 >= 500: kargo ucretsiz
-    expect(screen.getByTestId("summary-shipping").props.children).toBe("Ücretsiz");
+    await waitFor(() => expect(text("summary-total")).toMatch(/600,00/));
+    expect(text("summary-shipping")).toBe("Ücretsiz");
+    expect(fake.cartRows[0].quantity).toBe(2);
 
     await act(async () => {
-      fireEvent.press(screen.getByTestId("cart-qty-p-005-minus"));
+      await fireEvent.press(screen.getByTestId(`cart-remove-${line}`));
     });
-    expect(store().cartItems[0].quantity).toBe(1);
-
-    await act(async () => {
-      fireEvent.press(screen.getByTestId("cart-remove-p-005"));
-    });
-    expect(screen.getByTestId("cart-empty")).toBeTruthy();
+    await waitFor(() => expect(screen.getByTestId("cart-empty")).toBeTruthy());
+    expect(fake.cartRows).toEqual([]);
   });
 
-  it("alisverise devam et ve odeme adimina gec butonlari calisir", async () => {
-    await renderWithStore(<CartScreen />, await seed());
-    fireEvent.press(screen.getByTestId("go-checkout"));
-    expect(mockRouter.push).toHaveBeenCalledWith(expect.stringContaining("/pages/store/checkout"));
-    fireEvent.press(screen.getByTestId("continue-shopping"));
-    expect(mockRouter.replace).toHaveBeenCalled();
+  it("stogu tukenen satiri isaretler ve odemeyi kapatir", async () => {
+    const fake = seeded();
+    fake.products.find((p) => p.id === "104")!.stock = 0;
+    await renderWithStore(<CartScreen />, fake);
+    const line = fake.cartRows[0].id;
+    await waitFor(() => expect(screen.getByTestId(`cart-unavailable-${line}`)).toBeTruthy());
+    expect(screen.getByTestId("cart-blocked")).toBeTruthy();
+    expect(screen.getByTestId("go-checkout").props.accessibilityState.disabled).toBe(true);
   });
 });
 
-describe("Checkout, siparis ve favoriler", () => {
-  it("eksik/hatali teslimat bilgisiyle sonraki adima gecmez", async () => {
-    const services = createDummyStoreServices();
-    await services.cart.addItem({ productId: "p-011", quantity: 1, selectedVariant: {} });
-    await services.addresses.removeAddress("addr-1");
-    await services.addresses.removeAddress("addr-2");
-    await renderWithStore(<CheckoutScreen />, services);
-
-    fireEvent.press(screen.getByTestId("checkout-next"));
+describe("Checkout ve siparis", () => {
+  it("kayitli adres yoksa form acilir; eksik/hatali bilgiyle ilerlemez", async () => {
+    const fake = createFakeStore({ cart: [{ productId: "105", quantity: 1, selectedVariant: {} }], addresses: [] });
+    await renderWithStore(<CheckoutScreen />, fake);
+    await waitFor(() => expect(screen.getByTestId("field-fullName")).toBeTruthy());
+    await fireEvent.press(screen.getByTestId("checkout-next"));
     expect(screen.getByTestId("error-fullName")).toBeTruthy();
-    expect(screen.getByTestId("error-phone")).toBeTruthy();
     expect(screen.queryByTestId("step-summary")).toBeNull();
 
-    fireEvent.changeText(screen.getByTestId("field-title"), "Ev");
-    fireEvent.changeText(screen.getByTestId("field-fullName"), "Ayşe Yılmaz");
-    fireEvent.changeText(screen.getByTestId("field-phone"), "123");
-    fireEvent.changeText(screen.getByTestId("field-city"), "İstanbul");
-    fireEvent.changeText(screen.getByTestId("field-district"), "Kadıköy");
-    fireEvent.changeText(screen.getByTestId("field-address"), "Örnek Mah. Deneme Sok. No: 1");
-    fireEvent.press(screen.getByTestId("checkout-next"));
+    await fireEvent.changeText(screen.getByTestId("field-title"), "Ev");
+    await fireEvent.changeText(screen.getByTestId("field-fullName"), "Ayşe Yılmaz");
+    await fireEvent.changeText(screen.getByTestId("field-phone"), "123");
+    await fireEvent.changeText(screen.getByTestId("field-city"), "İstanbul");
+    await fireEvent.changeText(screen.getByTestId("field-district"), "Kadıköy");
+    await fireEvent.changeText(screen.getByTestId("field-address"), "Örnek Mah. Deneme Sok. No: 1");
+    await fireEvent.press(screen.getByTestId("checkout-next"));
     expect(screen.getByTestId("error-phone")).toBeTruthy();
-    expect(screen.queryByTestId("step-summary")).toBeNull();
+    expect(fake.addresses).toEqual([]);
+
+    await fireEvent.changeText(screen.getByTestId("field-phone"), "05321234567");
+    await act(async () => {
+      await fireEvent.press(screen.getByTestId("checkout-next"));
+    });
+    await waitFor(() => expect(screen.getByTestId("step-summary")).toBeTruthy());
+    expect(fake.addresses).toEqual([expect.objectContaining({ fullName: "Ayşe Yılmaz", isDefault: true })]);
   });
 
-  it("4 adimli demo akis: siparis olusur, sepet temizlenir, basari ekranina yonlenir, siparislerde gorunur", async () => {
-    const services = createDummyStoreServices();
-    await services.cart.addItem({ productId: "p-005", quantity: 2, selectedVariant: { size: "m", color: "black" } });
-    await renderWithStore(<CheckoutScreen />, services);
+  it("siparis olusur: sunucu toplami onaylanir, sepet bosalir, basari ekranina gider; kart odemesi kapalidir", async () => {
+    const fake = createFakeStore({ cart: [{ productId: "104", quantity: 2, selectedVariant: { size: "m" } }] });
+    const createSpy = jest.spyOn(fake.services.orders, "create");
+    await renderWithStore(<CheckoutScreen />, fake);
+    await waitFor(() => expect(screen.getByTestId("step-delivery")).toBeTruthy());
+    await pressNext();
+    await waitFor(() => expect(screen.getByTestId("step-summary")).toBeTruthy());
+    expect(text("summary-total")).toMatch(/600,00/);
+    await pressNext();
+    await waitFor(() => expect(screen.getByTestId("payment-card")).toBeTruthy());
+    expect(screen.getByTestId("payment-card").props.accessibilityState.disabled).toBe(true);
+    await fireEvent.press(screen.getByTestId("payment-bank_transfer"));
 
-    // Adim 1: kayitli adres on dolu gelir
-    expect(screen.getByTestId("step-delivery")).toBeTruthy();
-    fireEvent.press(screen.getByTestId("checkout-next"));
-
-    // Adim 2: ozet
-    expect(screen.getByTestId("step-summary")).toBeTruthy();
-    expect(screen.getByTestId("summary-total").props.children).toMatch(/599,80/);
-    fireEvent.press(screen.getByTestId("checkout-next"));
-
-    // Adim 3: odeme (yalnizca demo secenekleri, kart alani yok)
-    expect(screen.getByTestId("step-payment")).toBeTruthy();
-    expect(screen.queryByTestId("field-cardNumber")).toBeNull();
-    fireEvent.press(screen.getByTestId("payment-card_simulation"));
     await act(async () => {
-      fireEvent.press(screen.getByTestId("checkout-next"));
+      await fireEvent.press(screen.getByTestId("checkout-next"));
     });
-
-    // Adim 4: tamamlandi
     await waitFor(() => expect(mockRouter.replace).toHaveBeenCalled());
     const arg = mockRouter.replace.mock.calls[0][0] as { pathname: string; params: { orderId: string } };
     expect(arg.pathname).toBe("/pages/store/order-success");
-    const orderId = arg.params.orderId;
-    expect(orderId).toMatch(/^MBF-/);
-    expect(store().cartItems).toEqual([]);
-    expect(store().orders[0]).toMatchObject({ id: orderId, status: "received", paymentMethod: "card_simulation", total: 599.8 });
-    expect(screen.queryByTestId("checkout-empty")).toBeNull();
+    expect(createSpy).toHaveBeenCalledWith(expect.objectContaining({ addressId: "1", paymentMethod: "bank_transfer", expectedTotal: 600 }));
+    expect(createSpy.mock.calls[0][0].idempotencyKey).toEqual(expect.any(String));
+    expect(fake.orders[0]).toMatchObject({ id: arg.params.orderId, status: "received", paymentStatus: "pending", total: 600 });
+    expect(fake.products.find((p) => p.id === "104")!.stock).toBe(8);
+    await waitFor(() => expect(store().cart.items).toEqual([]));
+    expect(store().orderCount).toBe(1);
   });
 
-  it("basari ekrani siparis numarasini ve Siparislerime git secenegini gosterir", async () => {
-    const services = createDummyStoreServices();
-    await services.cart.addItem({ productId: "p-011", quantity: 1, selectedVariant: {} });
-    const order = await services.orders.createOrder({ items: await services.cart.getItems(), deliveryAddress: (await services.addresses.getAddresses())[0], paymentMethod: "bank_transfer" });
+  it("fiyat degistiyse siparis olusmaz, kullanici ozet adimina doner ve yeni tutari gorur", async () => {
+    const fake = createFakeStore({ cart: [{ productId: "105", quantity: 1, selectedVariant: {} }] });
+    await renderWithStore(<CheckoutScreen />, fake);
+    await waitFor(() => expect(screen.getByTestId("step-delivery")).toBeTruthy());
+    await pressNext();
+    await waitFor(() => expect(screen.getByTestId("step-summary")).toBeTruthy());
+    await pressNext();
+    await waitFor(() => expect(screen.getByTestId("step-payment")).toBeTruthy());
+
+    fake.products.find((p) => p.id === "105")!.price = 700;
+    await act(async () => {
+      await fireEvent.press(screen.getByTestId("checkout-next"));
+    });
+    await waitFor(() => expect(screen.getByTestId("step-summary")).toBeTruthy());
+    expect(fake.orders).toEqual([]);
+    expect(screen.getByTestId("checkout-error")).toBeTruthy();
+    await waitFor(() => expect(text("summary-total")).toMatch(/700,00/));
+    expect(mockRouter.replace).not.toHaveBeenCalled();
+  });
+
+  it("ag hatasinda ayni idempotency anahtariyla tekrar dener; cift siparis olusmaz", async () => {
+    const fake = createFakeStore({ cart: [{ productId: "105", quantity: 1, selectedVariant: {} }] });
+    const original = fake.services.orders.create;
+    const keys: string[] = [];
+    fake.services.orders.create = jest.fn(async (input) => {
+      keys.push(input.idempotencyKey);
+      const order = await original(input);
+      // Ilk denemede siparis sunucuda olustu ama yanit kayboldu.
+      if (keys.length === 1) throw new NetworkError("http://api");
+      return order;
+    });
+    await renderWithStore(<CheckoutScreen />, fake);
+    await waitFor(() => expect(screen.getByTestId("step-delivery")).toBeTruthy());
+    await pressNext();
+    await waitFor(() => expect(screen.getByTestId("step-summary")).toBeTruthy());
+    await pressNext();
+    await waitFor(() => expect(screen.getByTestId("step-payment")).toBeTruthy());
+
+    await act(async () => {
+      await fireEvent.press(screen.getByTestId("checkout-next"));
+    });
+    await waitFor(() => expect(screen.getByTestId("checkout-error")).toBeTruthy());
+    expect(mockRouter.replace).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await fireEvent.press(screen.getByTestId("checkout-next"));
+    });
+    await waitFor(() => expect(mockRouter.replace).toHaveBeenCalled());
+    expect(keys).toHaveLength(2);
+    expect(keys[1]).toBe(keys[0]);
+    expect(fake.orders).toHaveLength(1);
+  });
+
+  it("basari ekrani siparis numarasini ve havale bilgisini sunucudan gosterir", async () => {
+    const fake = createFakeStore({ cart: [{ productId: "105", quantity: 1, selectedVariant: {} }] });
+    const order = await fake.services.orders.create({ addressId: "1", paymentMethod: "bank_transfer", idempotencyKey: "k1", expectedTotal: 600 });
     mockParams = { orderId: order.id };
-    await renderWithStore(<OrderSuccessScreen />, services);
-    expect(screen.getByTestId("order-number").props.children).toBe(order.id);
-    fireEvent.press(screen.getByTestId("go-orders"));
+    await renderWithStore(<OrderSuccessScreen />, fake);
+    await waitFor(() => expect(screen.getByTestId("order-number")).toBeTruthy());
+    expect(text("order-number")).toBe(order.orderNumber);
+    expect(screen.getByTestId("bank-transfer-info")).toBeTruthy();
+    expect(screen.queryByText(/demo/i)).toBeNull();
+    await fireEvent.press(screen.getByTestId("go-orders"));
     expect(mockRouter.replace).toHaveBeenCalledWith(expect.stringContaining("/pages/store/orders"));
   });
 
-  it("Siparislerim demo siparisleri tum durumlariyla listeler ve detaya gider", async () => {
-    await renderWithStore(<OrdersScreen />);
-    for (const status of ["received", "preparing", "shipped", "delivered"]) expect(screen.getByTestId(`status-${status}`)).toBeTruthy();
-    fireEvent.press(screen.getByTestId("order-MBF-261027-1042"));
-    expect(mockRouter.push).toHaveBeenCalledWith(expect.stringContaining("/pages/store/orders/MBF-261027-1042"));
+  it("Siparislerim sunucudaki siparisleri listeler; detayda iptal edilebilir", async () => {
+    const fake = createFakeStore({ cart: [{ productId: "105", quantity: 2, selectedVariant: {} }] });
+    const order = await fake.services.orders.create({ addressId: "1", paymentMethod: "cash_on_delivery", idempotencyKey: "k2", expectedTotal: 1200 });
+    const list = await renderWithStore(<OrdersScreen />, fake);
+    await waitFor(() => expect(screen.getByTestId(`order-${order.id}`)).toBeTruthy());
+    expect(screen.getByText(order.orderNumber)).toBeTruthy();
+    expect(screen.getByTestId("status-received")).toBeTruthy();
+    await fireEvent.press(screen.getByTestId(`order-${order.id}`));
+    expect(mockRouter.push).toHaveBeenCalledWith(`/pages/store/orders/${order.id}`);
+    await list.unmount();
+
+    mockParams = { id: order.id };
+    const alertSpy = jest.spyOn(Alert, "alert").mockImplementation((_t, _m, buttons) => {
+      buttons?.find((b) => b.style === "destructive")?.onPress?.();
+    });
+    await renderWithStore(<OrderDetailScreen />, fake);
+    await waitFor(() => expect(screen.getByTestId("order-cancel")).toBeTruthy());
+    await act(async () => {
+      await fireEvent.press(screen.getByTestId("order-cancel"));
+    });
+    await waitFor(() => expect(screen.getByTestId("order-cancelled")).toBeTruthy());
+    expect(screen.queryByTestId("order-cancel")).toBeNull();
+    expect(fake.orders[0].status).toBe("cancelled");
+    expect(fake.products.find((p) => p.id === "105")!.stock).toBe(9);
+    alertSpy.mockRestore();
   });
 
-  it("Favoriler: bos durum, listeleme ve cikarma", async () => {
-    const services = createDummyStoreServices();
-    const first = await renderWithStore(<FavoritesScreen />, services);
-    expect(screen.getByTestId("favorites-empty")).toBeTruthy();
-    first.unmount();
+  it("baskasina ait / olmayan sipariste bulunamadi gosterir", async () => {
+    mockParams = { id: "424242" };
+    await renderWithStore(<OrderDetailScreen />);
+    await waitFor(() => expect(screen.getByTestId("order-not-found")).toBeTruthy());
+  });
+});
 
-    await services.favorites.toggle("p-011");
-    await renderWithStore(<FavoritesScreen />, services);
-    expect(screen.getByTestId("product-card-p-011")).toBeTruthy();
+describe("Favoriler ve adresler", () => {
+  it("Favoriler: bos durum, listeleme ve cikarma", async () => {
+    const empty = await renderWithStore(<FavoritesScreen />);
+    await waitFor(() => expect(screen.getByTestId("favorites-empty")).toBeTruthy());
+    await empty.unmount();
+
+    const fake = createFakeStore({ favorites: ["105"] });
+    await renderWithStore(<FavoritesScreen />, fake);
+    await waitFor(() => expect(screen.getByTestId("product-card-105")).toBeTruthy());
     await act(async () => {
-      fireEvent.press(screen.getByTestId("favorite-p-011"));
+      await fireEvent.press(screen.getByTestId("favorite-105"));
     });
-    expect(screen.getByTestId("favorites-empty")).toBeTruthy();
+    await waitFor(() => expect(screen.getByTestId("favorites-empty")).toBeTruthy());
+    expect(fake.favorites).toEqual([]);
+  });
+
+  it("Adresler: sunucu hatasini gosterir, silme sunucuya gider", async () => {
+    const fake = createFakeStore();
+    fake.services.addresses.remove = jest.fn().mockRejectedValueOnce(new ApiError(409, "Bu adres silinemedi."));
+    const alertSpy = jest.spyOn(Alert, "alert").mockImplementation((_t, _m, buttons) => {
+      buttons?.find((b) => b.style === "destructive")?.onPress?.();
+    });
+    await renderWithStore(<AddressesScreen />, fake);
+    await waitFor(() => expect(screen.getByTestId("address-1")).toBeTruthy());
+    await act(async () => {
+      await fireEvent.press(screen.getByTestId("delete-address-1"));
+    });
+    await waitFor(() => expect(screen.getByTestId("address-notice")).toBeTruthy());
+    expect(screen.getByText("Bu adres silinemedi.")).toBeTruthy();
+    expect(screen.getByTestId("address-1")).toBeTruthy();
+    alertSpy.mockRestore();
   });
 });

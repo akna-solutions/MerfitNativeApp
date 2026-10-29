@@ -24,7 +24,7 @@ export function SummaryRow({ label, value, strong, positive, testID }: { label: 
   );
 }
 
-/** Sepet, odeme ozeti ve siparis detayinda ayni toplam satirlari (hesap utils/pricing.ts'te yapilir). */
+/** Sepet, odeme ozeti ve siparis detayinda ayni toplam satirlari. Tutarlar sunucudan gelir; burada hesap yapilmaz. */
 export function OrderSummary({ subtotal, discount, shippingCost, total, remainingForFreeShipping = 0 }: Props) {
   const { colors } = useTheme();
   return (
@@ -34,7 +34,7 @@ export function OrderSummary({ subtotal, discount, shippingCost, total, remainin
       <SummaryRow label="Kargo" value={shippingCost > 0 ? formatPrice(shippingCost) : "Ücretsiz"} positive={shippingCost === 0 && total > 0} testID="summary-shipping" />
       {remainingForFreeShipping > 0 ? (
         <Text style={[styles.hint, { color: colors.textSecondary }]} testID="summary-free-shipping-hint">
-          {formatPrice(remainingForFreeShipping)} daha ekleyin, kargo ücretsiz olsun (demo kural).
+          {formatPrice(remainingForFreeShipping)} daha ekle, kargo ücretsiz olsun.
         </Text>
       ) : null}
       <View style={[styles.divider, { backgroundColor: colors.border }]} />

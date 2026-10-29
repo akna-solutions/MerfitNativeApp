@@ -1,38 +1,41 @@
-# Store (e-ticaret) modülü
+# MB Shop (e-ticaret) modülü
 
-MBFit Store; backend olmadan **dummy veri + servis arayüzleri** ile uçtan uca çalışır (ürünler, kampanyalar, sepet,
-favoriler, checkout, siparişler, adresler). Hiçbir ağ isteği yapılmaz ve uydurma bir API adresi yoktur.
+MB Shop verileri **MerfitCustomerApi** `/api/store` uç noktalarından gelir (katalog, kampanyalar, sepet, favoriler,
+adresler, ödeme seçenekleri, siparişler). Uygulamada dummy veri ya da sessiz yedek veri yoktur: sunucuya
+ulaşılamazsa ekran hata durumu ve "Tekrar dene" gösterir. Admin işlemleri (ürün, stok, kategori, kampanya,
+sipariş durumu) MerfitApi `/api/admin/store/*` üzerinden yapılır; mobil uygulamada admin yetkisi yoktur.
+
+API adresi `EXPO_PUBLIC_API_URL` ortam değişkeninden okunur (`src/services/api/config.ts`). Tüm uçlar oturum ister;
+kullanıcı kimliği JWT'den alınır, istemci kullanıcı id'si göndermez.
 
 ## Klasörler
 
 | Klasör | İçerik |
 | --- | --- |
-| `types/` | `Product`, `Category`, `Campaign`, `CartItem`, `Order`, `DeliveryAddress` vb. alan modelleri |
-| `data/` | Dummy veriler: `products.ts` (24 ürün), `categories.ts`, `campaigns.ts`, `orders.ts`, `addresses.ts` |
-| `utils/` | `pricing.ts` (tüm fiyat/toplam hesapları), `catalog.ts` (arama, filtre, sıralama, koleksiyonlar), `validation.ts` (adres doğrulama) |
-| `services/` | `types.ts` (servis arayüzleri), `dummy.ts` (bellek içi implementasyon), `index.ts` (kullanılan örnek) |
-| `state/` | `StoreContext.tsx`: sepet/favori/sipariş/adres durumunun tek sahibi; yalnızca servis arayüzlerini kullanır |
-| `hooks/` | `useCart`, `useFavorites`, `useOrders`, `useAddresses`, `useProduct`, `useProductList` |
-| `components/` | Ortak UI (ürün kartı, fiyat, adet seçici, boş durum, filtre sayfası, kampanya/kategori kartları…) |
-| `screens/` | Store ana sayfa, ürün listesi (kategori/arama/filtre/sıralama), ürün detay, sepet, checkout, sipariş başarı, siparişler, sipariş detay, favoriler, adresler |
+| `../../services/api/store.ts` | `/api/store` uçları ve DTO tipleri (tek HTTP katmanı, mevcut `apiRequest` istemcisi) |
+| `types/` | Ekranların kullandığı alan modelleri (`ProductSummary`, `Product`, `Cart`, `Order`, `DeliveryAddress`…) |
+| `services/` | `types.ts` (servis arayüzleri), `mappers.ts` (DTO → model), `http.ts` (arayüzlerin HTTP uygulaması), `index.ts` |
+| `state/` | `StoreContext.tsx`: oturuma bağlı ilk yükleme, sepet/favori/adres durumu, 401'de oturumu kapatma |
+| `hooks/` | `useCart`, `useFavorites`, `useAddresses`, `useProductQuery` (sayfalı), `useOrderList` (sayfalı), `useProductDetail`, `useOrderDetail`, `useCheckoutOptions`, `useBrands` |
+| `components/` | Ortak UI (ürün kartı, fiyat, adet seçici, boş durum, filtre sayfası, kampanya/kategori kartları, havale bilgisi…) |
+| `screens/` | Ana sayfa, ürün listesi, ürün detay, sepet, ödeme, sipariş başarı, siparişler, sipariş detay, favoriler, adresler, kategoriler |
 
-Rota dosyaları `src/app/pages/store/*` ve `src/app/pages/(tabs)/store.tsx` altında ince sarmalayıcılardır.
+Rota dosyaları `src/app/pages/store/*` ve `src/app/pages/(tabs)/store*.tsx` altında ince sarmalayıcılardır.
 
-## Fiyat kuralları (tek kaynak: `utils/pricing.ts`)
+## Kurallar
 
-- `discountPercentage` elle yazılmaz; `price` ve `originalPrice`'tan türetilir.
-- `subtotal` = liste fiyatlarıyla toplam, `discount` = liste − güncel fiyat, `total` = `subtotal − discount + shippingCost`.
-- Kargo (dummy kural): indirimli ara toplam **500 ₺** ve üzeriyse ücretsiz, altındaysa **49,90 ₺**.
-- Bir üründen en fazla 10 adet ve stok kadar eklenebilir; varyantı seçilmemiş ürün sepete eklenmez.
+- Fiyat, indirim, kargo ve toplamlar **yalnızca sunucuda** hesaplanır; istemci sepete eklerken fiyat göndermez.
+  `utils/pricing.ts` sadece biçimleme ve ürün detayındaki varyant fiyat önizlemesi içindir.
+- Sepet satırı sunucuda stok ve satır başına 10 adet sınırıyla doğrulanır; stok yetmezse 409 döner ve ekran mesajı gösterir.
+- Sipariş, kayıtlı adres id'si + ödeme yöntemi + idempotency anahtarı + kullanıcının gördüğü tutar (`expectedTotal`) ile
+  verilir. Tutar değiştiyse sunucu 409 `PRICE_CHANGED` döner ve kullanıcı özet adımına geri döner. Ağ hatasında aynı
+  anahtarla tekrar denenir, böylece çift sipariş oluşmaz.
+- Ödeme durumu sipariş durumundan ayrıdır. Kart ile ödeme bir ödeme sağlayıcısı entegre edilene kadar kapalıdır;
+  kapıda ödeme ve havale/EFT siparişleri "Ödeme bekleniyor" ile oluşur. Sahte "ödendi" durumu üretilmez.
+- Kullanıcı yalnızca "Sipariş Alındı" durumundaki siparişi iptal edebilir; stok sunucuda geri eklenir.
 
-## .NET Web API + PostgreSQL'e geçiş
+## Testler
 
-Ekranlar ve hook'lar yalnızca `services/types.ts` içindeki arayüzlere (`CatalogService`, `CartService`,
-`FavoriteService`, `OrderService`, `AddressService`) bağlıdır. Geçiş adımları:
-
-1. Aynı arayüzleri HTTP ile uygulayan `createHttpStoreServices(...)` yazın (mevcut `src/services/api/client.ts` istemcisi kullanılabilir).
-2. API DTO'larını `types/` içindeki modellere map'leyin. `Product.variants` / `VariantGroup` ürün varyantlarına (ör. `product_variant_groups`, `product_variant_options` tabloları), `CartItem.selectedVariant` seçilen seçenek id'lerine karşılık gelir.
-3. `services/index.ts` içinde `storeServices` örneğini HTTP implementasyonuyla değiştirin. Ekranlara dokunmak gerekmez.
-4. Sunucu tarafında fiyat/stok/kargo hesabı yeniden doğrulanmalıdır (`OrderService.createOrder`); bu modüldeki hesap yalnızca önizleme içindir. Gerçek ödeme entegrasyonu ayrı bir iştir; şimdiki ödeme adımı yalnızca demo/simülasyondur ve kart bilgisi toplamaz.
-
-Sipariş numaraları, durumlar ve teslimat tahminleri yalnızca demo verisidir; gerçek kargo takibi yoktur.
+`__tests__/storeFlow.test.tsx`, ekranları `src/test/storeFakes.ts` içindeki **yalnızca teste ait** bellek içi servisle
+çalıştırır (uygulama bunu kullanmaz). `__tests__/httpServices.test.ts` HTTP servislerinin doğru uçlara doğru gövdeyi
+gönderdiğini ve yanıtların doğru eşlendiğini sınar.

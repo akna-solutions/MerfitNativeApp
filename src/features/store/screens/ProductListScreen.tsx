@@ -1,7 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
-import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+
+import { DumbbellSpinner } from "../../../shared/motion/DumbbellSpinner";
 
 import { useTheme } from "../../../shared/theme/ThemeContext";
 import { EmptyState } from "../components/EmptyState";
@@ -11,42 +13,51 @@ import { ProductCard } from "../components/ProductCard";
 import { SearchBar } from "../components/SearchBar";
 import { GUTTER } from "../components/StoreSections";
 import { StoreScreenShell } from "../components/StoreScreenShell";
-import { useProductList, useStore } from "../hooks";
+import { useBrands, useDebouncedValue, useProductQuery, useStore } from "../hooks";
 import { ProductListParams } from "../navigation";
-import { CollectionKey, Product, SortKey } from "../types";
-import { COLLECTION_TITLES, SORT_LABELS } from "../utils/catalog";
+import { ProductSummary } from "../types";
+import { COLLECTION_TITLES, isCollectionKey, isSortKey, SORT_LABELS } from "../utils/catalog";
 
-const keyOf = (p: Product) => p.id;
+const keyOf = (p: ProductSummary) => p.id;
+const PAGE_SIZE = 20;
 
 /** Kategori listesi, arama sonuclari, koleksiyon ve kampanya listelerinin ortak ekrani (filtre + siralama). */
 export function ProductListScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const params = useLocalSearchParams() as Partial<Record<keyof ProductListParams, string>>;
-  const { categories, campaigns, products, isLoading, error, reload } = useStore();
+  const { categories: allCategories, campaigns, isLoading: storeLoading, error: storeError, reload: reloadStore } = useStore();
+  const categories = useMemo(() => allCategories.filter((c) => !c.parentId), [allCategories]);
 
   const [query, setQuery] = useState(params.q ?? "");
-  const [filters, setFilters] = useState<FilterState>({ ...DEFAULT_FILTERS, sort: (params.sort as SortKey | undefined) ?? "featured" });
+  const [filters, setFilters] = useState<FilterState>({ ...DEFAULT_FILTERS, sort: isSortKey(params.sort) ? params.sort : "featured" });
   const [categoryId, setCategoryId] = useState<string | undefined>(params.categoryId);
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  const collection = params.collection as CollectionKey | undefined;
-  const campaign = campaigns.find((c) => c.id === params.campaignId);
+  const collection = isCollectionKey(params.collection) ? params.collection : undefined;
+  const campaignId = params.campaignId;
+  const campaign = campaigns.find((c) => c.id === campaignId);
   const range = PRICE_RANGES.find((r) => r.id === filters.priceRange);
-  const brands = useMemo(() => Array.from(new Set(products.map((p) => p.brand))).sort(), [products]);
+  const brands = useBrands(categoryId);
+  const debouncedQuery = useDebouncedValue(query.trim());
 
-  const all = useProductList({
-    query: query.trim(),
-    categoryId,
-    collection,
-    inStockOnly: filters.inStockOnly,
-    discountedOnly: filters.discountedOnly,
-    brands: filters.brands,
-    minPrice: range?.min,
-    maxPrice: range?.max,
-    sort: filters.sort,
-  });
-  const list = useMemo(() => (campaign ? all.filter((p) => campaign.productIds.includes(p.id)) : all), [all, campaign]);
+  const result = useProductQuery(
+    {
+      query: debouncedQuery,
+      categoryId,
+      campaignId,
+      collection,
+      inStockOnly: filters.inStockOnly,
+      discountedOnly: filters.discountedOnly,
+      brands: filters.brands,
+      minPrice: range?.min,
+      maxPrice: range?.max,
+      // Koleksiyonun kendi varsayilan siralamasi (orn. cok satanlar) kullanici secmedikce korunur.
+      sort: collection && filters.sort === "featured" ? undefined : filters.sort,
+    },
+    { pageSize: PAGE_SIZE },
+  );
+  const list = result.items;
 
   const category = categories.find((c) => c.id === categoryId);
   const title = params.title ?? category?.name ?? (collection ? COLLECTION_TITLES[collection] : params.q ? "Arama sonuçları" : "Tüm Ürünler");
@@ -58,7 +69,7 @@ export function ProductListScreen() {
       <View style={styles.searchRow}>
         <SearchBar value={query} onChangeText={setQuery} testID="list-search" />
       </View>
-      {!campaign ? (
+      {!campaignId ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
           <CategoryChip label="Tümü" selected={!categoryId} onPress={() => setCategoryId(undefined)} testID="chip-all" />
           {categories.map((c) => (
@@ -68,7 +79,7 @@ export function ProductListScreen() {
       ) : null}
       <View style={styles.toolbar}>
         <Text style={[styles.count, { color: colors.textSecondary }]} testID="list-count">
-          {list.length} ürün · {SORT_LABELS[filters.sort]}
+          {result.isLoading && list.length === 0 ? "Yükleniyor…" : `${result.totalCount} ürün · ${SORT_LABELS[filters.sort]}`}
         </Text>
         <Pressable
           testID="open-filters"
@@ -85,10 +96,14 @@ export function ProductListScreen() {
   );
 
   let content: React.ReactNode;
-  if (isLoading) {
-    content = <EmptyState icon="hourglass-outline" title="Ürünler yükleniyor" />;
-  } else if (error) {
-    content = <EmptyState icon="cloud-offline-outline" title="Ürünler yüklenemedi" message={error} actionLabel="Tekrar dene" onAction={reload} />;
+  if (storeError) {
+    content = <EmptyState icon="cloud-offline-outline" title="MB Shop yüklenemedi" message={storeError} actionLabel="Tekrar dene" onAction={reloadStore} testID="list-error" />;
+  } else if (storeLoading) {
+    content = (
+      <View style={styles.centered} testID="list-loading">
+        <DumbbellSpinner color={colors.primary} size="large" />
+      </View>
+    );
   } else {
     content = (
       <FlatList
@@ -104,19 +119,41 @@ export function ProductListScreen() {
         columnWrapperStyle={styles.column}
         ListHeaderComponent={header}
         ListEmptyComponent={
-          <EmptyState
-            icon="search-outline"
-            title="Ürün bulunamadı"
-            message="Arama veya filtrelerinize uyan ürün yok."
-            actionLabel="Filtreleri temizle"
-            onAction={() => {
-              setQuery("");
-              setCategoryId(undefined);
-              setFilters(DEFAULT_FILTERS);
-            }}
-            testID="list-empty"
-          />
+          result.isLoading ? (
+            <View style={styles.centered} testID="list-loading">
+              <DumbbellSpinner color={colors.primary} size="large" />
+            </View>
+          ) : result.error ? (
+            <EmptyState icon="cloud-offline-outline" title="Ürünler yüklenemedi" message={result.error} actionLabel="Tekrar dene" onAction={result.reload} testID="list-error" />
+          ) : (
+            <EmptyState
+              icon="search-outline"
+              title="Ürün bulunamadı"
+              message="Arama veya filtrelerinize uyan ürün yok."
+              actionLabel="Filtreleri temizle"
+              onAction={() => {
+                setQuery("");
+                setCategoryId(undefined);
+                setFilters(DEFAULT_FILTERS);
+              }}
+              testID="list-empty"
+            />
+          )
         }
+        ListFooterComponent={
+          result.isLoadingMore ? (
+            <View style={styles.footerSpinner} testID="list-loading-more">
+              <DumbbellSpinner color={colors.primary} />
+            </View>
+          ) : result.error && list.length > 0 ? (
+            <Pressable onPress={result.loadMore} accessibilityRole="button" style={styles.footerSpinner} testID="list-load-more-retry">
+              <Text style={[styles.filterLabel, { color: colors.primary }]}>{result.error} Tekrar dene</Text>
+            </Pressable>
+          ) : undefined
+        }
+        onEndReached={result.loadMore}
+        onEndReachedThreshold={0.5}
+        refreshControl={<RefreshControl refreshing={false} onRefresh={result.reload} tintColor={colors.primary} />}
         contentContainerStyle={styles.listContent}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
@@ -171,4 +208,6 @@ const styles = StyleSheet.create({
   filterLabel: { fontSize: 13, fontWeight: "600" },
   column: { gap: 12 },
   cell: { flex: 1, marginBottom: 12, maxWidth: "50%" },
+  centered: { minHeight: 240, alignItems: "center", justifyContent: "center" },
+  footerSpinner: { paddingVertical: 18, alignItems: "center" },
 });

@@ -39,7 +39,7 @@ export function ProfileScreen() {
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [achievements, setAchievements] = useState<AchievementsResponse | null>(null);
   const guard = useNavigationGuard();
-  const { cartItems, favoriteIds, orders, addresses } = useStore();
+  const { cart, favoriteIds, orderCount, addresses } = useStore();
 
   const headerAnim = useRef(new Animated.Value(0)).current;
   const identityAnim = useRef(new Animated.Value(0)).current;
@@ -274,13 +274,13 @@ export function ProfileScreen() {
               <SettingsRow
                 icon="cart-outline"
                 title="Sepetim"
-                subtitle={cartItems.length > 0 ? `${cartItems.reduce((n, i) => n + i.quantity, 0)} ürün` : "Sepetin boş"}
+                subtitle={cart.totals.itemCount > 0 ? `${cart.totals.itemCount} ürün` : "Sepetin boş"}
                 onPress={guard(() => router.push(storeRoutes.cart()))}
               />
               <SettingsRow
                 icon="receipt-outline"
                 title="Siparişlerim"
-                subtitle={orders.length > 0 ? `${orders.length} sipariş (demo)` : "Henüz siparişin yok"}
+                subtitle={orderCount > 0 ? `${orderCount} sipariş` : "Henüz siparişin yok"}
                 onPress={guard(() => router.push(storeRoutes.orders()))}
               />
               <SettingsRow

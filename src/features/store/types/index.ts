@@ -1,6 +1,6 @@
 /**
- * Store (e-ticaret) modulunun alan modelleri. Tamami simdilik dummy veriyle calisir; ileride .NET Web API
- * DTO'lari bu tiplere map'lenir (bkz. ../README.md).
+ * MB Shop alan modelleri. Veriler MerfitCustomerApi'nin /api/store uc noktalarindan gelir ve services/mappers.ts'te
+ * bu tiplere cevrilir. Fiyatlar, indirimler, kargo ve toplamlar sunucuda hesaplanir; ekranlar yalnizca gosterir.
  */
 
 export type Category = {
@@ -8,8 +8,11 @@ export type Category = {
   name: string;
   slug: string;
   image: string | null;
-  /** Gorsel yuklenemediginde gosterilen Ionicons adi. */
+  /** Gorsel yoksa gosterilen Ionicons adi (admin panelinden girilir). */
   icon: string;
+  parentId: string | null;
+  /** Kategorideki satistaki urun sayisi. */
+  productCount: number;
 };
 
 export type VariantKind = "size" | "color" | "package" | "option";
@@ -32,24 +35,30 @@ export type VariantGroup = {
   options: VariantOption[];
 };
 
-export type Product = {
+/** Liste ve kartlarda gosterilen urun ozeti. */
+export type ProductSummary = {
   id: string;
   name: string;
   brand: string;
-  description: string;
-  images: string[];
   categoryId: string;
-  /** Guncel birim fiyat (TL). */
+  /** Guncel satis fiyati (TL). */
   price: number;
   /** Indirim oncesi fiyat; indirim yoksa price ile aynidir. */
   originalPrice: number;
-  /** price ve originalPrice'tan turetilir (bkz. utils/pricing.ts); elle yazilmaz. */
+  /** Sunucunun hesapladigi indirim orani. */
   discountPercentage: number;
   stock: number;
+  image: string | null;
+  /** true ise sepete eklemeden once secenek secilmelidir. */
+  hasVariants: boolean;
+};
+
+/** Urun detay ekrani. */
+export type Product = ProductSummary & {
+  description: string;
+  categoryName: string | null;
+  images: string[];
   variants: VariantGroup[];
-  rating: number;
-  reviewCount: number;
-  tags: string[];
   features: string[];
   /** Kullanim bilgileri veya teknik ozellikler. */
   specs: { label: string; value: string }[];
@@ -60,22 +69,56 @@ export type Campaign = {
   title: string;
   description: string;
   image: string | null;
-  productIds: string[];
-  /** Kampanyadaki urunlerin en yuksek indirim orani; urun verisinden turetilir. */
+  /** Kampanyadaki urunlerin en yuksek indirim orani (sunucuda hesaplanir). */
   discountPercentage: number;
-  /** Kart zemin rengi (kampanya karti gorseli yokken de dolu gorunur). */
+  productCount: number;
+  /** Kartta fiyati gosterilen urun. */
+  featuredProduct: ProductSummary | null;
+  /** Kart zemin rengi. */
   tint: string;
 };
 
 /** groupId -> optionId */
 export type SelectedVariant = Record<string, string>;
 
-export type CartItem = {
+export type CartTotals = {
+  itemCount: number;
+  /** Liste (indirimsiz) fiyatlarla ara toplam. */
+  subtotal: number;
+  discount: number;
+  shippingCost: number;
+  total: number;
+  /** Ucretsiz kargoya kalan tutar; zaten ucretsizse 0. */
+  remainingForFreeShipping: number;
+  freeShippingThreshold: number;
+};
+
+export type CartLine = {
+  /** Sepet satiri kimligi (adet guncelleme/silme). */
+  id: string;
   productId: string;
-  quantity: number;
+  categoryId: string;
+  name: string;
+  brand: string;
+  image: string | null;
   selectedVariant: SelectedVariant;
-  /** Sepete eklendigi andaki, varyant farki dahil birim fiyat. */
+  variantLabel: string;
+  quantity: number;
+  /** Stok ve satir siniriyla secilebilecek en fazla adet. */
+  maxQuantity: number;
   unitPrice: number;
+  unitOriginalPrice: number;
+  lineTotal: number;
+  lineOriginalTotal: number;
+  /** false ise urun satistan kalkmis / stok yetmiyor; toplamlara katilmaz ve siparis verilemez. */
+  isAvailable: boolean;
+  unavailableReason: string | null;
+};
+
+export type Cart = {
+  items: CartLine[];
+  totals: CartTotals;
+  canCheckout: boolean;
 };
 
 export type DeliveryAddress = {
@@ -86,54 +129,75 @@ export type DeliveryAddress = {
   city: string;
   district: string;
   address: string;
+  isDefault: boolean;
 };
 
-export type OrderStatus = "received" | "preparing" | "shipped" | "delivered";
+export type OrderStatus = "received" | "preparing" | "shipped" | "delivered" | "cancelled";
+
+export type PaymentStatus = "pending" | "paid" | "failed" | "refund_pending" | "refunded" | "cancelled";
+
+export type PaymentMethod = "cash_on_delivery" | "bank_transfer" | "card";
 
 export type OrderItem = {
-  productId: string;
+  productId: string | null;
   name: string;
   brand: string;
   image: string | null;
   quantity: number;
   unitPrice: number;
   originalUnitPrice: number;
+  lineTotal: number;
   variantLabel: string;
 };
 
-export type PaymentMethod = "cash_on_delivery" | "bank_transfer" | "card_simulation";
-
-export type Order = {
+export type OrderListItem = {
   id: string;
+  orderNumber: string;
   createdAt: string;
+  status: OrderStatus;
+  paymentStatus: PaymentStatus;
+  paymentMethod: PaymentMethod;
+  total: number;
+  itemCount: number;
+  itemNames: string[];
+};
+
+export type Order = OrderListItem & {
   items: OrderItem[];
-  deliveryAddress: DeliveryAddress;
+  deliveryAddress: Omit<DeliveryAddress, "id" | "isDefault">;
   /** Liste (indirimsiz) fiyatlarla urun toplami. */
   subtotal: number;
   discount: number;
   shippingCost: number;
-  /** subtotal - discount + shippingCost */
-  total: number;
-  status: OrderStatus;
-  paymentMethod: PaymentMethod;
-  estimatedDelivery: string;
+  history: { status: OrderStatus; paymentStatus: PaymentStatus; note: string | null; createdAt: string }[];
+  canCancel: boolean;
+  cancelReason: string | null;
+  /** Havale ile odenecek ve odeme bekleyen sipariste banka bilgisi. */
+  bankTransfer: { iban: string; accountName: string; bankName: string | null; reference: string } | null;
 };
 
-export type CartTotals = {
-  itemCount: number;
-  subtotal: number;
-  discount: number;
+export type PaymentOption = {
+  method: PaymentMethod;
+  label: string;
+  description: string;
+  available: boolean;
+  unavailableReason: string | null;
+};
+
+export type CheckoutOptions = {
+  paymentMethods: PaymentOption[];
+  freeShippingThreshold: number;
   shippingCost: number;
-  total: number;
-  /** Ucretsiz kargoya kalan tutar; zaten ucretsizse 0. */
-  remainingForFreeShipping: number;
 };
 
-export type SortKey = "featured" | "price_asc" | "price_desc" | "discount" | "rating" | "newest";
+export type SortKey = "featured" | "price_asc" | "price_desc" | "discount" | "newest" | "name_asc" | "bestsellers";
+
+export type CollectionKey = "bestsellers" | "discounted" | "featured" | "new";
 
 export type ProductFilters = {
   query?: string;
   categoryId?: string;
+  campaignId?: string;
   collection?: CollectionKey;
   inStockOnly?: boolean;
   discountedOnly?: boolean;
@@ -141,6 +205,7 @@ export type ProductFilters = {
   minPrice?: number;
   maxPrice?: number;
   sort?: SortKey;
+  excludeId?: string;
 };
 
-export type CollectionKey = "bestsellers" | "discounted" | "forYou" | "new";
+export type Page<T> = { items: T[]; page: number; totalCount: number; hasNextPage: boolean };
