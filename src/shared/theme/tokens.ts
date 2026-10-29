@@ -1,6 +1,6 @@
 /**
  * Merkezi semantic theme token'lari. Mevcut Merfit tasarim dili (mavi/siyah/beyaz/koyu gri,
- * mor aksan) buradan turetilir; onceki hardcoded degerler (bkz. app/pages/welcome/theme.ts,
+ * kirmizi #FF1414 aksan) buradan turetilir; onceki hardcoded degerler (bkz. app/pages/welcome/theme.ts,
  * app/pages/onboarding/theme.ts) `dark` paletine birebir tasindi ki gorunumde bir sapma olmasin.
  */
 export type ResolvedScheme = "light" | "dark";
@@ -46,7 +46,7 @@ export const darkColors: ThemeTokens = {
   primary: "#3E7BFA",
   primaryPressed: "#1d51c0",
   secondary: "#2A2D34",
-  accent: "#8B5CF6",
+  accent: "#FF1414",
   danger: "#FF6B6B",
   dangerPressed: "#E14F4F",
   dangerBackground: "rgba(255,107,107,0.12)",
@@ -69,7 +69,7 @@ export const lightColors: ThemeTokens = {
   primary: "#1d51c0",
   primaryPressed: "#153e94",
   secondary: "#1F2329",
-  accent: "#8B5CF6",
+  accent: "#FF1414",
   danger: "#DC2626",
   dangerPressed: "#B91C1C",
   dangerBackground: "rgba(220,38,38,0.08)",

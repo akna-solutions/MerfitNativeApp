@@ -11,7 +11,7 @@ type Props = {
   onClose: () => void;
 };
 
-const CONFETTI_COLORS = ["#3E7BFA", "#8B5CF6", "#22C55E", "#F59E0B", "#EF4444", "#06B6D4"];
+const CONFETTI_COLORS = ["#3E7BFA", "#FF1414", "#22C55E", "#F59E0B", "#EF4444", "#06B6D4"];
 const CONFETTI_COUNT = 22;
 const CONFETTI_MS = 1800;
 

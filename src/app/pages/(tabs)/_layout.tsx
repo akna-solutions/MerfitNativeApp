@@ -13,7 +13,7 @@ import { circleTab, navbarRoute } from "../../../shared/navigation/navbarRoutes"
 import { useTheme } from "../../../shared/theme/ThemeContext";
 import { useStore } from "../../../features/store/hooks";
 
-// Yuvarlak buton gecisinde mor ekranda donen ikon ve altindaki baslik/aciklama.
+// Yuvarlak buton gecisinde kirmizi ekranda donen ikon ve altindaki baslik/aciklama.
 const LOADERS: Partial<Record<NavTab, RevealLoader>> = {
   store: { icon: "bag-handle", title: "MB Shop", description: "Takviyeler, ekipmanlar ve kampanyalar" },
   home: { icon: "barbell", title: "MB Fit", description: "Antrenman, beslenme ve ilerlemen" },
