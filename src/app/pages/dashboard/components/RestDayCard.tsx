@@ -11,8 +11,9 @@ type Props = {
 };
 
 /**
- * Aktif programda bugun antrenman yoksa "Bugünün Antrenmanı" yerine gosterilir: kullanici bugunun
- * dinlenme gunu oldugunu acikca gorur ve Dumbbell Dash ile MB FIT puani toplamaya devam edebilir.
+ * Aktif programda bugun antrenman yoksa ana sayfada "Antrenmana Başla" kartinin yerine (yarim genislik)
+ * gosterilir: kullanici bugunun dinlenme gunu oldugunu acikca gorur ve Dumbbell Dash ile MB FIT puani
+ * toplamaya devam edebilir.
  */
 export function RestDayCard({ onRewardGranted }: Props) {
   const { colors } = useTheme();
@@ -27,30 +28,27 @@ export function RestDayCard({ onRewardGranted }: Props) {
         <View
           accessible
           accessibilityLabel="Bugün dinlenme günü. Programında bugün antrenman yok. Dumbbell Dash ile MB FIT puanı toplamaya devam edebilirsin."
-          style={styles.row}
         >
-          <View style={[styles.icon, { backgroundColor: colors.inputBackground }]}>
-            <Ionicons name="moon" size={20} color={colors.text} />
-          </View>
-          <View style={styles.body}>
+          <View style={styles.topRow}>
+            <View style={[styles.icon, { backgroundColor: colors.inputBackground }]}>
+              <Ionicons name="moon" size={18} color={colors.text} />
+            </View>
             <Text style={[styles.badge, { color: colors.textSecondary }]}>BUGÜN</Text>
-            <Text style={[styles.title, { color: colors.text }]}>Dinlenme Günü</Text>
-            <Text style={[styles.text, { color: colors.textSecondary }]}>
-              Programında bugün antrenman yok. Kasların toparlansın; istersen hafif yürüyüş veya esneme yapabilirsin.
-            </Text>
-            <Text style={[styles.text, { color: colors.text }]}>
-              Dumbbell Dash ile MB FIT puanı toplamaya devam edebilirsin.
-            </Text>
           </View>
+          <Text style={[styles.title, { color: colors.text }]}>Dinlenme Günü</Text>
+          <Text style={[styles.text, { color: colors.textSecondary }]} numberOfLines={3}>
+            Kasların toparlansın. Hafif yürüyüş veya esneme iyi gelir.
+          </Text>
         </View>
         <Pressable
           testID="rest-day-play-game"
           onPress={() => setGameOpen(true)}
           accessibilityRole="button"
+          accessibilityLabel="Dumbbell Dash oyna"
           style={({ pressed }) => [styles.cta, { backgroundColor: colors.text, opacity: pressed ? 0.85 : 1 }]}
         >
-          <Ionicons name="game-controller" size={16} color={colors.background} />
-          <Text style={[styles.ctaLabel, { color: colors.background }]}>Dumbbell Dash Oyna</Text>
+          <Ionicons name="game-controller" size={14} color={colors.background} />
+          <Text style={[styles.ctaLabel, { color: colors.background }]} numberOfLines={1}>Dumbbell Dash</Text>
         </Pressable>
       </View>
 
@@ -65,24 +63,27 @@ export function RestDayCard({ onRewardGranted }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    gap: 16,
+    flex: 1,
+    minHeight: 208,
+    justifyContent: "space-between",
+    gap: 12,
     borderRadius: 20,
-    padding: 20,
+    padding: 14,
     borderWidth: StyleSheet.hairlineWidth,
   },
-  row: { flexDirection: "row", gap: 14 },
-  icon: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" },
-  body: { flex: 1 },
-  badge: { fontSize: 11, fontWeight: "700", letterSpacing: 1.2 },
-  title: { fontSize: 18, fontWeight: "700", marginTop: 2 },
-  text: { fontSize: 13, lineHeight: 19, marginTop: 6 },
+  topRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  icon: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },
+  badge: { fontSize: 10, fontWeight: "800", letterSpacing: 1.2 },
+  title: { fontSize: 16, fontWeight: "800", marginTop: 12 },
+  text: { fontSize: 12, lineHeight: 17, marginTop: 4 },
   cta: {
-    minHeight: 46,
-    borderRadius: 14,
+    minHeight: 34,
+    borderRadius: 11,
     flexDirection: "row",
-    gap: 8,
+    gap: 6,
     alignItems: "center",
     justifyContent: "center",
+    paddingHorizontal: 8,
   },
-  ctaLabel: { fontSize: 14, fontWeight: "800" },
+  ctaLabel: { fontSize: 12, fontWeight: "800" },
 });

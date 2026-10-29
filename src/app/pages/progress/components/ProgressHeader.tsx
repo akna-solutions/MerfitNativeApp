@@ -3,9 +3,9 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { useTheme } from "../../../../shared/theme/ThemeContext";
 
-type Props = { onSettingsPress: () => void };
+type Props = { onCalendarPress: () => void };
 
-export function ProgressHeader({ onSettingsPress }: Props) {
+export function ProgressHeader({ onCalendarPress }: Props) {
   const { colors } = useTheme();
   return (
     <View style={styles.row}>
@@ -15,12 +15,15 @@ export function ProgressHeader({ onSettingsPress }: Props) {
       </View>
 
       <Pressable
-        onPress={onSettingsPress}
+        testID="progress-calendar-button"
+        onPress={onCalendarPress}
         hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel="Aktivite takvimini aç"
         style={[styles.iconButton, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
       >
         <Ionicons
-          name="settings-outline"
+          name="calendar-outline"
           size={18}
           color={colors.text}
         />

@@ -1,5 +1,5 @@
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
@@ -11,43 +11,39 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { getCampaigns } from "../../../services/api/campaigns";
 import { ApiError } from "../../../services/api/client";
 import { getDashboard } from "../../../services/api/dashboard";
 import { getLeaderboard } from "../../../services/api/leaderboard";
 import { getTodayPlan } from "../../../services/api/myPlan";
 import { getUnreadNotificationCount } from "../../../services/api/notifications";
 import {
+  ActivityCalendarResponse,
+  CalendarDay,
+  CampaignListItem,
   DashboardResponse,
   MyTodayWorkoutPlanResponse,
 } from "../../../services/api/types";
-import { MiniGameModal } from "../../../shared/miniGame/dumbbellDash/MiniGameModal";
-import { useNutritionAssistant } from "../../../shared/nutritionAssistant/useNutritionAssistant";
+import { AchievementCelebration } from "../../../shared/achievements/AchievementCelebration";
+import { useAchievementCelebration } from "../../../shared/achievements/useAchievementCelebration";
+import { fetchCalendar, peekCalendar } from "../../../shared/calendar/calendarCache";
+import { toDateKey, weekKeys as buildWeekKeys } from "../../../shared/calendar/dates";
+import { useNavigationGuard } from "../../../shared/navigation/useNavigationGuard";
 import { usePersonalizationStatus } from "../../../shared/personalization/usePersonalizationStatus";
-import { PremiumFeature } from "../../../shared/plus/components/PremiumFeature";
+import { useWeightReminder } from "../../../shared/weightReminder/useWeightReminder";
+import { WeightReminderModal } from "../../../shared/weightReminder/WeightReminderModal";
 import { useTheme } from "../../../shared/theme/ThemeContext";
-import { NutritionAssistantSheet } from "../nutrition/components/assistant/NutritionAssistantSheet";
-import { AiWorkoutCard } from "./components/AiWorkoutCard";
+import { CalorieRingCard } from "./components/CalorieRingCard";
+import { CampaignsSection } from "./components/CampaignsSection";
 import { DashboardHeader } from "./components/DashboardHeader";
-import { DashboardShortcuts } from "./components/DashboardShortcuts";
-import { EmptyState } from "./components/EmptyState";
 import { GoalProgressCard } from "./components/GoalProgressCard";
 import { PersonalizationPendingState } from "./components/PersonalizationPendingState";
-import { ProgressCard } from "./components/ProgressCard";
-import { QuickStats } from "./components/QuickStats";
-import { RecommendedWorkouts } from "./components/RecommendedWorkouts";
+import { QuickStats, QuickStatAction } from "./components/QuickStats";
 import { RestDayCard } from "./components/RestDayCard";
-import { TodayPersonalWorkoutCard } from "./components/TodayPersonalWorkoutCard";
-import { WorkoutCard } from "./components/WorkoutCard";
+import { TodayStartCard } from "./components/TodayStartCard";
+import { usableImageUrls } from "./components/useImageCycle";
+import { WeeklyActivitySection } from "./components/WeeklyActivitySection";
 import { DashboardData, WorkoutSummary } from "./types";
-
-/** "yyyy-MM-dd" - bugunun tarihi (yerel saat diliminde); beslenme asistani gun bazinda calisir. */
-function todayParam(): string {
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
 
 /** Backend'in CustomerDashboardResponse'unu (services/api/types.ts) ekranin bekledigi DashboardData sekline cevirir. */
 function mapToDashboardData(response: DashboardResponse): DashboardData {
@@ -78,9 +74,12 @@ function mapToDashboardData(response: DashboardResponse): DashboardData {
   };
 }
 
+type LoadState<T> = { data: T; loading: boolean; error: boolean };
+
 export function DashboardScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const guard = useNavigationGuard();
 
   const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -89,14 +88,23 @@ export function DashboardScreen() {
     null,
   );
   const [unreadCount, setUnreadCount] = useState(0);
-  // Kisayoldaki MB FIT puani, puan sayfasiyla ayni (aylik) donemden gelir.
+  // MB FIT puani karti, puan sayfasiyla ayni (aylik) donemden gelir.
   const [monthlyPoints, setMonthlyPoints] = useState<number | null>(null);
-  const [gameOpen, setGameOpen] = useState(false);
-  const [assistantOpen, setAssistantOpen] = useState(false);
-  const assistant = useNutritionAssistant(todayParam());
+
+  // Haftalik aktivite ve bugunun kalori halkasi ayni takvim isteginden (bu hafta, Pzt-Paz) beslenir.
+  const weekKeys = useMemo(() => buildWeekKeys(new Date()), []);
+  const [week, setWeek] = useState<LoadState<ActivityCalendarResponse | null>>(() => {
+    const cached = peekCalendar(weekKeys[0], weekKeys[6]);
+    return { data: cached ?? null, loading: !cached, error: false };
+  });
+  const [campaigns, setCampaigns] = useState<LoadState<CampaignListItem[]>>({ data: [], loading: true, error: false });
 
   const personalization = usePersonalizationStatus(true);
   const previousPersonalizationStatus = useRef(personalization.status);
+
+  const celebration = useAchievementCelebration();
+  // Kilo hatirlaticisi rozet kutlamasi acikken beklemeye alinir; ikisi ust uste acilmaz.
+  const weightReminder = useWeightReminder({ blocked: celebration.current !== null });
 
   const loadDashboard = useCallback(
     async (signal?: AbortSignal) => {
@@ -128,7 +136,7 @@ export function DashboardScreen() {
       const response = await getLeaderboard("month", signal);
       setMonthlyPoints(response.currentUser.points);
     } catch {
-      // Puan alinamazsa kisayol "—" gosterir; dokununca puan sayfasi yine acilir.
+      // Puan alinamazsa kart "—" gosterir; dokununca puan sayfasi yine acilir.
     }
   }, []);
 
@@ -142,6 +150,32 @@ export function DashboardScreen() {
     }
   }, []);
 
+  const loadWeek = useCallback(
+    async (signal?: AbortSignal) => {
+      setWeek((previous) => ({ ...previous, loading: true, error: false }));
+      try {
+        // Odaga her geliste guncel veri: antrenman/ogun kaydi baska ekranda yapilmis olabilir.
+        const response = await fetchCalendar(weekKeys[0], weekKeys[6], { force: true, signal });
+        setWeek({ data: response, loading: false, error: false });
+      } catch {
+        if (signal?.aborted) return;
+        setWeek((previous) => ({ ...previous, loading: false, error: true }));
+      }
+    },
+    [weekKeys],
+  );
+
+  const loadCampaigns = useCallback(async (signal?: AbortSignal) => {
+    setCampaigns((previous) => ({ ...previous, loading: true, error: false }));
+    try {
+      const response = await getCampaigns(signal);
+      setCampaigns({ data: response, loading: false, error: false });
+    } catch {
+      if (signal?.aborted) return;
+      setCampaigns((previous) => ({ ...previous, loading: false, error: true }));
+    }
+  }, []);
+
   // Sekme ekranlari antrenmandan donuste yeniden mount edilmez; bu yuzden veriyi yalnizca ilk
   // acilista degil, ekran her odaga geldiginde yeniden cekiyoruz. Aksi halde ilk antrenman
   // bittikten sonra da "İlk Antrenmana Başla" gorunmeye devam ediyordu.
@@ -151,13 +185,15 @@ export function DashboardScreen() {
       loadDashboard(controller.signal);
       loadTodayPlan(controller.signal);
       loadMonthlyPoints(controller.signal);
+      loadWeek(controller.signal);
+      loadCampaigns(controller.signal);
       getUnreadNotificationCount(undefined, controller.signal)
         .then(setUnreadCount)
         .catch(() => {
           // Sayi alinamazsa zil noktasiz gosterilir.
         });
       return () => controller.abort();
-    }, [loadDashboard, loadTodayPlan, loadMonthlyPoints]),
+    }, [loadDashboard, loadTodayPlan, loadMonthlyPoints, loadWeek, loadCampaigns]),
   );
 
   // PersonalizationJob Pending/Processing -> Completed'e gectiginde, artik gercek kisisel
@@ -177,35 +213,19 @@ export function DashboardScreen() {
   }, [personalization.status, loadDashboard, loadTodayPlan]);
 
   const headerAnim = useRef(new Animated.Value(0)).current;
-  const progressAnim = useRef(new Animated.Value(0)).current;
-  const workoutAnim = useRef(new Animated.Value(0)).current;
+  const todayAnim = useRef(new Animated.Value(0)).current;
+  const weekAnim = useRef(new Animated.Value(0)).current;
   const statsAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (!data) return;
-    Animated.stagger(110, [
-      Animated.timing(headerAnim, {
-        toValue: 1,
-        duration: 420,
-        useNativeDriver: true,
-      }),
-      Animated.timing(progressAnim, {
-        toValue: 1,
-        duration: 420,
-        useNativeDriver: true,
-      }),
-      Animated.timing(workoutAnim, {
-        toValue: 1,
-        duration: 420,
-        useNativeDriver: true,
-      }),
-      Animated.timing(statsAnim, {
-        toValue: 1,
-        duration: 420,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [data, headerAnim, progressAnim, workoutAnim, statsAnim]);
+    Animated.stagger(
+      110,
+      [headerAnim, todayAnim, weekAnim, statsAnim].map((anim) =>
+        Animated.timing(anim, { toValue: 1, duration: 420, useNativeDriver: true }),
+      ),
+    ).start();
+  }, [data, headerAnim, todayAnim, weekAnim, statsAnim]);
 
   const fadeUp = (anim: Animated.Value, distance = 14) => ({
     opacity: anim,
@@ -219,6 +239,14 @@ export function DashboardScreen() {
     ],
   });
 
+  const weekDays = useMemo(() => {
+    const map = new Map<string, CalendarDay>();
+    week.data?.days.forEach((day) => map.set(day.date, day));
+    return map;
+  }, [week.data]);
+  const todayKey = week.data?.today ?? toDateKey(new Date());
+  const todayCalendar = weekDays.get(todayKey);
+
   const goToWorkout = (workout: WorkoutSummary) => {
     router.push({
       pathname: "/pages/workout/active/[id]",
@@ -228,23 +256,15 @@ export function DashboardScreen() {
 
   // Aktif program var ama bugun antrenman gunu degil: dinlenme gunu.
   const isRestDay = todayPlan?.hasActivePlan === true && !todayPlan.hasWorkoutToday;
+  const personalDay = todayPlan?.hasWorkoutToday ? todayPlan.day : null;
 
   const goToWorkoutPlan = () => {
     router.push("/pages/workout/plan" as never);
   };
 
-  // Beslenme sekmesi Ogun Ekle penceresini dogrudan fotograf adiminda acar; kayit orada listeye eklenir.
-  const goToMealPhoto = () => {
-    router.navigate({ pathname: "/pages/nutrition", params: { action: "photo" } } as never);
-  };
-
   const handleGameReward = () => {
     void loadDashboard();
     void loadMonthlyPoints();
-  };
-
-  const goToWorkoutHistory = () => {
-    router.push("/pages/workout/history" as never);
   };
 
   // Ilk antrenman icin backend'in "bugunun antrenmani" onerisini kullan (recommended[0] aslinda
@@ -270,6 +290,10 @@ export function DashboardScreen() {
           : undefined,
       },
     } as never);
+  };
+
+  const goToDay = (dateKey: string) => {
+    router.navigate({ pathname: "/pages/progress", params: { date: dateKey } } as never);
   };
 
   if (isLoading) {
@@ -311,6 +335,79 @@ export function DashboardScreen() {
     );
   }
 
+  // Sol kart: kisisel planda bugun antrenman varsa o; dinlenme gunuyse dinlenme karti; plan yoksa genel oneri.
+  const renderStartCard = () => {
+    if (personalDay) {
+      const completed = todayPlan?.isCompletedToday ?? false;
+      return (
+        <TodayStartCard
+          testID="today-start-card"
+          images={usableImageUrls([...personalDay.exercises.map((ex) => ex.imageUrl), personalDay.workout.imageUrl])}
+          badge="BUGÜN"
+          title={personalDay.workout.title}
+          meta={`${personalDay.workout.durationMin} dk · ${personalDay.exercises.length} egzersiz`}
+          ctaLabel={completed ? "Tekrar Başla" : "Antrenmana Başla"}
+          completed={completed}
+          onPress={guard(goToPersonalWorkout)}
+        />
+      );
+    }
+    if (isRestDay) {
+      return <RestDayCard onRewardGranted={handleGameReward} />;
+    }
+    const suggestion = data.todayWorkout;
+    if (data.hasCompletedFirstWorkout && suggestion) {
+      return (
+        <TodayStartCard
+          testID="today-start-card"
+          images={usableImageUrls([suggestion.imageUrl])}
+          badge="ÖNERİLEN"
+          title={suggestion.title}
+          meta={`${suggestion.duration} · ${suggestion.meta}`}
+          ctaLabel="Antrenmana Başla"
+          onPress={guard(() => goToWorkout(suggestion))}
+        />
+      );
+    }
+    if (!data.hasCompletedFirstWorkout) {
+      const first = data.todayWorkout ?? data.recommended[0];
+      return (
+        <TodayStartCard
+          testID="today-start-card"
+          images={usableImageUrls([first?.imageUrl])}
+          badge="İLK ADIM"
+          title={first?.title ?? "Yolculuğun burada başlıyor"}
+          meta={first ? `${first.duration} · ${first.meta}` : "İlerlemeni görmek için ilk antrenmanını tamamla."}
+          ctaLabel="İlk Antrenmana Başla"
+          onPress={guard(startFirstWorkout)}
+        />
+      );
+    }
+    // Bugun zaten antrenman yapildi (backend todayWorkout'u null doner) ve kisisel plan yok.
+    return (
+      <TodayStartCard
+        testID="today-start-card"
+        images={[]}
+        badge="BUGÜN"
+        title="Bugünkü antrenman tamamlandı"
+        meta="Yeni bir antrenman seçmek için kataloğa göz at."
+        ctaLabel="Antrenmanlar"
+        completed
+        onPress={guard(() => router.navigate("/pages/workouts" as never))}
+      />
+    );
+  };
+
+  const statActions: QuickStatAction[] = [
+    {
+      id: "mbfit-points",
+      label: "MB FIT Puanı (bu ay)",
+      value: monthlyPoints === null ? "—" : monthlyPoints.toLocaleString("tr-TR"),
+      icon: "trophy-outline",
+      onPress: guard(() => router.push("/pages/leaderboard" as never)),
+    },
+  ];
+
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <SafeAreaView style={styles.flex} edges={["top"]}>
@@ -323,23 +420,13 @@ export function DashboardScreen() {
             <DashboardHeader
               name={data.userName}
               unreadCount={unreadCount}
-              onNotificationsPress={() => router.push("/pages/notifications" as never)}
-              onProfilePress={() => router.navigate("/pages/profile" as never)}
-            />
-          </Animated.View>
-
-          <Animated.View style={[styles.padded, styles.shortcutsGap, fadeUp(headerAnim, -8)]}>
-            <DashboardShortcuts
-              points={monthlyPoints}
-              onMealPhotoPress={goToMealPhoto}
-              onGamePress={() => setGameOpen(true)}
-              onAssistantPress={() => setAssistantOpen(true)}
-              onScorePress={() => router.push("/pages/leaderboard" as never)}
+              onNotificationsPress={guard(() => router.push("/pages/notifications" as never))}
+              onProfilePress={guard(() => router.navigate("/pages/profile" as never))}
             />
           </Animated.View>
 
           {personalization.isPending || personalization.isFailed ? (
-            <Animated.View style={[styles.padded, fadeUp(workoutAnim)]}>
+            <Animated.View style={[styles.padded, styles.gapTop, fadeUp(todayAnim)]}>
               <PersonalizationPendingState
                 isTimedOut={personalization.isTimedOut}
                 isFailed={personalization.isFailed}
@@ -349,132 +436,78 @@ export function DashboardScreen() {
             </Animated.View>
           ) : null}
 
-          {todayPlan?.hasWorkoutToday && todayPlan.day ? (
-            <Animated.View
-              style={[styles.padded, styles.gapTop, fadeUp(workoutAnim)]}
-            >
-              <TodayPersonalWorkoutCard
-                day={todayPlan.day}
-                isCompletedToday={todayPlan.isCompletedToday ?? false}
-                onPress={goToPersonalWorkout}
-              />
-            </Animated.View>
-          ) : null}
-
-          {isRestDay ? (
-            <Animated.View style={[styles.padded, styles.gapTop, fadeUp(workoutAnim)]}>
-              <RestDayCard onRewardGranted={handleGameReward} />
-            </Animated.View>
-          ) : null}
+          <Animated.View style={[styles.padded, styles.todayRow, fadeUp(todayAnim)]}>
+            {renderStartCard()}
+            <CalorieRingCard
+              today={todayCalendar}
+              dailyTarget={week.data?.dailyCalorieTarget ?? null}
+              loading={week.loading && !week.data}
+              error={week.error && !week.data}
+              onPress={guard(() => router.navigate("/pages/nutrition" as never))}
+            />
+          </Animated.View>
 
           {todayPlan?.hasActivePlan ? (
-            <View style={[styles.padded, styles.gapTop]}>
+            <View style={[styles.padded, styles.planLinkGap]}>
               <Pressable
-                onPress={goToWorkoutPlan}
+                onPress={guard(goToWorkoutPlan)}
                 style={[
-                  styles.historyLink,
-                  {
-                    backgroundColor: colors.card,
-                    borderColor: colors.border,
-                    marginBottom: 16,
-                  },
+                  styles.planLink,
+                  { backgroundColor: colors.card, borderColor: colors.border },
                 ]}
                 accessibilityRole="button"
               >
-                <Text style={[styles.historyLinkTitle, { color: colors.text }]}>
+                <Text style={[styles.planLinkTitle, { color: colors.text }]}>
                   Antrenman Programım
                 </Text>
-                <Text
-                  style={[styles.historyLinkMeta, { color: colors.primary }]}
-                >
+                <Text style={[styles.planLinkMeta, { color: colors.primary }]}>
                   Haftayı gör
                 </Text>
               </Pressable>
             </View>
           ) : null}
 
-          {data.hasCompletedFirstWorkout ? (
-            <>
-              {/* Bugun zaten antrenman yapildiysa backend todayWorkout'u null doner; bu durumda
-                  kart gizlenir ama dashboard'un geri kalani (ilerleme, gecmis) gosterilmeye devam eder. */}
-              {/* Dinlenme gununde genel "Bugünkü Antrenman" onerisi gosterilmez; karisiklik yaratiyordu. */}
-              {!todayPlan?.hasWorkoutToday && !isRestDay && data.todayWorkout ? (
-                <Animated.View style={[styles.padded, fadeUp(workoutAnim)]}>
-                  <WorkoutCard
-                    workout={data.todayWorkout}
-                    onPress={() =>
-                      goToWorkout(data.todayWorkout as WorkoutSummary)
-                    }
-                  />
-                </Animated.View>
-              ) : null}
+          <Animated.View style={[styles.padded, styles.gapTop, fadeUp(weekAnim)]}>
+            <WeeklyActivitySection
+              weekKeys={weekKeys}
+              days={weekDays}
+              loading={week.loading}
+              error={week.error}
+              onRetry={() => void loadWeek()}
+              onDayPress={guard(goToDay)}
+            />
+          </Animated.View>
 
-              <Animated.View style={[styles.padded, fadeUp(progressAnim)]}>
-                <ProgressCard progress={data.todayProgress} />
-              </Animated.View>
-
-              <View style={[styles.padded, styles.historyLinkGap]}>
-                <Pressable
-                  onPress={goToWorkoutHistory}
-                  style={[
-                    styles.historyLink,
-                    {
-                      backgroundColor: colors.card,
-                      borderColor: colors.border,
-                    },
-                  ]}
-                  accessibilityRole="button"
-                >
-                  <Text
-                    style={[styles.historyLinkTitle, { color: colors.text }]}
-                  >
-                    Antrenman Geçmişi
-                  </Text>
-                  <Text
-                    style={[styles.historyLinkMeta, { color: colors.primary }]}
-                  >
-                    Gör
-                  </Text>
-                </Pressable>
-              </View>
-
-              <Animated.View style={[styles.padded, fadeUp(statsAnim)]}>
-                <QuickStats stats={data.quickStats} />
+          <Animated.View style={fadeUp(statsAnim)}>
+            {data.hasCompletedFirstWorkout ? (
+              <>
+                <QuickStats stats={data.quickStats} actions={statActions} />
                 {data.goalProgress ? (
-                  <GoalProgressCard goal={data.goalProgress} />
+                  <View style={styles.padded}>
+                    <GoalProgressCard goal={data.goalProgress} />
+                  </View>
                 ) : null}
-              </Animated.View>
+              </>
+            ) : (
+              <QuickStats stats={[]} actions={statActions} />
+            )}
 
-              <View style={[styles.padded, styles.gapTop]}>
-                <PremiumFeature feature="AI_WORKOUT" borderRadius={18}>
-                  <AiWorkoutCard />
-                </PremiumFeature>
-              </View>
-
-              <RecommendedWorkouts
-                workouts={data.recommended}
-                onSelect={goToWorkout}
-              />
-            </>
-          ) : !todayPlan?.hasWorkoutToday && !personalization.isPending ? (
-            <Animated.View style={[styles.padded, fadeUp(workoutAnim)]}>
-              <EmptyState onStartFirstWorkout={startFirstWorkout} />
-            </Animated.View>
-          ) : null}
+            <CampaignsSection
+              campaigns={campaigns.data}
+              loading={campaigns.loading}
+              error={campaigns.error}
+              onRetry={() => void loadCampaigns()}
+              onSelect={guard((campaign: CampaignListItem) =>
+                router.push({ pathname: "/pages/campaigns/[id]", params: { id: String(campaign.id) } } as never),
+              )}
+            />
+          </Animated.View>
         </ScrollView>
       </SafeAreaView>
 
-      <MiniGameModal
-        visible={gameOpen}
-        onClose={() => setGameOpen(false)}
-        onRewardGranted={handleGameReward}
-      />
+      <AchievementCelebration achievement={celebration.current} onClose={celebration.dismiss} />
 
-      <NutritionAssistantSheet
-        visible={assistantOpen}
-        onClose={() => setAssistantOpen(false)}
-        controller={assistant}
-      />
+      <WeightReminderModal controller={weightReminder} />
     </View>
   );
 }
@@ -498,9 +531,9 @@ const styles = StyleSheet.create({
   scrollContent: { paddingTop: 16, paddingBottom: 156 },
   padded: { paddingHorizontal: 24 },
   gapTop: { marginTop: 28 },
-  shortcutsGap: { marginTop: 20, marginBottom: 8 },
-  historyLinkGap: { marginTop: 16 },
-  historyLink: {
+  todayRow: { marginTop: 24, flexDirection: "row", gap: 12 },
+  planLinkGap: { marginTop: 14 },
+  planLink: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -509,6 +542,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 14,
   },
-  historyLinkTitle: { fontSize: 14, fontWeight: "700" },
-  historyLinkMeta: { fontSize: 13, fontWeight: "700" },
+  planLinkTitle: { fontSize: 14, fontWeight: "700" },
+  planLinkMeta: { fontSize: 13, fontWeight: "700" },
 });

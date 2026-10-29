@@ -1,4 +1,4 @@
-import { useFocusEffect, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Animated, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -8,6 +8,7 @@ import { ApiError } from "../../../services/api/client";
 import { getMyPlan } from "../../../services/api/myPlan";
 import { getProgress } from "../../../services/api/progress";
 import { ProgressResponse } from "../../../services/api/types";
+import { CalendarSheet } from "./calendar/CalendarSheet";
 import { BodyMetrics } from "./components/BodyMetrics";
 import { CurrentWeightCard } from "./components/CurrentWeightCard";
 import { GoalProgress } from "./components/GoalProgress";
@@ -63,6 +64,16 @@ export function ProgressScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const [timeRange, setTimeRange] = useState<TimeRange>("3months");
+  // Ana sayfadaki haftalik aktiviteden bir gune dokununca ?date=yyyy-MM-dd ile gelinir: takvim o gunle acilir.
+  const { date: dateParam } = useLocalSearchParams<{ date?: string }>();
+  const [calendar, setCalendar] = useState<{ open: boolean; focusDate: string | null }>({ open: false, focusDate: null });
+
+  useEffect(() => {
+    if (!dateParam) return;
+    setCalendar({ open: true, focusDate: dateParam });
+    // Parametre tuketildi; geri gelindiginde takvim kendiliginden tekrar acilmasin.
+    router.setParams({ date: undefined } as never);
+  }, [dateParam, router]);
 
   const [data, setData] = useState<ProgressData | null>(null);
   const [score, setScore] = useState<ProgressResponse["score"]>(null);
@@ -153,10 +164,19 @@ export function ProgressScreen() {
     ],
   });
 
+  const calendarSheet = (
+    <CalendarSheet
+      visible={calendar.open}
+      focusDate={calendar.focusDate}
+      onClose={() => setCalendar((current) => ({ ...current, open: false }))}
+    />
+  );
+
   if (isLoading) {
     return (
       <View style={[styles.root, styles.centered, { backgroundColor: colors.background }]}>
         <ActivityIndicator color={colors.primary} size="large" />
+        {calendarSheet}
       </View>
     );
   }
@@ -174,6 +194,7 @@ export function ProgressScreen() {
         >
           <Text style={styles.retryLabel}>Tekrar dene</Text>
         </Pressable>
+        {calendarSheet}
       </View>
     );
   }
@@ -187,7 +208,7 @@ export function ProgressScreen() {
           showsVerticalScrollIndicator={false}
         >
           <Animated.View style={[styles.padded, fadeUp(headerAnim, -8)]}>
-            <ProgressHeader onSettingsPress={() => {}} />
+            <ProgressHeader onCalendarPress={() => setCalendar({ open: true, focusDate: null })} />
           </Animated.View>
 
           {score ? (
@@ -314,6 +335,7 @@ export function ProgressScreen() {
           )}
         </ScrollView>
       </SafeAreaView>
+      {calendarSheet}
     </View>
   );
 }

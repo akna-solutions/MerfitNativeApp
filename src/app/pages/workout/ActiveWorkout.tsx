@@ -35,6 +35,7 @@ import { SetTracker } from "./components/SetTracker";
 import { WorkoutComplete } from "./components/WorkoutComplete";
 import { WorkoutProgress } from "./components/WorkoutProgress";
 import { WorkoutTopBar } from "./components/WorkoutTopBar";
+import { requestAchievementCheck } from "../../../shared/achievements/useAchievementCelebration";
 import { DumbbellDashPanel } from "../../../shared/miniGame/dumbbellDash/DumbbellDashPanel";
 import { useTheme } from "../../../shared/theme/ThemeContext";
 import { adjustRestEndsAt, remainingRestSeconds, restEndsAt } from "../../../shared/workout/restClock";
@@ -353,6 +354,8 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
         })),
       );
       setSaveStatus("saved");
+      // Yeni rozet kazanilmis olabilir: ana sayfaya donuldugunde kutlama kontrolu beklemeden yapilsin.
+      requestAchievementCheck();
     } catch (error) {
       if (error instanceof ApiError && error.isUnauthorized) {
         router.replace("/pages/login");

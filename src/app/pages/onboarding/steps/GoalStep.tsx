@@ -1,5 +1,6 @@
 import { View } from "react-native";
 
+import { GoalIllustration } from "../components/GoalIllustration";
 import { OnboardingOption } from "../components/OnboardingOption";
 import { Goal } from "../types";
 
@@ -18,6 +19,7 @@ type Props = {
 export function GoalStep({ value, onChange }: Props) {
   return (
     <View>
+      <GoalIllustration goal={value} />
       {OPTIONS.map((option) => (
         <OnboardingOption
           key={option.value}
