@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { useTheme } from "../../../../shared/theme/ThemeContext";
@@ -18,59 +19,64 @@ type Props = {
   onSelectMeal: (meal: MealEntry) => void;
 };
 
+/** Ogun turleri acilip kapanan kartlardir; kapaliyken toplam kalori ve kayit sayisi gorunur. */
 export function MealsSection({ meals, onAddMeal, onSelectMeal }: Props) {
   const { colors } = useTheme();
+  const [expanded, setExpanded] = useState<Partial<Record<MealType, boolean>>>({});
+
   return (
     <View>
       <Text style={[styles.sectionTitle, { color: colors.text }]}>Bugünün Öğünleri</Text>
 
-      {MEAL_TYPES.map((type, index) => {
+      {MEAL_TYPES.map((type) => {
         const entries = meals.filter((meal) => meal.type === type);
+        const totalCalories = entries.reduce((sum, meal) => sum + meal.calories, 0);
+        const isOpen = expanded[type] === true;
         return (
           <View
             key={type}
-            style={[
-              styles.group,
-              index === MEAL_TYPES.length - 1 && styles.groupLast,
-            ]}
+            testID={`meal-group-${type}`}
+            style={[styles.group, { backgroundColor: colors.card, borderColor: colors.border }]}
           >
-            <View style={styles.groupHeader}>
-              <View style={styles.groupTitleRow}>
-                <Ionicons
-                  name={MEAL_ICONS[type]}
-                  size={15}
-                  color={colors.textSecondary}
-                />
+            <Pressable
+              testID={`meal-group-toggle-${type}`}
+              accessibilityRole="button"
+              accessibilityState={{ expanded: isOpen }}
+              onPress={() => setExpanded((current) => ({ ...current, [type]: !current[type] }))}
+              style={styles.groupHeader}
+            >
+              <View style={[styles.iconCircle, { backgroundColor: colors.inputBackground }]}>
+                <Ionicons name={MEAL_ICONS[type]} size={20} color={colors.primary} />
+              </View>
+              <View style={styles.groupText}>
                 <Text style={[styles.groupTitle, { color: colors.text }]}>{type}</Text>
+                <Text style={[styles.groupMeta, { color: colors.textSecondary }]}>
+                  {entries.length > 0
+                    ? `${entries.length} kayıt · ${totalCalories.toLocaleString()} kcal`
+                    : "Henüz öğün eklenmedi"}
+                </Text>
               </View>
-              <Pressable
-                onPress={() => onAddMeal(type)}
-                hitSlop={10}
-                style={[styles.addButton, { backgroundColor: colors.inputBackground }]}
-              >
-                <Ionicons name="add" size={16} color={colors.primary} />
-              </Pressable>
-            </View>
+              <Ionicons
+                name={isOpen ? "chevron-up" : "chevron-down"}
+                size={20}
+                color={colors.textSecondary}
+              />
+            </Pressable>
 
-            {entries.length > 0 ? (
-              <View style={styles.entries}>
+            {isOpen ? (
+              <View style={styles.body}>
                 {entries.map((meal) => (
-                  <MealCard
-                    key={meal.id}
-                    meal={meal}
-                    onPress={() => onSelectMeal(meal)}
-                  />
+                  <MealCard key={meal.id} meal={meal} onPress={() => onSelectMeal(meal)} />
                 ))}
+                <Pressable
+                  onPress={() => onAddMeal(type)}
+                  style={[styles.addRow, { borderColor: colors.border }]}
+                >
+                  <Ionicons name="add" size={16} color={colors.primary} />
+                  <Text style={[styles.addLabel, { color: colors.primary }]}>Öğün ekle</Text>
+                </Pressable>
               </View>
-            ) : (
-              <Pressable
-                onPress={() => onAddMeal(type)}
-                style={[styles.emptyCard, { borderColor: colors.border }]}
-              >
-                <Text style={[styles.emptyLabel, { color: colors.textSecondary }]}>Henüz öğün eklenmedi</Text>
-                <Text style={[styles.emptyAction, { color: colors.primary }]}>+ Öğün ekle</Text>
-              </Pressable>
-            )}
+            ) : null}
           </View>
         );
       })}
@@ -80,38 +86,43 @@ export function MealsSection({ meals, onAddMeal, onSelectMeal }: Props) {
 
 const styles = StyleSheet.create({
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: 20,
+    fontWeight: "800",
     marginBottom: 14,
   },
-  group: { marginBottom: 18 },
-  groupLast: { marginBottom: 0 },
+  group: {
+    borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth,
+    marginBottom: 12,
+    overflow: "hidden",
+  },
   groupHeader: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 8,
+    gap: 14,
+    padding: 16,
+    minHeight: 72,
   },
-  groupTitleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  groupTitle: { fontSize: 13, fontWeight: "700" },
-  addButton: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+  iconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
   },
-  entries: { gap: 8 },
-  emptyCard: {
-    height: 52,
+  groupText: { flex: 1 },
+  groupTitle: { fontSize: 16, fontWeight: "700" },
+  groupMeta: { fontSize: 12, fontWeight: "600", marginTop: 3 },
+  body: { gap: 8, paddingHorizontal: 12, paddingBottom: 12 },
+  addRow: {
+    height: 48,
     borderRadius: 14,
-    paddingHorizontal: 16,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "center",
+    gap: 6,
     borderWidth: StyleSheet.hairlineWidth,
     borderStyle: "dashed",
   },
-  emptyLabel: { fontSize: 12 },
-  emptyAction: { fontSize: 12, fontWeight: "700" },
+  addLabel: { fontSize: 13, fontWeight: "700" },
 });

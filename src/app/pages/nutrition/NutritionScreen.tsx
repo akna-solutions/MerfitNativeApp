@@ -18,7 +18,6 @@ import { useNutritionAssistant } from "../../../shared/nutritionAssistant/useNut
 import { useTheme } from "../../../shared/theme/ThemeContext";
 import { AddMealModal } from "./components/AddMealModal";
 import { CalorieBreakdown } from "./components/CalorieBreakdown";
-import { CalorieCard } from "./components/CalorieCard";
 import { DateSelector } from "./components/DateSelector";
 import { EditMealItemModal } from "./components/EditMealItemModal";
 import { MacroOverview } from "./components/MacroOverview";
@@ -289,37 +288,26 @@ export function NutritionScreen() {
             </View>
           ) : hasLoggedFirstMeal ? (
             <>
-              <Animated.View
-                style={[
-                  styles.padded,
-                  styles.sectionGap,
-                  fadeUp(calorieCardAnim),
-                ]}
-              >
-                <CalorieCard
+              <Animated.View style={[styles.sectionGap, fadeUp(macrosAnim)]}>
+                <MacroOverview
+                  macros={data.macros}
                   consumedCalories={consumedCalories}
                   dailyCalories={data.dailyCalories}
                 />
               </Animated.View>
-
-              <Animated.View
-                style={[styles.padded, styles.sectionGap, fadeUp(macrosAnim)]}
-              >
-                <MacroOverview macros={data.macros} />
-              </Animated.View>
-
-              <View style={[styles.padded, styles.sectionGap]}>
-                <NutritionInsight
-                  insight={data.insight}
-                  onViewSuggestions={() => setAssistantOpen(true)}
-                />
-              </View>
 
               <View style={[styles.padded, styles.sectionGap]}>
                 <MealsSection
                   meals={data.meals}
                   onAddMeal={openAddMeal}
                   onSelectMeal={(meal) => setEditingMealId(meal.id)}
+                />
+              </View>
+
+              <View style={[styles.padded, styles.sectionGap]}>
+                <NutritionInsight
+                  insight={data.insight}
+                  onViewSuggestions={() => setAssistantOpen(true)}
                 />
               </View>
 
