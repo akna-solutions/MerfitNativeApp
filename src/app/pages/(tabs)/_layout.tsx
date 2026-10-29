@@ -86,8 +86,8 @@ export default function TabsLayout() {
     </Tabs>
     <CircleReveal
       origin={reveal?.origin ?? null}
-      // MB Shop'a geciste kirmizi, MB Fit'e donuste mavi ekran.
-      color={reveal?.target === "store" ? colors.accent : colors.primary}
+      // Iki yone de gecis ekrani mavi (primary).
+      color={colors.primary}
       onCovered={() => reveal && router.navigate(navbarRoute(reveal.target, reveal.variant))}
       onDone={() => setReveal(null)}
       // MB Shop'a geciste market, MB Fit'e donuste dambil ikonu doner; MB Shop verisi yuklenene kadar ortu kalkmaz.

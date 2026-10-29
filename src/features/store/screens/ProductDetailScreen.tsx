@@ -165,7 +165,7 @@ function ProductDetailContent({ product }: { product: Product }) {
             accessibilityState={{ selected: favorite }}
             style={[styles.headerButton, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
           >
-            <Ionicons name={favorite ? "heart" : "heart-outline"} size={20} color={favorite ? colors.danger : colors.text} />
+            <Ionicons name={favorite ? "heart" : "heart-outline"} size={20} color={favorite ? colors.primary : colors.text} />
           </Pressable>
           <CartButton />
         </>
