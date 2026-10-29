@@ -1,11 +1,8 @@
-import { createDummyStoreServices } from "./dummy";
+import { createHttpStoreServices } from "./http";
 import { StoreServices } from "./types";
 
 export type * from "./types";
-export { createDummyStoreServices } from "./dummy";
+export { createHttpStoreServices } from "./http";
 
-/**
- * Uygulamanin kullandigi servis ornegi. Backend baglanirken yalniz burasi HTTP implementasyonuyla
- * (orn. createHttpStoreServices(apiClient)) degistirilir; ekranlara dokunulmaz.
- */
-export const storeServices: StoreServices = createDummyStoreServices();
+/** Uygulamanin kullandigi servisler: MerfitCustomerApi (/api/store). Adres EXPO_PUBLIC_API_URL ile belirlenir. */
+export const storeServices: StoreServices = createHttpStoreServices();

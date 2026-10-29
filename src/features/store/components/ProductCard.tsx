@@ -5,16 +5,14 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { useNavigationGuard } from "../../../shared/navigation/useNavigationGuard";
 import { useTheme } from "../../../shared/theme/ThemeContext";
-import { useCart, useFavorites } from "../hooks";
+import { useCart, useCategoryIcon, useFavorites } from "../hooks";
 import { storeRoutes } from "../navigation";
-import { Product } from "../types";
-import { isVariantSelectionComplete } from "../utils/pricing";
-import { categoryIconFor } from "./categoryIcons";
+import { ProductSummary } from "../types";
 import { PriceTag, DiscountBadge } from "./PriceTag";
 import { ProductImage } from "./ProductImage";
 
 type Props = {
-  product: Product;
+  product: ProductSummary;
   /** Yatay listede sabit genislik; verilmezse kapsayiciyi doldurur (izgara). */
   width?: number;
 };
@@ -26,13 +24,15 @@ function ProductCardBase({ product, width }: Props) {
   const { isFavorite, toggle } = useFavorites();
   const { addToCart } = useCart();
   const [added, setAdded] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const icon = useCategoryIcon(product.categoryId);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
   const favorite = isFavorite(product.id);
   const outOfStock = product.stock <= 0;
   // Varyant secimi gereken urunlerde hizli ekleme yerine detay acilir (secim yapilmadan sepete eklenmez).
-  const needsSelection = !isVariantSelectionComplete(product, {});
+  const needsSelection = product.hasVariants;
 
   const openDetail = guard(() => router.push(storeRoutes.product(product.id)));
 
@@ -43,11 +43,14 @@ function ProductCardBase({ product, width }: Props) {
       return;
     }
     const result = await addToCart({ productId: product.id, quantity: 1, selectedVariant: {} });
-    if (result.ok) {
-      setAdded(true);
-      if (timer.current) clearTimeout(timer.current);
-      timer.current = setTimeout(() => setAdded(false), 1400);
-    }
+    // Sonuc simgeyle kisa sure gosterilir: tik (eklendi) veya unlem (stok/baglanti hatasi).
+    setAdded(result.ok);
+    setFailed(!result.ok);
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      setAdded(false);
+      setFailed(false);
+    }, 1400);
   }, [addToCart, needsSelection, outOfStock, product.id, router]);
 
   return (
@@ -60,7 +63,7 @@ function ProductCardBase({ product, width }: Props) {
         accessibilityLabel={`${product.brand} ${product.name}, ${product.price} lira${outOfStock ? ", stokta yok" : ""}`}
       >
         <View>
-          <ProductImage uri={product.images[0]} icon={categoryIconFor(product.categoryId)} label={product.brand} style={styles.image} />
+          <ProductImage uri={product.image} icon={icon} label={product.brand} style={styles.image} />
           {product.discountPercentage > 0 ? (
             <View style={styles.badge}>
               <DiscountBadge percent={product.discountPercentage} />
@@ -105,7 +108,7 @@ function ProductCardBase({ product, width }: Props) {
         accessibilityState={{ disabled: outOfStock }}
         style={[styles.addButton, { backgroundColor: outOfStock ? colors.inputBackground : colors.primary }]}
       >
-        <Ionicons name={added ? "checkmark" : needsSelection ? "options-outline" : "add"} size={18} color={outOfStock ? colors.icon : "#FFFFFF"} />
+        <Ionicons name={added ? "checkmark" : failed ? "alert" : needsSelection ? "options-outline" : "add"} size={18} color={outOfStock ? colors.icon : "#FFFFFF"} />
       </Pressable>
     </View>
   );

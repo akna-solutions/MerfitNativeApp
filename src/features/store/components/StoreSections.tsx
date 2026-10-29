@@ -3,7 +3,8 @@ import { memo } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { useTheme } from "../../../shared/theme/ThemeContext";
-import { Campaign, Category, Product } from "../types";
+import { DumbbellSpinner } from "../../../shared/motion/DumbbellSpinner";
+import { Campaign, Category, ProductSummary } from "../types";
 import { DiscountBadge, PriceTag } from "./PriceTag";
 import { ProductCard } from "./ProductCard";
 import { ProductImage } from "./ProductImage";
@@ -27,23 +28,24 @@ export function SectionHeader({ title, actionLabel, onAction }: { title: string;
   );
 }
 
-type CampaignCardProps = { campaign: Campaign; product: Product | undefined; onPress: () => void };
+type CampaignCardProps = { campaign: Campaign; onPress: () => void };
 
-export const CampaignCard = memo(function CampaignCard({ campaign, product, onPress }: CampaignCardProps) {
+export const CampaignCard = memo(function CampaignCard({ campaign, onPress }: CampaignCardProps) {
   const { colors } = useTheme();
+  const product = campaign.featuredProduct;
   return (
     <Pressable
       testID={`campaign-${campaign.id}`}
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${campaign.title}, en fazla yüzde ${campaign.discountPercentage} indirim`}
+      accessibilityLabel={campaign.discountPercentage > 0 ? `${campaign.title}, en fazla yüzde ${campaign.discountPercentage} indirim` : campaign.title}
       style={[styles.campaign, { backgroundColor: campaign.tint, borderColor: colors.border }]}
     >
       <ProductImage uri={campaign.image} icon="pricetag-outline" style={StyleSheet.absoluteFill} iconSize={44} />
       <View style={styles.campaignShade} />
       <View style={styles.campaignTop}>
         <DiscountBadge percent={campaign.discountPercentage} />
-        <Text style={styles.campaignDemo}>Demo kampanya</Text>
+        <Text style={styles.campaignCount}>{campaign.productCount} ürün</Text>
       </View>
       <View style={styles.campaignBottom}>
         <Text style={styles.campaignTitle} numberOfLines={2}>
@@ -82,10 +84,50 @@ export const CategoryTile = memo(function CategoryTile({ category, onPress, sele
   );
 });
 
-const keyOf = (p: Product) => p.id;
+const keyOf = (p: ProductSummary) => p.id;
 
-/** Yatay urun seridi (FlatList; sanallastirilmis). */
-export function ProductRow({ products, cardWidth = 156 }: { products: Product[]; cardWidth?: number }) {
+type ProductRowProps = {
+  products: ProductSummary[];
+  cardWidth?: number;
+  /** Verilirse serit yuklenirken / hata olunca yerinde durum gosterir. */
+  isLoading?: boolean;
+  error?: string | null;
+  onRetry?: () => void;
+  emptyText?: string;
+  testID?: string;
+};
+
+/** Yatay urun seridi (FlatList; sanallastirilmis). Yukleniyor, hata ve bos durumlarini da cizer. */
+export function ProductRow({ products, cardWidth = 156, isLoading, error, onRetry, emptyText, testID }: ProductRowProps) {
+  const { colors } = useTheme();
+  if (isLoading && products.length === 0) {
+    return (
+      <View style={styles.rowState} testID={testID ? `${testID}-loading` : undefined}>
+        <DumbbellSpinner color={colors.primary} />
+      </View>
+    );
+  }
+  if (error && products.length === 0) {
+    return (
+      <View style={[styles.rowState, styles.rowStateText]} testID={testID ? `${testID}-error` : undefined}>
+        <Text style={[styles.rowMessage, { color: colors.textSecondary }]} numberOfLines={2}>
+          {error}
+        </Text>
+        {onRetry ? (
+          <Pressable onPress={onRetry} hitSlop={8} accessibilityRole="button" accessibilityLabel="Tekrar dene">
+            <Text style={[styles.sectionAction, { color: colors.primary }]}>Tekrar dene</Text>
+          </Pressable>
+        ) : null}
+      </View>
+    );
+  }
+  if (products.length === 0) {
+    return emptyText ? (
+      <View style={[styles.rowState, styles.rowStateText]} testID={testID ? `${testID}-empty` : undefined}>
+        <Text style={[styles.rowMessage, { color: colors.textSecondary }]}>{emptyText}</Text>
+      </View>
+    ) : null;
+  }
   return (
     <FlatList
       horizontal
@@ -96,6 +138,7 @@ export function ProductRow({ products, cardWidth = 156 }: { products: Product[];
       contentContainerStyle={styles.rowContent}
       ItemSeparatorComponent={RowGap}
       initialNumToRender={4}
+      testID={testID}
     />
   );
 }
@@ -111,7 +154,7 @@ const styles = StyleSheet.create({
   campaign: { width: CAMPAIGN_CARD_WIDTH, height: 188, borderRadius: 16, overflow: "hidden", borderWidth: StyleSheet.hairlineWidth, justifyContent: "space-between", padding: 14 },
   campaignShade: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(5,5,7,0.62)" },
   campaignTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  campaignDemo: { color: "rgba(255,255,255,0.7)", fontSize: 10, fontWeight: "600" },
+  campaignCount: { color: "rgba(255,255,255,0.8)", fontSize: 11, fontWeight: "600" },
   campaignBottom: { gap: 6 },
   campaignTitle: { color: "#FFFFFF", fontSize: 17, fontWeight: "800" },
   campaignPrice: { alignSelf: "flex-start" },
@@ -122,4 +165,7 @@ const styles = StyleSheet.create({
   categoryName: { fontSize: 12, fontWeight: "600", minHeight: 30 },
   rowContent: { paddingHorizontal: GUTTER },
   rowGap: { width: 12 },
+  rowState: { height: 120, alignItems: "center", justifyContent: "center", paddingHorizontal: GUTTER },
+  rowStateText: { gap: 8 },
+  rowMessage: { fontSize: 13, textAlign: "center" },
 });

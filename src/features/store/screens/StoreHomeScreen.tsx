@@ -12,40 +12,30 @@ import { EmptyState } from "../components/EmptyState";
 import { ProductCard } from "../components/ProductCard";
 import { SearchBar } from "../components/SearchBar";
 import { CAMPAIGN_CARD_WIDTH, CampaignCard, CategoryTile, GUTTER, ProductRow, SectionHeader } from "../components/StoreSections";
-import { useProductList, useStore } from "../hooks";
+import { useDebouncedValue, useProductQuery, useStore } from "../hooks";
 import { storeRoutes } from "../navigation";
-import { Campaign, CollectionKey, Product } from "../types";
+import { Campaign, CollectionKey } from "../types";
 import { COLLECTION_TITLES } from "../utils/catalog";
 
 /** Alt navbar (yuzen kapsul) icerigin ustune bindigi icin diger tab ekranlariyla ayni alt bosluk. */
 const NAVBAR_CLEARANCE = 156;
-const COLLECTIONS: CollectionKey[] = ["bestsellers", "discounted", "forYou", "new"];
+const COLLECTIONS: CollectionKey[] = ["bestsellers", "discounted", "featured", "new"];
 const ROW_LIMIT = 8;
+const SEARCH_PAGE_SIZE = 20;
 
 export function StoreHomeScreen() {
   const router = useRouter();
   const guard = useNavigationGuard();
   const { colors } = useTheme();
-  const { isLoading, error, reload, categories, campaigns, productsById } = useStore();
+  const { isLoading, error, reload, categories: allCategories, campaigns } = useStore();
+  const categories = useMemo(() => allCategories.filter((c) => !c.parentId), [allCategories]);
   const [query, setQuery] = useState("");
   const trimmed = query.trim();
   const searching = trimmed.length > 0;
-
-  const results = useProductList({ query: trimmed });
-  const bestsellers = useProductList({ collection: "bestsellers", sort: "rating" });
-  const discounted = useProductList({ collection: "discounted", sort: "discount" });
-  const forYou = useProductList({ collection: "forYou" });
-  const fresh = useProductList({ collection: "new", sort: "newest" });
-  const byCollection: Record<CollectionKey, Product[]> = { bestsellers, discounted, forYou, new: fresh };
-
-  const featuredProductByCampaign = useMemo(() => {
-    const map = new Map<string, Product | undefined>();
-    for (const c of campaigns) {
-      const items = c.productIds.map((id) => productsById.get(id)).filter((p): p is Product => Boolean(p));
-      map.set(c.id, items.sort((a, b) => b.discountPercentage - a.discountPercentage)[0]);
-    }
-    return map;
-  }, [campaigns, productsById]);
+  // Arama sunucuda yapilir; her tus vurusunda istek atilmasin diye kisa bir gecikmeyle gonderilir.
+  const debounced = useDebouncedValue(trimmed);
+  const results = useProductQuery({ query: debounced }, { pageSize: SEARCH_PAGE_SIZE, enabled: debounced.length > 0 });
+  const searchPending = searching && (debounced !== trimmed || results.isLoading);
 
   const openCampaign = guard((campaign: Campaign) => {
     router.push(storeRoutes.list({ campaignId: campaign.id, title: campaign.title }));
@@ -65,7 +55,7 @@ export function StoreHomeScreen() {
       <View style={styles.padded}>
         <View style={styles.resultsHeader}>
           <Text style={[styles.resultsCount, { color: colors.textSecondary }]} testID="search-count">
-            “{trimmed}” için {results.length} sonuç
+            {searchPending ? `“${trimmed}” aranıyor…` : `“${trimmed}” için ${results.totalCount} sonuç`}
           </Text>
           <Pressable
             onPress={guard(() => router.push(storeRoutes.list({ q: trimmed })))}
@@ -77,37 +67,59 @@ export function StoreHomeScreen() {
             <Text style={[styles.filterLabel, { color: colors.text }]}>Filtrele ve sırala</Text>
           </Pressable>
         </View>
-        {results.length === 0 ? (
-          <EmptyState icon="search-outline" title="Ürün bulunamadı" message="Farklı bir ürün adı veya marka deneyin." actionLabel="Aramayı temizle" onAction={() => setQuery("")} testID="search-empty" />
-        ) : (
-          <View style={styles.grid}>
-            {results.map((p) => (
-              <View key={p.id} style={styles.gridCell}>
-                <ProductCard product={p} />
-              </View>
-            ))}
+        {searchPending && results.items.length === 0 ? (
+          <View style={styles.centered} testID="search-loading">
+            <DumbbellSpinner color={colors.primary} size="large" />
           </View>
+        ) : results.error ? (
+          <EmptyState icon="cloud-offline-outline" title="Arama yapılamadı" message={results.error} actionLabel="Tekrar dene" onAction={results.reload} testID="search-error" />
+        ) : results.items.length === 0 ? (
+          <EmptyState icon="search-outline" title="Ürün bulunamadı" message="Farklı bir ürün adı, marka veya SKU deneyin." actionLabel="Aramayı temizle" onAction={() => setQuery("")} testID="search-empty" />
+        ) : (
+          <>
+            <View style={styles.grid}>
+              {results.items.map((p) => (
+                <View key={p.id} style={styles.gridCell}>
+                  <ProductCard product={p} />
+                </View>
+              ))}
+            </View>
+            {results.hasNextPage ? (
+              <Pressable
+                onPress={guard(() => router.push(storeRoutes.list({ q: trimmed })))}
+                accessibilityRole="button"
+                testID="search-see-all"
+                style={[styles.seeAll, { borderColor: colors.border }]}
+              >
+                <Text style={[styles.filterLabel, { color: colors.text }]}>Tüm {results.totalCount} sonucu gör</Text>
+              </Pressable>
+            ) : null}
+          </>
         )}
       </View>
     );
   } else {
     body = (
       <>
-        <SectionHeader title="İndirimler ve Kampanyalar" />
-        <FlatList
-          horizontal
-          data={campaigns}
-          keyExtractor={(c) => c.id}
-          renderItem={({ item }) => <CampaignCard campaign={item} product={featuredProductByCampaign.get(item.id)} onPress={() => openCampaign(item)} />}
-          showsHorizontalScrollIndicator={false}
-          snapToInterval={CAMPAIGN_CARD_WIDTH + 12}
-          decelerationRate="fast"
-          contentContainerStyle={styles.rowContent}
-          ItemSeparatorComponent={Gap}
-          testID="campaign-list"
-        />
+        {campaigns.length > 0 ? (
+          <>
+            <SectionHeader title="İndirimler ve Kampanyalar" />
+            <FlatList
+              horizontal
+              data={campaigns}
+              keyExtractor={(c) => c.id}
+              renderItem={({ item }) => <CampaignCard campaign={item} onPress={() => openCampaign(item)} />}
+              showsHorizontalScrollIndicator={false}
+              snapToInterval={CAMPAIGN_CARD_WIDTH + 12}
+              decelerationRate="fast"
+              contentContainerStyle={styles.rowContent}
+              ItemSeparatorComponent={Gap}
+              testID="campaign-list"
+            />
+          </>
+        ) : null}
 
-        <View style={styles.section}>
+        <View style={campaigns.length > 0 ? styles.section : undefined}>
           <SectionHeader title="Kategoriler" />
           <FlatList
             horizontal
@@ -121,12 +133,11 @@ export function StoreHomeScreen() {
           />
         </View>
 
-        {COLLECTIONS.map((key) => (
-          <View key={key} style={styles.section}>
-            <SectionHeader title={COLLECTION_TITLES[key]} actionLabel="Tümünü gör" onAction={guard(() => router.push(storeRoutes.list({ collection: key, title: COLLECTION_TITLES[key] })))} />
-            <ProductRow products={byCollection[key].slice(0, ROW_LIMIT)} />
-          </View>
-        ))}
+        {categories.length === 0 && campaigns.length === 0 ? (
+          <EmptyState icon="storefront-outline" title="Mağaza henüz hazırlanıyor" message="Ürünler eklendiğinde burada listelenecek." testID="store-empty" />
+        ) : (
+          COLLECTIONS.map((key) => <CollectionSection key={key} collection={key} onSeeAll={guard(() => router.push(storeRoutes.list({ collection: key, title: COLLECTION_TITLES[key] })))} />)
+        )}
       </>
     );
   }
@@ -160,6 +171,18 @@ export function StoreHomeScreen() {
   );
 }
 
+/** Ana sayfadaki koleksiyon seridi: kendi istegini yapar; bos koleksiyon gizlenir. */
+function CollectionSection({ collection, onSeeAll }: { collection: CollectionKey; onSeeAll: () => void }) {
+  const query = useProductQuery({ collection }, { pageSize: ROW_LIMIT });
+  if (!query.isLoading && !query.error && query.items.length === 0) return null;
+  return (
+    <View style={styles.section} testID={`collection-${collection}`}>
+      <SectionHeader title={COLLECTION_TITLES[collection]} actionLabel={query.items.length > 0 ? "Tümünü gör" : undefined} onAction={onSeeAll} />
+      <ProductRow products={query.items} isLoading={query.isLoading} error={query.error} onRetry={query.reload} testID={`row-${collection}`} />
+    </View>
+  );
+}
+
 function Gap() {
   return <View style={styles.gap} />;
 }
@@ -182,4 +205,5 @@ const styles = StyleSheet.create({
   filterLabel: { fontSize: 13, fontWeight: "600" },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
   gridCell: { width: "47.5%", flexGrow: 1 },
+  seeAll: { marginTop: 14, height: 44, borderRadius: 22, borderWidth: 1, alignItems: "center", justifyContent: "center" },
 });

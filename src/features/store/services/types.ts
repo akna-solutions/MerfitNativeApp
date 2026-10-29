@@ -1,67 +1,65 @@
-import {
-  CartItem,
-  Campaign,
-  Category,
-  DeliveryAddress,
-  Order,
-  PaymentMethod,
-  Product,
-  ProductFilters,
-  SelectedVariant,
-} from "../types";
+import { Campaign, Cart, Category, CheckoutOptions, DeliveryAddress, Order, OrderListItem, Page, PaymentMethod, Product, ProductFilters, ProductSummary, SelectedVariant } from "../types";
 
 /**
- * Store servis siniri. Ekranlar ve hook'lar YALNIZCA bu arayuzlere baglidir (bkz. ../README.md);
- * .NET Web API'ye gecerken sadece bu arayuzlerin HTTP implementasyonu yazilip services/index.ts'te
- * degistirilir. Tum cagrilar Promise doner, boylece ag gecikmesi/hata yonetimi ekranlarda hazirdir.
+ * MB Shop servis siniri. Ekranlar, hook'lar ve StoreContext YALNIZCA bu arayuzlere baglidir; uygulamada
+ * services/http.ts (MerfitCustomerApi /api/store) kullanilir, testlerde ayni arayuzun sahte bir uygulamasi verilir.
+ * Fiyat, stok ve toplamlar sunucuda hesaplanir; bu arayuz hicbir yerde istemci fiyati gondermez.
  */
 export interface CatalogService {
-  getCategories(): Promise<Category[]>;
-  getCampaigns(): Promise<Campaign[]>;
-  getProducts(filters?: ProductFilters): Promise<Product[]>;
-  /** Urun yoksa null doner. */
-  getProduct(id: string): Promise<Product | null>;
+  getCategories(signal?: AbortSignal): Promise<Category[]>;
+  getCampaigns(signal?: AbortSignal): Promise<Campaign[]>;
+  getBrands(categoryId?: string, signal?: AbortSignal): Promise<string[]>;
+  getProducts(filters: ProductFilters, page: number, pageSize: number, signal?: AbortSignal): Promise<Page<ProductSummary>>;
+  /** Urun yoksa ApiError(404) firlatir. */
+  getProduct(id: string, signal?: AbortSignal): Promise<Product>;
 }
 
 export interface CartService {
-  getItems(): Promise<CartItem[]>;
-  /** Ayni urun + ayni varyant varsa satiri birlestirir (adedi artirir). */
-  addItem(input: { productId: string; quantity: number; selectedVariant: SelectedVariant }): Promise<CartItem[]>;
-  setQuantity(productId: string, selectedVariant: SelectedVariant, quantity: number): Promise<CartItem[]>;
-  removeItem(productId: string, selectedVariant: SelectedVariant): Promise<CartItem[]>;
-  clear(): Promise<CartItem[]>;
+  get(signal?: AbortSignal): Promise<Cart>;
+  /** Ayni urun + ayni varyant varsa sunucu satiri birlestirir. Stok yetmezse ApiError(409). */
+  add(input: { productId: string; quantity: number; selectedVariant: SelectedVariant }): Promise<Cart>;
+  /** 0 satiri kaldirir. */
+  setQuantity(lineId: string, quantity: number): Promise<Cart>;
+  remove(lineId: string): Promise<Cart>;
 }
 
 export interface FavoriteService {
-  getFavoriteIds(): Promise<string[]>;
-  /** Donus: guncel favori id listesi. */
-  toggle(productId: string): Promise<string[]>;
+  list(signal?: AbortSignal): Promise<ProductSummary[]>;
+  add(productId: string): Promise<void>;
+  remove(productId: string): Promise<void>;
+}
+
+export type AddressInput = Omit<DeliveryAddress, "id" | "isDefault"> & { isDefault?: boolean };
+
+export interface AddressService {
+  list(signal?: AbortSignal): Promise<DeliveryAddress[]>;
+  create(input: AddressInput): Promise<DeliveryAddress>;
+  update(id: string, input: AddressInput): Promise<DeliveryAddress>;
+  remove(id: string): Promise<void>;
 }
 
 export type CreateOrderInput = {
-  items: CartItem[];
-  deliveryAddress: DeliveryAddress;
+  addressId: string;
   paymentMethod: PaymentMethod;
+  /** Bu siparis denemesi icin bir kez uretilir; tekrar denemede ayni anahtar gonderilir. */
+  idempotencyKey: string;
+  /** Kullanicinin onayladigi genel toplam; sunucudaki tutar farkliysa siparis olusmaz. */
+  expectedTotal: number;
 };
 
 export interface OrderService {
-  getOrders(): Promise<Order[]>;
-  getOrder(id: string): Promise<Order | null>;
-  /** Backend'de fiyat/stok dogrulamasi sunucuda yapilir; dummy implementasyon yerelde hesaplar. */
-  createOrder(input: CreateOrderInput): Promise<Order>;
-}
-
-export interface AddressService {
-  getAddresses(): Promise<DeliveryAddress[]>;
-  /** id verilmezse yeni adres olusturur. */
-  saveAddress(address: Omit<DeliveryAddress, "id"> & { id?: string }): Promise<DeliveryAddress[]>;
-  removeAddress(id: string): Promise<DeliveryAddress[]>;
+  getCheckoutOptions(signal?: AbortSignal): Promise<CheckoutOptions>;
+  create(input: CreateOrderInput): Promise<Order>;
+  list(page: number, pageSize: number, signal?: AbortSignal): Promise<Page<OrderListItem>>;
+  /** Siparis yoksa / baskasinina aitse ApiError(404). */
+  get(id: string, signal?: AbortSignal): Promise<Order>;
+  cancel(id: string, reason?: string): Promise<Order>;
 }
 
 export type StoreServices = {
   catalog: CatalogService;
   cart: CartService;
   favorites: FavoriteService;
-  orders: OrderService;
   addresses: AddressService;
+  orders: OrderService;
 };

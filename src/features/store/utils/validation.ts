@@ -1,6 +1,6 @@
 import { DeliveryAddress } from "../types";
 
-export type AddressForm = Omit<DeliveryAddress, "id">;
+export type AddressForm = Omit<DeliveryAddress, "id" | "isDefault">;
 export type AddressErrors = Partial<Record<keyof AddressForm, string>>;
 
 /** Turkiye cep telefonu: 05XXXXXXXXX veya 5XXXXXXXXX (bosluk, tire, parantez ve +90 tolere edilir). */
