@@ -420,6 +420,7 @@ export function DashboardScreen() {
             <DashboardHeader
               name={data.userName}
               unreadCount={unreadCount}
+              onProgressPress={guard(() => router.navigate("/pages/progress" as never))}
               onNotificationsPress={guard(() => router.push("/pages/notifications" as never))}
               onProfilePress={guard(() => router.navigate("/pages/profile" as never))}
             />

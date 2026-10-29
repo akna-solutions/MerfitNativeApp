@@ -9,20 +9,22 @@ import { useReducedMotion } from "../../../shared/motion/useReducedMotion";
 
 // Tab route dosya adları ile navbar'daki NavTab id'leri birebir aynı değil
 // ("dashboard" dosyası "home" tab'ına karşılık geliyor), bu yüzden ikisi
-// arasında çeviri yapıyoruz.
+// arasında çeviri yapıyoruz. "progress" artık navbar'da bir menü değil; ana sayfanın sağ üstünden
+// açılır ve ana sayfanın parçası gibi göründüğü için "home" vurgulanır.
 const ROUTE_TO_TAB: Record<string, NavTab> = {
   dashboard: "home",
   workouts: "workouts",
-  progress: "progress",
   nutrition: "nutrition",
+  store: "store",
+  progress: "home",
   profile: "profile",
 };
 
 const TAB_TO_ROUTE: Record<NavTab, string> = {
   home: "dashboard",
   workouts: "workouts",
-  progress: "progress",
   nutrition: "nutrition",
+  store: "store",
   profile: "profile",
 };
 
@@ -50,8 +52,9 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="dashboard" />
       <Tabs.Screen name="workouts" />
-      <Tabs.Screen name="progress" />
       <Tabs.Screen name="nutrition" />
+      <Tabs.Screen name="store" />
+      <Tabs.Screen name="progress" />
       <Tabs.Screen name="profile" />
     </Tabs>
   );

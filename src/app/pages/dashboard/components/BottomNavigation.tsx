@@ -1,40 +1,42 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRef } from "react";
-import {
-    Animated,
-    Platform,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
-} from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { LayoutChangeEvent, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Gesture, GestureDetector, GestureHandlerRootView } from "react-native-gesture-handler";
+import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { scheduleOnRN } from "react-native-worklets";
 
+import { useReducedMotion } from "../../../../shared/motion/useReducedMotion";
+import { clampIndicatorX, indicatorXForIndex, nearestIndex, settleIndex } from "../../../../shared/navigation/navbarDrag";
+import { useProfile } from "../../../../shared/profile/ProfileContext";
 import { useTheme } from "../../../../shared/theme/ThemeContext";
 
-export type NavTab = "home" | "workouts" | "progress" | "nutrition" | "profile";
+/** Kapsuldaki dort ana menu + sagdaki bagimsiz Profil dugmesi. */
+export type NavTab = "home" | "workouts" | "nutrition" | "store" | "profile";
+export type MainNavTab = Exclude<NavTab, "profile">;
 
-const TABS: {
-  id: NavTab;
-  label: string;
-  icon: keyof typeof Ionicons.glyphMap;
-}[] = [
-  { id: "home", label: "Ana Sayfa", icon: "home-outline" },
-  { id: "workouts", label: "Antrenmanlar", icon: "barbell-outline" },
-  { id: "progress", label: "İlerleme", icon: "stats-chart-outline" },
-  { id: "nutrition", label: "Beslenme", icon: "restaurant-outline" },
-  { id: "profile", label: "Profil", icon: "person-outline" },
+const MAIN_TABS: { id: MainNavTab; label: string; icon: keyof typeof Ionicons.glyphMap; activeIcon: keyof typeof Ionicons.glyphMap }[] = [
+  { id: "home", label: "Ana Sayfa", icon: "home-outline", activeIcon: "home" },
+  { id: "workouts", label: "Antrenman", icon: "barbell-outline", activeIcon: "barbell" },
+  { id: "nutrition", label: "Beslenme", icon: "restaurant-outline", activeIcon: "restaurant" },
+  { id: "store", label: "Store", icon: "bag-handle-outline", activeIcon: "bag-handle" },
 ];
 
 type Props = {
-  active: NavTab;
+  /** Secili sekme. `null` ise kapsulde gosterge gizlenir. */
+  active: NavTab | null;
   onChange: (tab: NavTab) => void;
 };
 
 // Navbar'in ekranin altindan uzakligi ve kapsul yuksekligi.
 const NAV_BOTTOM_GAP = 6;
-const NAV_HEIGHT = 68;
+const NAV_HEIGHT = 64;
+const SIDE_MARGIN = 16;
+const GAP = 10;
+/** Kapsul ici dolgu; gosterge bu kadar iceride baslar. */
+const PAD = 4;
+const INDICATOR_HEIGHT = NAV_HEIGHT - PAD * 2;
 // Navbar'in arkasindaki icerik, navbar'in ust kenarindan bu kadar yukarida solmaya baslar.
 const FADE_START_ABOVE_NAV = 16;
 // Solma navbar'in ortasinda tamamlanir; kapsul opak oldugu icin gecisin cogu onun arkasinda kalir.
@@ -47,6 +49,8 @@ const FADE_STOPS: { alpha: number; at: number }[] = [
   { alpha: 0.65, at: 0.75 },
   { alpha: 1, at: 1 },
 ];
+const SPRING = { damping: 20, stiffness: 240, mass: 0.7 } as const;
+const ACTIVE_CONTENT = "#FFFFFF";
 
 function withAlpha(hex: string, alpha: number) {
   return `${hex}${Math.round(alpha * 255).toString(16).padStart(2, "0")}`;
@@ -55,35 +59,145 @@ function withAlpha(hex: string, alpha: number) {
 export function BottomNavigation({ active, onChange }: Props) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+  const { profile } = useProfile();
+  const reducedMotion = useReducedMotion();
   const navBottom = insets.bottom + NAV_BOTTOM_GAP;
   const fadeAreaHeight = navBottom + NAV_HEIGHT + FADE_START_ABOVE_NAV;
   // Gradyanin tam opakliga ulastigi nokta: navbar'in ortasi.
   const fadeEnd = FADE_HEIGHT / fadeAreaHeight;
 
-  // Her tab için ayrı bir scale değeri - basılan/aktif olan ikon hafifçe
-  // "pulse" yapar. Navigation'ın kendisi sürekli hareket etmiyor,
-  // sadece etkileşim anında çok kısa bir geri bildirim veriyor.
-  const scales = useRef<Record<NavTab, Animated.Value>>(
-    TABS.reduce(
-      (acc, tab) => {
-        acc[tab.id] = new Animated.Value(1);
-        return acc;
-      },
-      {} as Record<NavTab, Animated.Value>,
-    ),
-  ).current;
+  const activeIndex = active ? MAIN_TABS.findIndex((t) => t.id === active) : -1;
 
-  const handlePress = (tab: NavTab) => {
-    const scale = scales[tab];
-    scale.setValue(0.88);
-    Animated.spring(scale, {
-      toValue: 1,
-      useNativeDriver: true,
-      speed: 28,
-      bounciness: 7,
-    }).start();
-    onChange(tab);
+  // Surukleme durumu UI thread'inde (shared value) tutulur; JS tarafi yalnizca gorsel vurgu ve gecis icin bilgilendirilir.
+  const itemWidth = useSharedValue(0);
+  const indicatorX = useSharedValue(PAD);
+  const indicatorOpacity = useSharedValue(activeIndex >= 0 ? 1 : 0);
+  const armed = useSharedValue(false);
+  const dragStartX = useSharedValue(PAD);
+  const hoverIndex = useSharedValue(activeIndex);
+  const [layoutWidth, setLayoutWidth] = useState(0);
+  // Surukleme sirasinda gostergenin altindaki sekme (idle iken null).
+  const [draggingOver, setDraggingOver] = useState<number | null>(null);
+
+  const moveTo = useCallback(
+    (index: number, animate: boolean) => {
+      const target = indicatorXForIndex(index, itemWidth.get(), PAD);
+      indicatorX.set(animate && !reducedMotion ? withSpring(target, SPRING) : target);
+    },
+    [indicatorX, itemWidth, reducedMotion],
+  );
+
+  const onPillLayout = (e: LayoutChangeEvent) => {
+    const width = e.nativeEvent.layout.width;
+    itemWidth.set((width - PAD * 2) / MAIN_TABS.length);
+    setLayoutWidth(width);
   };
+
+  // Disaridan (rota degisimi, geri tusu) gelen secimi gostergeye yansitir; surukleme sirasinda dokunmaz.
+  useEffect(() => {
+    if (layoutWidth === 0) return;
+    if (activeIndex < 0) {
+      indicatorOpacity.set(withTiming(0, { duration: reducedMotion ? 0 : 160 }));
+      return;
+    }
+    const wasHidden = indicatorOpacity.get() === 0;
+    hoverIndex.set(activeIndex);
+    moveTo(activeIndex, !wasHidden);
+    indicatorOpacity.set(withTiming(1, { duration: reducedMotion ? 0 : 160 }));
+  }, [activeIndex, layoutWidth, moveTo, hoverIndex, indicatorOpacity, reducedMotion]);
+
+  // Web'de (RN-web Pressable), surukleme bitince parmagin/imlecin basladigi menunun Pressable'i de "birakildi" olayi
+  // alir ve onPress tetikleyip az once secilen menuyu geri alir. Surukleme sirasinda ve hemen sonrasinda
+  // dokunma olaylari yok sayilir. (Native'de Gesture Handler zaten JS dokunuslarini iptal eder.)
+  const suppressPressRef = useRef(false);
+  const suppressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (suppressTimerRef.current) clearTimeout(suppressTimerRef.current); }, []);
+
+  const beginDrag = useCallback((over: number) => {
+    if (suppressTimerRef.current) clearTimeout(suppressTimerRef.current);
+    suppressPressRef.current = true;
+    setDraggingOver(over);
+  }, []);
+
+  const endDrag = useCallback(() => {
+    if (suppressTimerRef.current) clearTimeout(suppressTimerRef.current);
+    suppressTimerRef.current = setTimeout(() => {
+      suppressPressRef.current = false;
+    }, 300);
+  }, []);
+
+  const commit = useCallback(
+    (index: number) => {
+      setDraggingOver(null);
+      onChange(MAIN_TABS[index].id);
+    },
+    [onChange],
+  );
+
+  const handlePress = (index: number) => {
+    if (suppressPressRef.current) return;
+    hoverIndex.set(index);
+    moveTo(index, true);
+    onChange(MAIN_TABS[index].id);
+  };
+
+  // Gosterge yalnizca kendi hucresinden tutulunca surulur; baska yerden baslayan yatay kaydirma yok sayilir.
+  // activeOffsetX: kucuk titremeler dokunmayi (tap) bozmaz; failOffsetY: dikey hareket jesti iptal eder.
+  const pan = useMemo(
+    () =>
+      Gesture.Pan()
+        .withTestId("navbar-pan")
+        .activeOffsetX([-6, 6])
+        .failOffsetY([-32, 32])
+        .onBegin((e) => {
+          const w = itemWidth.get();
+          const x = indicatorX.get();
+          armed.set(indicatorOpacity.get() > 0.5 && e.x >= x && e.x <= x + w);
+          dragStartX.set(x);
+        })
+        .onStart(() => {
+          if (armed.get()) scheduleOnRN(beginDrag, hoverIndex.get());
+        })
+        .onUpdate((e) => {
+          if (!armed.get()) return;
+          const w = itemWidth.get();
+          const next = clampIndicatorX(dragStartX.get() + e.translationX, w, MAIN_TABS.length, PAD);
+          indicatorX.set(next);
+          const over = nearestIndex(next, w, MAIN_TABS.length, PAD);
+          if (over !== hoverIndex.get()) {
+            hoverIndex.set(over);
+            scheduleOnRN(setDraggingOver, over);
+          }
+        })
+        .onEnd((e, success) => {
+          if (!armed.get() || !success) return;
+          const w = itemWidth.get();
+          const target = settleIndex(indicatorX.get(), e.velocityX, w, MAIN_TABS.length, PAD);
+          hoverIndex.set(target);
+          indicatorX.set(withSpring(indicatorXForIndex(target, w, PAD), SPRING));
+          scheduleOnRN(commit, target);
+        })
+        .onFinalize((_e, success) => {
+          if (armed.get()) scheduleOnRN(endDrag);
+          if (armed.get() && !success) {
+            // Jest iptal edildi (orn. sistem jesti): gostergeyi onceki konumuna dondur.
+            indicatorX.set(withSpring(dragStartX.get(), SPRING));
+            scheduleOnRN(setDraggingOver, null);
+          }
+          armed.set(false);
+        }),
+    [armed, beginDrag, commit, dragStartX, endDrag, hoverIndex, indicatorOpacity, indicatorX, itemWidth],
+  );
+
+  const indicatorStyle = useAnimatedStyle(() => ({
+    width: itemWidth.get(),
+    opacity: indicatorOpacity.get(),
+    transform: [{ translateX: indicatorX.get() }],
+  }));
+
+  const shownIndex = draggingOver ?? activeIndex;
+  const profileActive = active === "profile";
+  const initial = profile.firstName.trim().charAt(0).toUpperCase();
 
   return (
     <>
@@ -94,87 +208,110 @@ export function BottomNavigation({ active, onChange }: Props) {
           style={StyleSheet.absoluteFill}
         />
       </View>
-      <View
-        pointerEvents="box-none"
-        style={[styles.wrapper, { bottom: navBottom }]}
-      >
-        <View style={[styles.capsule, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          {TABS.map((tab) => {
-            const isActive = tab.id === active;
-            return (
-              <Pressable
-                key={tab.id}
-                onPress={() => handlePress(tab.id)}
-                hitSlop={6}
-                style={styles.item}
-              >
-                <Animated.View
-                  style={[
-                    styles.iconWrap,
-                    { transform: [{ scale: scales[tab.id] }] },
-                  ]}
-                >
-                  <Ionicons
-                    name={tab.icon}
-                    size={21}
-                    color={isActive ? colors.iconActive : colors.icon}
-                  />
-                </Animated.View>
-                {isActive ? (
-                  <Text style={[styles.label, { color: colors.iconActive }]} numberOfLines={1}>
-                    {tab.label}
-                  </Text>
-                ) : null}
-              </Pressable>
-            );
-          })}
+      {/* Android'de GestureDetector, bir GestureHandlerRootView altinda olmalidir; navbar kendi kokunu getirir. */}
+      <GestureHandlerRootView pointerEvents="box-none" style={[styles.wrapper, { bottom: navBottom }]}>
+        <View style={styles.row} pointerEvents="box-none">
+          <GestureDetector gesture={pan}>
+            <View
+              testID="navbar-pill"
+              onLayout={onPillLayout}
+              style={[styles.capsule, { backgroundColor: colors.surface, borderColor: colors.border }]}
+              accessibilityRole="tablist"
+            >
+              <Animated.View
+                testID="navbar-indicator"
+                pointerEvents="none"
+                style={[styles.indicator, { backgroundColor: colors.primary }, indicatorStyle]}
+              />
+              {MAIN_TABS.map((tab, index) => {
+                const selected = index === activeIndex;
+                const highlighted = index === shownIndex;
+                const color = highlighted ? ACTIVE_CONTENT : colors.icon;
+                return (
+                  <Pressable
+                    key={tab.id}
+                    testID={`nav-${tab.id}`}
+                    onPress={() => handlePress(index)}
+                    style={styles.item}
+                    accessibilityRole="tab"
+                    accessibilityLabel={tab.label}
+                    accessibilityState={{ selected }}
+                    accessibilityHint={selected ? "Seçili menü. Sağa veya sola sürükleyerek de menü değiştirebilirsiniz." : undefined}
+                  >
+                    <Ionicons name={highlighted ? tab.activeIcon : tab.icon} size={21} color={color} />
+                    <Text style={[styles.label, { color }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+                      {tab.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </GestureDetector>
+
+          <Pressable
+            testID="nav-profile"
+            onPress={() => onChange("profile")}
+            accessibilityRole="button"
+            accessibilityLabel="Profilim"
+            accessibilityState={{ selected: profileActive }}
+            style={[
+              styles.profile,
+              {
+                backgroundColor: profileActive ? colors.primary : colors.surface,
+                borderColor: profileActive ? colors.primary : colors.border,
+              },
+            ]}
+          >
+            {initial ? (
+              <Text style={[styles.profileInitial, { color: profileActive ? ACTIVE_CONTENT : colors.text }]}>{initial}</Text>
+            ) : (
+              <Ionicons name={profileActive ? "person" : "person-outline"} size={24} color={profileActive ? ACTIVE_CONTENT : colors.icon} />
+            )}
+          </Pressable>
         </View>
-      </View>
+      </GestureHandlerRootView>
     </>
   );
 }
 
+const shadow = Platform.select({
+  ios: { shadowColor: "#000000", shadowOpacity: 0.28, shadowRadius: 16, shadowOffset: { width: 0, height: 8 } },
+  android: { elevation: 10 },
+});
+
 const styles = StyleSheet.create({
   // Navbar'in arkasinda kalan sayfa icerigini arka plan rengine dogru soldurur.
-  fadeArea: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  // Ekranın altına yapışık değil - kenarlardan içeride, yüzen bir kapsül.
-  wrapper: {
-    position: "absolute",
-    left: 20,
-    right: 20,
-  },
+  fadeArea: { position: "absolute", left: 0, right: 0, bottom: 0 },
+  // Ekranin altina yapisik degil - kenarlardan iceride, yuzen bir kapsul + ayri profil dairesi.
+  wrapper: { position: "absolute", left: SIDE_MARGIN, right: SIDE_MARGIN },
+  row: { flexDirection: "row", alignItems: "center", gap: GAP },
   capsule: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     height: NAV_HEIGHT,
     borderRadius: NAV_HEIGHT / 2,
-    paddingHorizontal: 6,
+    padding: PAD,
     borderWidth: StyleSheet.hairlineWidth,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000000",
-        shadowOpacity: 0.28,
-        shadowRadius: 16,
-        shadowOffset: { width: 0, height: 8 },
-      },
-      android: { elevation: 10 },
-    }),
+    ...shadow,
   },
-  item: {
-    flex: 1,
+  indicator: {
+    position: "absolute",
+    left: 0,
+    top: PAD,
+    height: INDICATOR_HEIGHT,
+    borderRadius: INDICATOR_HEIGHT / 2,
+  },
+  item: { flex: 1, height: INDICATOR_HEIGHT, alignItems: "center", justifyContent: "center", gap: 3, paddingHorizontal: 2 },
+  label: { fontSize: 10, fontWeight: "700", letterSpacing: 0.1, maxWidth: "100%" },
+  profile: {
+    width: NAV_HEIGHT,
+    height: NAV_HEIGHT,
+    borderRadius: NAV_HEIGHT / 2,
+    borderWidth: StyleSheet.hairlineWidth,
     alignItems: "center",
     justifyContent: "center",
-    gap: 3,
+    ...shadow,
   },
-  iconWrap: { alignItems: "center", justifyContent: "center" },
-  label: {
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 0.2,
-  },
+  profileInitial: { fontSize: 22, fontWeight: "800" },
 });

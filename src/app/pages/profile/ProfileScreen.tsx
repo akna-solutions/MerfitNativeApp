@@ -11,6 +11,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { useStore } from "../../../features/store/hooks";
+import { storeRoutes } from "../../../features/store/navigation";
 import { useAuth } from "../../../shared/auth/AuthContext";
 import { usePlus } from "../../../shared/plus/PlusContext";
 import { useProfile } from "../../../shared/profile/ProfileContext";
@@ -37,6 +39,7 @@ export function ProfileScreen() {
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [achievements, setAchievements] = useState<AchievementsResponse | null>(null);
   const guard = useNavigationGuard();
+  const { cartItems, favoriteIds, orders, addresses } = useStore();
 
   const headerAnim = useRef(new Animated.Value(0)).current;
   const identityAnim = useRef(new Animated.Value(0)).current;
@@ -226,6 +229,12 @@ export function ProfileScreen() {
                 onPress={guard(() => router.push("/pages/workout/history" as never))}
               />
               <SettingsRow
+                icon="stats-chart-outline"
+                title="İlerlemem"
+                subtitle="Kilo, ölçüler ve haftalık ilerleme"
+                onPress={guard(() => router.navigate("/pages/progress" as never))}
+              />
+              <SettingsRow
                 icon="ribbon-outline"
                 title="Rozetlerim"
                 subtitle={badgeSubtitle}
@@ -252,6 +261,36 @@ export function ProfileScreen() {
                 ) : null}
               </Pressable>
             ) : null}
+          </View>
+
+          <View style={[styles.padded, styles.sectionGap]}>
+            <SettingsSection title="Alışveriş">
+              <SettingsRow
+                icon="heart-outline"
+                title="Favorilerim"
+                subtitle={favoriteIds.length > 0 ? `${favoriteIds.length} ürün` : "Beğendiğin ürünler"}
+                onPress={guard(() => router.push(storeRoutes.favorites()))}
+              />
+              <SettingsRow
+                icon="cart-outline"
+                title="Sepetim"
+                subtitle={cartItems.length > 0 ? `${cartItems.reduce((n, i) => n + i.quantity, 0)} ürün` : "Sepetin boş"}
+                onPress={guard(() => router.push(storeRoutes.cart()))}
+              />
+              <SettingsRow
+                icon="receipt-outline"
+                title="Siparişlerim"
+                subtitle={orders.length > 0 ? `${orders.length} sipariş (demo)` : "Henüz siparişin yok"}
+                onPress={guard(() => router.push(storeRoutes.orders()))}
+              />
+              <SettingsRow
+                icon="location-outline"
+                title="Adreslerim"
+                subtitle={addresses.length > 0 ? `${addresses.length} kayıtlı adres` : "Teslimat adresi ekle"}
+                onPress={guard(() => router.push(storeRoutes.addresses()))}
+                isLast
+              />
+            </SettingsSection>
           </View>
 
           <View style={[styles.padded, styles.sectionGap]}>
