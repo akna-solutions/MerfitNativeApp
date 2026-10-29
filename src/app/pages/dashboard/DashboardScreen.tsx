@@ -426,6 +426,17 @@ export function DashboardScreen() {
             />
           </Animated.View>
 
+          <Animated.View style={[styles.padded, styles.gapTop, fadeUp(weekAnim)]}>
+            <WeeklyActivitySection
+              weekKeys={weekKeys}
+              days={weekDays}
+              loading={week.loading}
+              error={week.error}
+              onRetry={() => void loadWeek()}
+              onDayPress={guard(goToDay)}
+            />
+          </Animated.View>
+
           {personalization.isPending || personalization.isFailed ? (
             <Animated.View style={[styles.padded, styles.gapTop, fadeUp(todayAnim)]}>
               <PersonalizationPendingState
@@ -467,17 +478,6 @@ export function DashboardScreen() {
               </Pressable>
             </View>
           ) : null}
-
-          <Animated.View style={[styles.padded, styles.gapTop, fadeUp(weekAnim)]}>
-            <WeeklyActivitySection
-              weekKeys={weekKeys}
-              days={weekDays}
-              loading={week.loading}
-              error={week.error}
-              onRetry={() => void loadWeek()}
-              onDayPress={guard(goToDay)}
-            />
-          </Animated.View>
 
           <Animated.View style={fadeUp(statsAnim)}>
             {data.hasCompletedFirstWorkout ? (
