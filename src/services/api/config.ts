@@ -20,9 +20,8 @@ function resolveDefaultBaseUrl(): string {
   return "http://localhost:5219";
 }
 
-const PRODUCTION_API_URL = "https://api.mbfit.online";
+export const API_BASE_URL =
+  process.env.EXPO_PUBLIC_API_URL?.replace(/\/+$/, "") ??
+  resolveDefaultBaseUrl();
 
-export const API_BASE_URL = (
-  process.env.EXPO_PUBLIC_API_URL || PRODUCTION_API_URL
-).replace(/\/+$/, "");
 export const API_TIMEOUT_MS = 15000;
