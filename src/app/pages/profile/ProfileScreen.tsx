@@ -14,6 +14,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../../shared/auth/AuthContext";
 import { usePlus } from "../../../shared/plus/PlusContext";
 import { useProfile } from "../../../shared/profile/ProfileContext";
+import { getAchievements } from "../../../services/api/achievements";
+import { AchievementsResponse } from "../../../services/api/types";
+import { AchievementBadgeIcon } from "../../../shared/achievements/AchievementBadgeIcon";
+import { useNavigationGuard } from "../../../shared/navigation/useNavigationGuard";
 import { SettingsRow } from "../../../shared/profile/components/SettingsRow";
 import { SettingsSection } from "../../../shared/profile/components/SettingsSection";
 import { GOAL_LABELS, ProfileData, WEEKDAY_SHORT_LABELS } from "../../../shared/profile/types";
@@ -31,6 +35,8 @@ export function ProfileScreen() {
   const { profile, isLoaded, isLoading, error, reload } = useProfile();
   const { mode, colors } = useTheme();
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+  const [achievements, setAchievements] = useState<AchievementsResponse | null>(null);
+  const guard = useNavigationGuard();
 
   const headerAnim = useRef(new Animated.Value(0)).current;
   const identityAnim = useRef(new Animated.Value(0)).current;
@@ -80,8 +86,24 @@ export function ProfileScreen() {
   useFocusEffect(
     useCallback(() => {
       reload();
+      const controller = new AbortController();
+      getAchievements(controller.signal)
+        .then(setAchievements)
+        .catch(() => {
+          // Rozetler alinamazsa satir sayisiz gorunur; rozet ekrani kendi hatasini gosterir.
+        });
+      return () => controller.abort();
     }, [reload]),
   );
+
+  const earnedBadges = (achievements?.achievements ?? [])
+    .filter((item) => item.earned)
+    .sort((a, b) => (b.earnedAt ?? "").localeCompare(a.earnedAt ?? ""));
+  const badgeSubtitle = achievements
+    ? earnedBadges.length > 0
+      ? `Son kazanılan: ${earnedBadges[0].title}`
+      : "İlk rozetini kazanmak için antrenmana başla"
+    : "Kazandığın rozetler";
 
   const handleConfirmLogout = () => {
     setLogoutModalVisible(false);
@@ -194,6 +216,43 @@ export function ProfileScreen() {
             </SettingsSection>
           </View>
           )}
+
+          <View style={[styles.padded, styles.sectionGap]}>
+            <SettingsSection title="Aktivitem">
+              <SettingsRow
+                icon="time-outline"
+                title="Antrenman Geçmişi"
+                subtitle="Tamamladığın antrenmanlar ve setler"
+                onPress={guard(() => router.push("/pages/workout/history" as never))}
+              />
+              <SettingsRow
+                icon="ribbon-outline"
+                title="Rozetlerim"
+                subtitle={badgeSubtitle}
+                value={achievements ? `${achievements.earnedCount}/${achievements.totalCount}` : undefined}
+                onPress={guard(() => router.push("/pages/profile/badges" as never))}
+                isLast
+              />
+            </SettingsSection>
+            {earnedBadges.length > 0 ? (
+              <Pressable
+                testID="profile-earned-badges"
+                onPress={guard(() => router.push("/pages/profile/badges" as never))}
+                accessibilityRole="button"
+                accessibilityLabel={`Kazanılan rozetler: ${earnedBadges.map((b) => b.title).join(", ")}`}
+                style={[styles.badgeStrip, { backgroundColor: colors.card, borderColor: colors.border }]}
+              >
+                {earnedBadges.slice(0, 6).map((badge) => (
+                  <View key={badge.id} style={[styles.badgeBubble, { backgroundColor: colors.cardActive, borderColor: colors.borderActive }]}>
+                    <AchievementBadgeIcon icon={badge.icon} size={18} color={colors.primary} />
+                  </View>
+                ))}
+                {earnedBadges.length > 6 ? (
+                  <Text style={[styles.badgeMore, { color: colors.textSecondary }]}>+{earnedBadges.length - 6}</Text>
+                ) : null}
+              </Pressable>
+            ) : null}
+          </View>
 
           <View style={[styles.padded, styles.sectionGap]}>
             <SettingsSection title="Üyelik">
@@ -320,6 +379,25 @@ const styles = StyleSheet.create({
   scrollContent: { paddingTop: 16, paddingBottom: 156 },
   padded: { paddingHorizontal: 24 },
   sectionGap: { marginTop: 24 },
+  badgeStrip: {
+    marginTop: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  badgeBubble: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  badgeMore: { fontSize: 13, fontWeight: "700" },
   stateBox: {
     minHeight: 180,
     alignItems: "center",

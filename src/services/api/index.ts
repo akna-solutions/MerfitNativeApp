@@ -1,4 +1,6 @@
+export * as achievementsApi from "./achievements";
 export * as authApi from "./auth";
+export * as campaignsApi from "./campaigns";
 export * from "./client";
 export * as dashboardApi from "./dashboard";
 export * as equipmentApi from "./equipment";

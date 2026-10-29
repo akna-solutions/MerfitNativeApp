@@ -273,6 +273,8 @@ export type MyPlanExercise = {
   repsMax?: number | null;
   restSeconds: number | null;
   durationSeconds: number | null;
+  /** Egzersiz gorseli (katalogdan); yoksa veya eski backend ise null/undefined. */
+  imageUrl?: string | null;
 };
 
 export type MyPlanDay = {
@@ -1098,3 +1100,109 @@ export type ConfirmFoodAnalysisResponse = {
   alreadyLogged: boolean;
   entries: MealEntry[];
 };
+
+// ---- Kampanyalar (GET /api/campaigns) ----
+export type CampaignListItem = {
+  id: number;
+  title: string;
+  summary: string | null;
+  imageUrl: string | null;
+  category: string | null;
+  startAt: string | null;
+  endAt: string | null;
+};
+
+export type CampaignDetail = CampaignListItem & {
+  body: string | null;
+  linkUrl: string | null;
+};
+
+// ---- Rozetler (GET /api/achievements) ----
+export type AchievementItem = {
+  id: number;
+  code: string;
+  title: string;
+  description: string | null;
+  icon: string | null;
+  points: number;
+  earned: boolean;
+  earnedAt: string | null;
+};
+
+export type AchievementsResponse = {
+  earnedCount: number;
+  totalCount: number;
+  achievements: AchievementItem[];
+  /** Kazanilmis ama kullaniciya henuz gosterilmemis rozetler (kutlama ekrani icin). */
+  newlyEarned: AchievementItem[];
+};
+
+// ---- Aktivite takvimi (GET /api/progress/calendar) ----
+export type CalendarWorkoutSession = {
+  id: number;
+  title: string;
+  completedAt: string;
+  durationSeconds: number | null;
+  caloriesBurned: number | null;
+  exerciseCount: number;
+  setCount: number;
+};
+
+export type CalendarMeal = {
+  type: string;
+  calories: number;
+  itemCount: number;
+};
+
+export type CalendarDay = {
+  /** "yyyy-MM-dd" (kullanicinin yerel gunu). */
+  date: string;
+  isToday: boolean;
+  isFuture: boolean;
+  /** Aktif programda antrenman gunu mu; program yoksa null. */
+  isPlannedWorkoutDay: boolean | null;
+  workout: {
+    completed: boolean;
+    totalDurationSeconds: number;
+    sessions: CalendarWorkoutSession[];
+  };
+  /** Besinlerden ALINAN kalori ve makrolar. */
+  nutrition: {
+    logged: boolean;
+    consumedCalories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    calorieRatio: number | null;
+    calorieGoalMet: boolean;
+    meals: CalendarMeal[];
+  };
+  /** Antrenmanlarda HARCANAN kalori ve aktif sure (adim verisi yok). */
+  activity: {
+    caloriesBurned: number;
+    activeMinutes: number;
+  };
+};
+
+export type ActivityCalendarResponse = {
+  from: string;
+  to: string;
+  today: string;
+  timeZone: string;
+  dailyCalorieTarget: number | null;
+  calorieGoalLowerRatio: number;
+  calorieGoalUpperRatio: number;
+  days: CalendarDay[];
+};
+
+// ---- Kilo hatirlaticisi (GET /api/progress/weight-reminder) ----
+export type WeightReminderResponse = {
+  shouldPrompt: boolean;
+  intervalDays: number;
+  lastLoggedDate: string | null;
+  lastWeightKg: number | null;
+  snoozedUntil: string | null;
+  unitSystem: "metric" | "imperial";
+};
+
+export type WeightReminderSnoozeAction = "later" | "dismiss";

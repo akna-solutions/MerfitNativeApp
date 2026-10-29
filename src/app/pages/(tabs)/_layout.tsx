@@ -1,9 +1,11 @@
 import { Tabs } from "expo-router";
+import { Easing } from "react-native";
 
 import {
     BottomNavigation,
     NavTab,
 } from "../dashboard/components/BottomNavigation";
+import { useReducedMotion } from "../../../shared/motion/useReducedMotion";
 
 // Tab route dosya adları ile navbar'daki NavTab id'leri birebir aynı değil
 // ("dashboard" dosyası "home" tab'ına karşılık geliyor), bu yüzden ikisi
@@ -25,9 +27,15 @@ const TAB_TO_ROUTE: Record<NavTab, string> = {
 };
 
 export default function TabsLayout() {
+  const reducedMotion = useReducedMotion();
   return (
     <Tabs
-      screenOptions={{ headerShown: false }}
+      screenOptions={{
+        headerShown: false,
+        // Sekmeler arasi kisa, yumusak kayma; "Hareketi azalt" acikken animasyonsuz.
+        animation: reducedMotion ? "none" : "shift",
+        transitionSpec: { animation: "timing", config: { duration: 220, easing: Easing.out(Easing.cubic) } },
+      }}
       tabBar={({ state, navigation }) => {
         const activeRouteName = state.routes[state.index].name;
         const active = ROUTE_TO_TAB[activeRouteName] ?? "home";
