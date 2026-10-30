@@ -1,5 +1,5 @@
 import { API_BASE_URL, API_TIMEOUT_MS } from "./config";
-import { clearTokens, getStoredTokens } from "./tokenStorage";
+import { clearTokens, getStoredTokens, saveTokens } from "./tokenStorage";
 
 // Backend'in global exception middleware'i hata govdelerini bu sekilde doner
 // (bkz. MerfitCustomerApi.Business.Common.Responses.ApiResponse). Basarili customer
@@ -90,9 +90,67 @@ async function parseErrorBody(response: Response): Promise<ApiErrorBody> {
   }
 }
 
+type RefreshOutcome = { accessToken: string; refreshToken: string } | "invalid" | "unavailable";
+
+// Ayni anda 401 alan istekler tek bir yenileme istegini paylasir; refresh token rotasyonlu oldugu icin
+// ayni token'la iki yenileme yapilmamali.
+let refreshInFlight: Promise<RefreshOutcome> | null = null;
+
+async function requestNewTokens(refreshToken: string): Promise<RefreshOutcome> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+  try {
+    const response = await fetch(buildUrl("/api/auth/refresh"), {
+      method: "POST",
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken }),
+      signal: controller.signal,
+    });
+    if (response.status === 400 || response.status === 401) {
+      return "invalid";
+    }
+    if (!response.ok) {
+      return "unavailable";
+    }
+    const result = (await response.json()) as { accessToken?: string; refreshToken?: string };
+    if (!result.accessToken || !result.refreshToken) {
+      return "unavailable";
+    }
+    const tokens = { accessToken: result.accessToken, refreshToken: result.refreshToken };
+    await saveTokens(tokens);
+    return tokens;
+  } catch {
+    return "unavailable";
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 /**
- * MerfitCustomerApi'ye JSON (ya da FormData ile multipart) istegi atar; Authorization header'ini otomatik ekler,
- * hata govdesini ApiError'a cevirir ve 401 durumunda saklanan token'lari temizler.
+ * Access token'in suresi doldugunda (401) refresh token ile yeni token cifti alir. Istek gonderilirken baska bir
+ * cagri token'lari zaten yenilediyse saklanan yeni cift kullanilir. "invalid": oturum gercekten bitti (refresh
+ * token suresi dolmus/iptal); "unavailable": sunucuya ulasilamadi, oturum korunur.
+ */
+async function refreshSession(usedRefreshToken: string): Promise<RefreshOutcome> {
+  const latest = await getStoredTokens();
+  if (!latest) {
+    return "invalid";
+  }
+  if (latest.refreshToken !== usedRefreshToken) {
+    return latest;
+  }
+  if (!refreshInFlight) {
+    refreshInFlight = requestNewTokens(latest.refreshToken).finally(() => {
+      refreshInFlight = null;
+    });
+  }
+  return refreshInFlight;
+}
+
+/**
+ * MerfitCustomerApi'ye JSON (ya da FormData ile multipart) istegi atar; Authorization header'ini otomatik ekler ve
+ * hata govdesini ApiError'a cevirir. 401 alinirsa refresh token ile oturumu sessizce yenileyip istegi bir kez
+ * tekrarlar; yenileme reddedilirse (oturum bitti) saklanan token'lari temizler.
  */
 export async function apiRequest<TResponse>(path: string, options: RequestOptions = {}): Promise<TResponse> {
   const { method = "GET", body, query, skipAuth = false, signal, timeoutMs = API_TIMEOUT_MS } = options;
@@ -106,41 +164,63 @@ export async function apiRequest<TResponse>(path: string, options: RequestOption
     headers["Content-Type"] = "application/json";
   }
 
-  if (!skipAuth) {
-    const tokens = await getStoredTokens();
-    if (tokens?.accessToken) {
-      headers.Authorization = `Bearer ${tokens.accessToken}`;
-    }
+  const tokens = skipAuth ? null : await getStoredTokens();
+  if (tokens?.accessToken) {
+    headers.Authorization = `Bearer ${tokens.accessToken}`;
   }
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-  if (signal) {
-    signal.addEventListener("abort", () => controller.abort(), { once: true });
-  }
-
-  let response: Response;
   const targetUrl = buildUrl(path, query);
-  try {
-    response = await fetch(targetUrl, {
-      method,
-      headers,
-      body: body === undefined ? undefined : isFormData ? (body as FormData) : JSON.stringify(body),
-      signal: controller.signal,
-    });
-  } catch (error) {
-    // Cagiran istegi kendisi iptal ettiyse (ekran kapandi, oturum degisti) bu bir hata degildir:
-    // loglanmaz ve AbortError olarak iletilir; cagiran taraf iptal edilen yaniti zaten yok sayar.
-    if (signal?.aborted) {
-      throw abortError();
+  const send = async (): Promise<Response> => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    if (signal) {
+      signal.addEventListener("abort", () => controller.abort(), { once: true });
     }
-    console.error(`[API Hatası] ${method} ${targetUrl} adresine erişilemedi:`, error);
-    if (controller.signal.aborted || (error as Error).name === "AbortError") {
-      throw new NetworkError(`İstek zaman aşımına uğradı (${targetUrl}). Lütfen tekrar deneyin.`);
+
+    try {
+      return await fetch(targetUrl, {
+        method,
+        headers,
+        body: body === undefined ? undefined : isFormData ? (body as FormData) : JSON.stringify(body),
+        signal: controller.signal,
+      });
+    } catch (error) {
+      // Cagiran istegi kendisi iptal ettiyse (ekran kapandi, oturum degisti) bu bir hata degildir:
+      // loglanmaz ve AbortError olarak iletilir; cagiran taraf iptal edilen yaniti zaten yok sayar.
+      if (signal?.aborted) {
+        throw abortError();
+      }
+      console.error(`[API Hatası] ${method} ${targetUrl} adresine erişilemedi:`, error);
+      if (controller.signal.aborted || (error as Error).name === "AbortError") {
+        throw new NetworkError(`İstek zaman aşımına uğradı (${targetUrl}). Lütfen tekrar deneyin.`);
+      }
+      throw new NetworkError(`Sunucuya ulaşılamadı (${targetUrl}). İnternet bağlantınızı ve backend adresini kontrol edin.`);
+    } finally {
+      clearTimeout(timeoutId);
     }
-    throw new NetworkError(`Sunucuya ulaşılamadı (${targetUrl}). İnternet bağlantınızı ve backend adresini kontrol edin.`);
-  } finally {
-    clearTimeout(timeoutId);
+  };
+
+  let response = await send();
+  let sessionEnded = false;
+
+  if (response.status === 401 && tokens?.refreshToken) {
+    const refreshed = await refreshSession(tokens.refreshToken);
+    if (refreshed === "unavailable") {
+      // Yenileme sunucuya ulasamadi: oturum kapatilmaz, kullanici baglanti gelince devam eder.
+      throw new NetworkError("Oturum yenilenemedi. İnternet bağlantınızı kontrol edip tekrar deneyin.");
+    }
+    if (refreshed === "invalid") {
+      sessionEnded = true;
+    } else {
+      if (signal?.aborted) {
+        throw abortError();
+      }
+      headers.Authorization = `Bearer ${refreshed.accessToken}`;
+      response = await send();
+      sessionEnded = response.status === 401;
+    }
+  } else if (response.status === 401 && !skipAuth) {
+    sessionEnded = true;
   }
 
   if (response.status === 204) {
@@ -150,9 +230,8 @@ export async function apiRequest<TResponse>(path: string, options: RequestOption
   if (!response.ok) {
     const errorBody = await parseErrorBody(response);
 
-    if (response.status === 401 && !skipAuth) {
-      // Access token gecersiz/suresi dolmus. Backend'de henuz bir /auth/refresh uc noktasi
-      // olmadigindan (bkz. FINAL RAPOR - Remaining Work) sessiz yenileme yapamiyoruz;
+    if (sessionEnded) {
+      // Refresh token da gecersiz (10 gun hic girilmedi, cikis yapildi veya sifre sifirlandi):
       // kullaniciyi tekrar giris yapmaya yonlendirmek icin token'lari temizliyoruz.
       await clearTokens();
     }
