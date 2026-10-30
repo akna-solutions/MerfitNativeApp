@@ -50,6 +50,11 @@ export type ProfileData = {
   email: string;
   /** Sunucudan gelir; profil henuz yuklenmediyse undefined (dogrulama uyarisi gosterilmez). */
   emailConfirmed?: boolean;
+  /**
+   * Fitness profili (boy, kilo, hedef...) dolu mu. Yalnizca alisveris icin kayit olan kullanicida false;
+   * MB Fit ekranlari bu durumda once profili tamamlatir (bkz. FitnessProfileGate). Profil yuklenmediyse undefined.
+   */
+  fitnessProfileCompleted?: boolean;
   dateOfBirth: string; // "YYYY-MM-DD"
   gender: Gender;
 

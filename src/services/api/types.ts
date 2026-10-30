@@ -70,6 +70,11 @@ export type AuthResponse = {
    * kadar kod ekranindan ileri gecirmez (bkz. pages/auth/verify-email, EmailVerificationGate).
    */
   emailConfirmed?: boolean;
+  /**
+   * Fitness profili (boy, kilo, hedef...) dolu mu. Yalnizca alisveris icin kayit olan kullanicida false;
+   * uygulama bu kullaniciyi giriste MB Shop'a goturur. Eski backend gondermezse undefined.
+   */
+  fitnessProfileCompleted?: boolean;
   /** Yalnizca register yanitinda: dogrulama kodu e-postasi gonderildiyse true, gonderilemediyse false. */
   verificationEmailSent?: boolean | null;
   /** Bu istekte yeni hesap olusturulduysa true (register, Google ile kayit). Girislerde false. */
@@ -182,7 +187,21 @@ export type RegisterRequest = {
   /** Backend'de Equipment tablosunun sayisal Id'lerini bekler; EquipmentStep, secenekleri
    * GET /api/equipment'ten urettigi icin secilen Id'ler dogrudan buraya konur. */
   equipmentIds?: number[] | null;
+  /**
+   * Yalnizca MB Shop'ta alisveris icin kayit: true ise fitness alanlari (boy, kilo, hedef...) sorulmaz ve
+   * backend bunlari yok sayar. Kullanici MB Fit'i actiginda POST /api/profile/fitness ile profilini tamamlar.
+   */
+  shoppingOnly?: boolean | null;
 };
+
+/**
+ * POST /api/profile/fitness - yalnizca alisveris icin kayit olmus kullanicinin fitness profilini tamamlamasi.
+ * Kayit istegindeki fitness alanlariyla ayni (backend FitnessProfileRequest); boy ve kilo zorunlu.
+ */
+export type FitnessProfileRequest = Omit<
+  RegisterRequest,
+  "firstName" | "lastName" | "username" | "email" | "password" | "confirmPassword" | "shoppingOnly"
+>;
 
 // ---- Equipment ----
 /** GET /api/equipment - onboarding'deki EquipmentStep secenekleri bu listeden uretilir;
@@ -855,6 +874,8 @@ export type ProfileResponse = {
   email: string;
   /** E-posta dogrulandi mi; e-posta degistirilince false olur. */
   emailConfirmed?: boolean;
+  /** Fitness profili dolu mu; yalnizca alisveris icin kayit olanlarda false. Eski backend gondermez. */
+  fitnessProfileCompleted?: boolean;
   dateOfBirth: string;
   gender: string;
   age: number;

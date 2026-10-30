@@ -1,5 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
+import { StyleSheet, Text } from "react-native";
 
 import {
   ApiError,
@@ -9,6 +10,7 @@ import {
 import { getEquipmentList } from "../../../services/api/equipment";
 import {
   EquipmentListItem,
+  FitnessProfileRequest,
   GoogleRegisterRequest,
   RegisterRequest,
 } from "../../../services/api/types";
@@ -31,6 +33,8 @@ import {
 } from "../../../shared/auth/pendingGoogleSignup";
 import { googleErrorMessage, useGoogleSignIn } from "../../../shared/auth/useGoogleSignIn";
 import { useUsernameAvailability } from "../../../shared/auth/useUsernameAvailability";
+import { useProfile } from "../../../shared/profile/ProfileContext";
+import { useTheme } from "../../../shared/theme/ThemeContext";
 import { OnboardingScreen } from "./components/OnboardingScreen";
 import { SuccessScreen } from "./components/SuccessScreen";
 import { AccountStep } from "./steps/AccountStep";
@@ -45,12 +49,40 @@ import { GoalStep } from "./steps/GoalStep";
 import { HeightStep } from "./steps/HeightStep";
 import { LastNameStep } from "./steps/LastNameStep";
 import { NameStep } from "./steps/NameStep";
+import { PurposeStep } from "./steps/PurposeStep";
 import { WeightStep } from "./steps/WeightStep";
 import { initialOnboardingData, OnboardingData } from "./types";
 
-const TOTAL_STEPS = 13;
-const GOAL_STEP = 7;
-const BODY_COMPOSITION_STEP = 8;
+type StepId =
+  | "purpose"
+  | "name"
+  | "lastName"
+  | "gender"
+  | "age"
+  | "height"
+  | "weight"
+  | "goal"
+  | "bodyComposition"
+  | "activity"
+  | "experience"
+  | "frequency"
+  | "equipment"
+  | "account";
+
+/** MB Fit'in ihtiyac duydugu fitness adimlari; yalnizca alisveris icin kayitta atlanir, sonradan tamamlanir. */
+const FITNESS_STEPS: StepId[] = [
+  "gender", "age", "height", "weight", "goal", "bodyComposition", "activity", "experience", "frequency", "equipment",
+];
+
+/**
+ * Akistaki adimlar: kayitta once amac (tam uygulama / sadece alisveris) sorulur; "Sadece alisveris" secilirse
+ * yalnizca ad, soyad ve hesap bilgileri istenir. Profil tamamlama modunda (mode=fitness) yalnizca fitness adimlari.
+ */
+function stepsFor(completingProfile: boolean, purpose: OnboardingData["purpose"]): StepId[] {
+  if (completingProfile) return FITNESS_STEPS;
+  if (purpose === "shopping") return ["purpose", "name", "lastName", "account"];
+  return ["purpose", "name", "lastName", ...FITNESS_STEPS, "account"];
+}
 
 // Bu alanlardan biri degisirse dusuk yag orani onayi gecersiz olur ve uyari yeniden degerlendirilir.
 const BODY_FAT_INPUT_KEYS: (keyof OnboardingData)[] = [
@@ -145,10 +177,33 @@ function toProfileFields(data: OnboardingData, allEquipmentIds: number[]): Profi
   };
 }
 
+/** Yalnizca alisveris icin kayit: fitness alanlari gonderilmez (backend shoppingOnly ile yok sayar). */
+function toShoppingProfileFields(data: OnboardingData): ProfileFields {
+  return {
+    firstName: data.name.trim(),
+    lastName: data.lastName.trim(),
+    username: data.username.trim(),
+    heightUnit: "cm",
+    weightUnit: "kg",
+    shoppingOnly: true,
+  };
+}
+
+function toAccountFields(data: OnboardingData, allEquipmentIds: number[]): ProfileFields {
+  return data.purpose === "shopping" ? toShoppingProfileFields(data) : toProfileFields(data, allEquipmentIds);
+}
+
+/** OnboardingData -> POST /api/profile/fitness (alisveris hesabinin fitness profilini tamamlama). */
+function toFitnessProfileRequest(data: OnboardingData, allEquipmentIds: number[]): FitnessProfileRequest {
+  const { firstName: _firstName, lastName: _lastName, username: _username, shoppingOnly: _shoppingOnly, ...fitness } =
+    toProfileFields(data, allEquipmentIds);
+  return fitness;
+}
+
 /** OnboardingData -> RegisterRequest (e-posta/sifre ile kayit). */
 function toRegisterRequest(data: OnboardingData, allEquipmentIds: number[]): RegisterRequest {
   return {
-    ...toProfileFields(data, allEquipmentIds),
+    ...toAccountFields(data, allEquipmentIds),
     email: data.email.trim(),
     password: data.password,
     confirmPassword: data.confirmPassword,
@@ -182,16 +237,25 @@ function registrationErrorMessage(error: unknown): string {
 
 export function OnboardingContainer() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ google?: string }>();
+  const params = useLocalSearchParams<{ google?: string; mode?: string }>();
   const { register, googleRegister } = useAuth();
+  const { profile, completeFitnessProfile, reload: reloadProfile } = useProfile();
+  const { colors } = useTheme();
+  // mode=fitness: yalnizca alisveris icin kayit olmus kullanici MB Fit'i actiginda fitness adimlarini tamamlar.
+  const completingProfile = params.mode === "fitness";
   const google = useGoogleSignIn();
   // Giris ekraninda "Google ile devam et" denenip hesap bulunamadiysa onboarding Google moduyla acilir
   // (google=1): ad/soyad on doldurulur, son adimda e-posta/sifre yerine yalnizca kullanici adi sorulur.
   const [googleSignup, setGoogleSignup] = useState<PendingGoogleSignup | null>(() =>
     params.google === "1" ? getPendingGoogleSignup() : null,
   );
-  const [step, setStep] = useState(1);
+  const [stepIndex, setStepIndex] = useState(0);
   const [data, setData] = useState<OnboardingData>(() => initialDataFor(googleSignup));
+  const steps = stepsFor(completingProfile, data.purpose);
+  const stepId = steps[Math.min(stepIndex, steps.length - 1)];
+  const stepNumber = stepIndex + 1;
+  const totalSteps = steps.length;
+  const shoppingOnly = !completingProfile && data.purpose === "shopping";
   // Google ile yeni hesap acildiginda (e-posta Google tarafindan dogrulanmis) kod ekrani yerine "Hazirsin" gosterilir.
   const [completedName, setCompletedName] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -233,21 +297,58 @@ export function OnboardingContainer() {
         BODY_FAT_INPUT_KEYS.includes(key) && prev[key] !== value ? false : prev.confirmLowBodyFatWarning,
     }));
 
+  const goToStep = (id: StepId) => setStepIndex(Math.max(steps.indexOf(id), 0));
+  const goToStepAfter = (id: StepId) => setStepIndex(steps.indexOf(id) + 1);
+
   const goNext = () => {
-    if (step < TOTAL_STEPS) {
-      setStep(step + 1);
+    if (stepIndex < steps.length - 1) {
+      setStepIndex(stepIndex + 1);
     } else {
-      handleCreateAccount();
+      void submit();
     }
   };
 
   const goBack = () => {
-    if (step === 1) {
+    if (stepIndex === 0) {
       router.back();
       return;
     }
     setSubmitError(null);
-    setStep(step - 1);
+    setStepIndex(stepIndex - 1);
+  };
+
+  const submit = (submitData: OnboardingData = data) =>
+    completingProfile ? handleCompleteProfile(submitData) : handleCreateAccount(submitData);
+
+  // Profil tamamlama bittiginde (veya zaten tamamsa) MB Fit'e geri donulur; FitnessProfileGate artik icerigi gosterir.
+  const leaveProfileCompletion = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace("/pages/dashboard");
+  };
+
+  const handleCompleteProfile = async (submitData: OnboardingData) => {
+    if (isSubmitting) return;
+    setSubmitError(null);
+    setIsSubmitting(true);
+    try {
+      await completeFitnessProfile(toFitnessProfileRequest(submitData, equipmentList.map((item) => item.id)));
+      setCompletedName(profile.firstName);
+    } catch (error) {
+      if (isLowBodyFatConfirmationError(error)) {
+        setLowBodyFatPrompt({ origin: "server", message: (error as ApiError).message });
+        return;
+      }
+      if (isApiError(error) && error.status === 409) {
+        // Profil bu arada (baska cihazda) tamamlanmis: guncel profil yuklenir ve MB Fit'e donulur.
+        reloadProfile();
+        leaveProfileCompletion();
+        return;
+      }
+      console.error("Profil tamamlama hatası:", error);
+      setSubmitError(registrationErrorMessage(error));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleCreateAccount = async (submitData: OnboardingData = data) => {
@@ -267,6 +368,7 @@ export function OnboardingContainer() {
         codeState: result.verificationEmailSent === false ? "failed" : "sent",
         fromRegistration: true,
         name: `${data.name} ${data.lastName}`.trim(),
+        shoppingOnly: submitData.purpose === "shopping",
       });
     } catch (error) {
       if (isLowBodyFatConfirmationError(error)) {
@@ -288,7 +390,7 @@ export function OnboardingContainer() {
       // ID token ~1 saat gecerli; onboarding uzun surduyse sessizce yenisi alinir.
       const idToken = (await refreshGoogleIdToken()) ?? signup.idToken;
       const request: GoogleRegisterRequest = {
-        ...toProfileFields(submitData, equipmentList.map((item) => item.id)),
+        ...toAccountFields(submitData, equipmentList.map((item) => item.id)),
         idToken,
       };
       const result = await googleRegister(request);
@@ -299,12 +401,13 @@ export function OnboardingContainer() {
           codeState: result.verificationEmailSent === false ? "failed" : "sent",
           fromRegistration: true,
           name,
+          shoppingOnly: submitData.purpose === "shopping",
         });
       } else if (result.isNewUser) {
         setCompletedName(name);
       } else {
         // Bu Google hesabi bu arada baska bir yoldan kaydolmus: dogrudan uygulamaya gecilir.
-        goToDashboardAfterAuth(router);
+        goToDashboardAfterAuth(router, { shoppingOnly: result.fitnessProfileCompleted === false });
       }
     } catch (error) {
       if (isLowBodyFatConfirmationError(error)) {
@@ -372,14 +475,14 @@ export function OnboardingContainer() {
 
   const skipBodyComposition = () => {
     setData((prev) => ({ ...prev, bodyFat: "", neck: "", waist: "", hip: "", confirmLowBodyFatWarning: false }));
-    setStep(BODY_COMPOSITION_STEP + 1);
+    goToStepAfter("bodyComposition");
   };
 
   // "Hedefimi yeniden degerlendirecegim": hicbir sey kaydedilmez, kullanici hedef adimina doner.
   const reconsiderGoal = () => {
     setLowBodyFatPrompt(null);
     setSubmitError(null);
-    setStep(GOAL_STEP);
+    goToStep("goal");
   };
 
   // "Uyariyi anladim, devam et": acik onay kaydedilir; sunucu istediyse kayit onayla tekrar gonderilir.
@@ -389,14 +492,20 @@ export function OnboardingContainer() {
     setData(confirmed);
     setLowBodyFatPrompt(null);
     if (prompt?.origin === "server") {
-      void handleCreateAccount(confirmed);
+      void submit(confirmed);
     } else {
-      setStep(BODY_COMPOSITION_STEP + 1);
+      goToStepAfter("bodyComposition");
     }
   };
 
   if (completedName !== null) {
-    return <SuccessScreen name={completedName} onStart={() => goToDashboardAfterAuth(router)} />;
+    return (
+      <SuccessScreen
+        name={completedName}
+        variant={shoppingOnly ? "shopping" : "fitness"}
+        onStart={completingProfile ? leaveProfileCompletion : () => goToDashboardAfterAuth(router, { shoppingOnly })}
+      />
+    );
   }
 
   return (
@@ -413,12 +522,26 @@ export function OnboardingContainer() {
   );
 
   function renderStep() {
-    switch (step) {
-      case 1:
+    switch (stepId) {
+      case "purpose":
         return (
           <OnboardingScreen
-            step={1}
-            totalSteps={TOTAL_STEPS}
+            step={stepNumber}
+            totalSteps={totalSteps}
+            title="MB FIT'i nasıl kullanacaksın?"
+            description="Sadece alışveriş yapacaksan boy, kilo gibi bilgileri sormayız; MB Fit'i istediğin zaman açıp tamamlayabilirsin."
+            onBack={goBack}
+            onContinue={goNext}
+          >
+            <PurposeStep value={data.purpose} onChange={(value) => update("purpose", value)} />
+          </OnboardingScreen>
+        );
+
+      case "name":
+        return (
+          <OnboardingScreen
+            step={stepNumber}
+            totalSteps={totalSteps}
             title="Adın nedir?"
             description="Adını, MB FIT deneyimini kişiselleştirmek için kullanacağız."
             onBack={goBack}
@@ -432,11 +555,11 @@ export function OnboardingContainer() {
           </OnboardingScreen>
         );
 
-      case 2:
+      case "lastName":
         return (
           <OnboardingScreen
-            step={2}
-            totalSteps={TOTAL_STEPS}
+            step={stepNumber}
+            totalSteps={totalSteps}
             title="Soyadın nedir?"
             description="Soyadını, profilini tamamlamak için kullanacağız."
             onBack={goBack}
@@ -450,11 +573,11 @@ export function OnboardingContainer() {
           </OnboardingScreen>
         );
 
-      case 3:
+      case "gender":
         return (
           <OnboardingScreen
-            step={3}
-            totalSteps={TOTAL_STEPS}
+            step={stepNumber}
+            totalSteps={totalSteps}
             title="Cinsiyetin nedir?"
             description="Bu, fitness önerilerini kişiselleştirmemize yardımcı olur."
             onBack={goBack}
@@ -468,11 +591,11 @@ export function OnboardingContainer() {
           </OnboardingScreen>
         );
 
-      case 4:
+      case "age":
         return (
           <OnboardingScreen
-            step={4}
-            totalSteps={TOTAL_STEPS}
+            step={stepNumber}
+            totalSteps={totalSteps}
             title="Kaç yaşındasın?"
             description="Yaşın, antrenman ve beslenme önerilerini kişiselleştirmemize yardımcı olur."
             onBack={goBack}
@@ -486,11 +609,11 @@ export function OnboardingContainer() {
           </OnboardingScreen>
         );
 
-      case 5:
+      case "height":
         return (
           <OnboardingScreen
-            step={5}
-            totalSteps={TOTAL_STEPS}
+            step={stepNumber}
+            totalSteps={totalSteps}
             title="Boyun kaç?"
             description="Boyunu, fitness metriklerini hesaplamak için kullanacağız."
             onBack={goBack}
@@ -510,11 +633,11 @@ export function OnboardingContainer() {
           </OnboardingScreen>
         );
 
-      case 6:
+      case "weight":
         return (
           <OnboardingScreen
-            step={6}
-            totalSteps={TOTAL_STEPS}
+            step={stepNumber}
+            totalSteps={totalSteps}
             title="Şu anki kilon nedir?"
             description="Bu, hedeflerini kişiselleştirmemize ve ilerlemeni takip etmemize yardımcı olur."
             onBack={goBack}
@@ -530,11 +653,11 @@ export function OnboardingContainer() {
           </OnboardingScreen>
         );
 
-      case 7:
+      case "goal":
         return (
           <OnboardingScreen
-            step={7}
-            totalSteps={TOTAL_STEPS}
+            step={stepNumber}
+            totalSteps={totalSteps}
             title="Ana hedefin nedir?"
             description="MB FIT'in odaklanmasını istediğin hedefi seç."
             onBack={goBack}
@@ -548,11 +671,11 @@ export function OnboardingContainer() {
           </OnboardingScreen>
         );
 
-      case BODY_COMPOSITION_STEP:
+      case "bodyComposition":
         return (
           <OnboardingScreen
-            step={BODY_COMPOSITION_STEP}
-            totalSteps={TOTAL_STEPS}
+            step={stepNumber}
+            totalSteps={totalSteps}
             title="Vücut ölçülerin (isteğe bağlı)"
             description="Yağ oranını bilmek hedefini ve beslenme planını güvenle ayarlamamıza yardımcı olur."
             onBack={goBack}
@@ -570,11 +693,11 @@ export function OnboardingContainer() {
           </OnboardingScreen>
         );
 
-      case 9:
+      case "activity":
         return (
           <OnboardingScreen
-            step={9}
-            totalSteps={TOTAL_STEPS}
+            step={stepNumber}
+            totalSteps={totalSteps}
             title="Ne kadar aktifsin?"
             description="Mevcut aktivite seviyeni bize anlat."
             onBack={goBack}
@@ -588,11 +711,11 @@ export function OnboardingContainer() {
           </OnboardingScreen>
         );
 
-      case 10:
+      case "experience":
         return (
           <OnboardingScreen
-            step={10}
-            totalSteps={TOTAL_STEPS}
+            step={stepNumber}
+            totalSteps={totalSteps}
             title="Antrenman tecrüben nedir?"
             onBack={goBack}
             onContinue={goNext}
@@ -605,11 +728,11 @@ export function OnboardingContainer() {
           </OnboardingScreen>
         );
 
-      case 11:
+      case "frequency":
         return (
           <OnboardingScreen
-            step={11}
-            totalSteps={TOTAL_STEPS}
+            step={stepNumber}
+            totalSteps={totalSteps}
             title="Ne sıklıkla antrenman yapmak istiyorsun?"
             onBack={goBack}
             onContinue={goNext}
@@ -622,15 +745,18 @@ export function OnboardingContainer() {
           </OnboardingScreen>
         );
 
-      case 12:
+      case "equipment":
         return (
           <OnboardingScreen
-            step={12}
-            totalSteps={TOTAL_STEPS}
+            step={stepNumber}
+            totalSteps={totalSteps}
             title="Nerede antrenman yapıyorsun?"
             onBack={goBack}
             onContinue={goNext}
+            continueLabel={completingProfile ? "Profili tamamla" : undefined}
+            continueLoading={completingProfile && isSubmitting}
             continueDisabled={
+              (completingProfile && isSubmitting) ||
               !data.trainingLocation ||
               equipmentStatus === "loading" ||
               // Spor salonunda tum ekipman ID'leri gonderilir; liste gelmeden devam edilemez.
@@ -648,20 +774,27 @@ export function OnboardingContainer() {
               equipment={data.equipment}
               onEquipmentChange={(value) => update("equipment", value)}
             />
+            {completingProfile && submitError ? (
+              <Text style={[styles.error, { color: colors.danger }]} accessibilityLiveRegion="polite">
+                {submitError}
+              </Text>
+            ) : null}
           </OnboardingScreen>
         );
 
-      case 13:
+      case "account":
       default:
         return (
           <OnboardingScreen
-            step={13}
-            totalSteps={TOTAL_STEPS}
+            step={stepNumber}
+            totalSteps={totalSteps}
             title="MB FIT hesabını oluştur"
             description={
               googleSignup
                 ? "Son olarak bir kullanıcı adı seç."
-                : "Profilini kaydet ve kişiselleştirilmiş fitness yolculuğuna başla."
+                : shoppingOnly
+                  ? "Hesabını oluştur ve MB Shop'ta alışverişe başla."
+                  : "Profilini kaydet ve kişiselleştirilmiş fitness yolculuğuna başla."
             }
             onBack={goBack}
             onContinue={goNext}
@@ -693,3 +826,7 @@ export function OnboardingContainer() {
     }
   }
 }
+
+const styles = StyleSheet.create({
+  error: { marginTop: 12, fontSize: 13, fontWeight: "600" },
+});

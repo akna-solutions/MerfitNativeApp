@@ -48,10 +48,11 @@ export function useGoogleSignIn() {
 
       const result = await googleSignIn(idToken);
       if (result.auth) {
+        const shoppingOnly = result.auth.fitnessProfileCompleted === false;
         if (result.auth.emailConfirmed === false) {
-          goToEmailVerificationAfterAuth(router);
+          goToEmailVerificationAfterAuth(router, { shoppingOnly });
         } else {
-          goToDashboardAfterAuth(router);
+          goToDashboardAfterAuth(router, { shoppingOnly });
         }
         return { type: "signedIn" };
       }

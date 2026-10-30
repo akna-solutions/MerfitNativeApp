@@ -38,6 +38,9 @@ jest.mock("../../../../shared/auth/googleSignIn", () => {
     refreshGoogleIdToken: () => mockRefreshGoogleIdToken(),
   };
 });
+jest.mock("../../../../shared/profile/ProfileContext", () => ({
+  useProfile: () => ({ profile: { firstName: "Ayşe" }, completeFitnessProfile: jest.fn(), reload: jest.fn() }),
+}));
 jest.mock("../../../../shared/auth/useUsernameAvailability", () => ({
   useUsernameAvailability: () => ({ state: "available" }),
 }));
@@ -73,10 +76,11 @@ beforeEach(() => {
 });
 
 /** Ad/soyad Google'dan on doldurulmus olmali; diger adimlar taslaklarla dolar. */
-async function goToAccountStep() {
-  for (let step = 1; step < 13; step++) {
+async function goToAccountStep(presses = 13) {
+  // Varsayilan: amac adimi + 12 adim.
+  for (let step = 0; step < presses; step++) {
     await waitFor(() => expect(screen.getByText("Devam et")).toBeEnabled());
-    fireEvent.press(screen.getByText("Devam et"));
+    await fireEvent.press(screen.getByText("Devam et"));
   }
   await screen.findByText("MB FIT hesabını oluştur");
 }
@@ -88,19 +92,20 @@ describe("Onboarding: Google ile kayıt", () => {
     mockRefreshGoogleIdToken.mockResolvedValue("fresh-token");
     mockGoogleRegister.mockResolvedValue({ emailConfirmed: true, isNewUser: true });
 
-    render(<OnboardingContainer />);
+    await render(<OnboardingContainer />);
 
+    await fireEvent.press(screen.getByText("Devam et")); // amac adimi
     expect(screen.getByText("ad:Mert")).toBeTruthy();
-    await goToAccountStep();
+    await goToAccountStep(12);
 
     expect(screen.getByText("Google hesabınla kayıt oluyorsun")).toBeTruthy();
     expect(screen.getByText("mert@gmail.com")).toBeTruthy();
     expect(screen.queryByPlaceholderText("Şifre")).toBeNull();
     expect(screen.queryByPlaceholderText("E-posta")).toBeNull();
 
-    fireEvent.changeText(screen.getByPlaceholderText("Kullanıcı adı"), "mert_g");
+    await fireEvent.changeText(screen.getByPlaceholderText("Kullanıcı adı"), "mert_g");
     await waitFor(() => expect(screen.getByText("Hesap oluştur")).toBeEnabled());
-    fireEvent.press(screen.getByText("Hesap oluştur"));
+    await fireEvent.press(screen.getByText("Hesap oluştur"));
 
     await screen.findByText("Antrenmana Başla");
     const request = mockGoogleRegister.mock.calls[0][0];
@@ -119,17 +124,17 @@ describe("Onboarding: Google ile kayıt", () => {
     expect(request).not.toHaveProperty("password");
     expect(mockRegister).not.toHaveBeenCalled();
 
-    fireEvent.press(screen.getByText("Antrenmana Başla"));
+    await fireEvent.press(screen.getByText("Antrenmana Başla"));
     expect(mockRouter.replace).toHaveBeenCalledWith("/pages/dashboard");
   });
 
   it("son adımda Google'a dokununca hesap yoksa Google moduna geçer; yeni token alınamazsa eldeki token kullanılır", async () => {
     setPendingGoogleSignup(GOOGLE_SIGNUP);
     mockParams = { google: "1" };
-    render(<OnboardingContainer />);
+    await render(<OnboardingContainer />);
     await goToAccountStep();
     // E-posta/sifre ile kayda don, sonra Google butonunu kullan.
-    fireEvent.press(screen.getByText("E-posta ve şifreyle kayıt ol"));
+    await fireEvent.press(screen.getByText("E-posta ve şifreyle kayıt ol"));
     expect(getPendingGoogleSignup()).toBeNull();
     expect(screen.getByPlaceholderText("Şifre")).toBeTruthy();
 
@@ -137,14 +142,14 @@ describe("Onboarding: Google ile kayıt", () => {
     mockGoogleSignIn.mockResolvedValue({ registrationRequired: true, profile: { email: "ali@gmail.com" } });
     mockGoogleRegister.mockResolvedValue({ emailConfirmed: true, isNewUser: true });
     await act(async () => {
-      fireEvent.press(screen.getByLabelText("Google ile devam et"));
+      await fireEvent.press(screen.getByLabelText("Google ile devam et"));
     });
 
     expect(mockGoogleSignIn).toHaveBeenCalledWith("picker-token");
     expect(await screen.findByText("ali@gmail.com")).toBeTruthy();
-    fireEvent.changeText(screen.getByPlaceholderText("Kullanıcı adı"), "ali_1");
+    await fireEvent.changeText(screen.getByPlaceholderText("Kullanıcı adı"), "ali_1");
     await waitFor(() => expect(screen.getByText("Hesap oluştur")).toBeEnabled());
-    fireEvent.press(screen.getByText("Hesap oluştur"));
+    await fireEvent.press(screen.getByText("Hesap oluştur"));
 
     await waitFor(() => expect(mockGoogleRegister).toHaveBeenCalled());
     expect(mockGoogleRegister.mock.calls[0][0].idToken).toBe("picker-token");
@@ -154,12 +159,12 @@ describe("Onboarding: Google ile kayıt", () => {
     setPendingGoogleSignup(GOOGLE_SIGNUP);
     mockParams = { google: "1" };
     mockGoogleRegister.mockRejectedValue(new ApiError(401, "Google ile giriş doğrulanamadı. Lütfen tekrar dene."));
-    render(<OnboardingContainer />);
+    await render(<OnboardingContainer />);
     await goToAccountStep();
 
-    fireEvent.changeText(screen.getByPlaceholderText("Kullanıcı adı"), "mert_g");
+    await fireEvent.changeText(screen.getByPlaceholderText("Kullanıcı adı"), "mert_g");
     await waitFor(() => expect(screen.getByText("Hesap oluştur")).toBeEnabled());
-    fireEvent.press(screen.getByText("Hesap oluştur"));
+    await fireEvent.press(screen.getByText("Hesap oluştur"));
 
     expect(await screen.findByText("Google oturumunun süresi doldu. \"Google ile devam et\"e tekrar dokun.")).toBeTruthy();
     expect(screen.getByPlaceholderText("Şifre")).toBeTruthy();
@@ -170,12 +175,12 @@ describe("Onboarding: Google ile kayıt", () => {
     setPendingGoogleSignup(GOOGLE_SIGNUP);
     mockParams = { google: "1" };
     mockGoogleRegister.mockResolvedValue({ emailConfirmed: false, isNewUser: true, verificationEmailSent: true });
-    render(<OnboardingContainer />);
+    await render(<OnboardingContainer />);
     await goToAccountStep();
 
-    fireEvent.changeText(screen.getByPlaceholderText("Kullanıcı adı"), "mert_g");
+    await fireEvent.changeText(screen.getByPlaceholderText("Kullanıcı adı"), "mert_g");
     await waitFor(() => expect(screen.getByText("Hesap oluştur")).toBeEnabled());
-    fireEvent.press(screen.getByText("Hesap oluştur"));
+    await fireEvent.press(screen.getByText("Hesap oluştur"));
 
     await waitFor(() =>
       expect(mockRouter.replace).toHaveBeenCalledWith({
@@ -187,7 +192,8 @@ describe("Onboarding: Google ile kayıt", () => {
 
   it("google parametresi yoksa bekleyen Google kaydını kullanmaz", async () => {
     setPendingGoogleSignup(GOOGLE_SIGNUP);
-    render(<OnboardingContainer />);
+    await render(<OnboardingContainer />);
+    await fireEvent.press(screen.getByText("Devam et")); // amac adimi
     expect(screen.getByText("ad:")).toBeTruthy();
   });
 });
