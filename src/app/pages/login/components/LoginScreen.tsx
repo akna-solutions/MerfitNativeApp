@@ -47,10 +47,12 @@ export function LoginScreen() {
     try {
       const result = await login({ emailOrUsername: emailOrUsername.trim(), password });
       // Dogrulanmamis hesaplar giris yapar ama once kod ekranina gider; dogrulamadan uygulamaya gecilmez.
+      // Yalnizca alisveris icin kayit olmus hesap MB Shop'tan baslar.
+      const shoppingOnly = result.fitnessProfileCompleted === false;
       if (result.emailConfirmed === false) {
-        goToEmailVerificationAfterAuth(router);
+        goToEmailVerificationAfterAuth(router, { shoppingOnly });
       } else {
-        goToDashboardAfterAuth(router);
+        goToDashboardAfterAuth(router, { shoppingOnly });
       }
     } catch (error) {
       console.error("Login hatası:", error);

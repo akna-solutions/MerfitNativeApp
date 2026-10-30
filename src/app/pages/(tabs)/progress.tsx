@@ -1,5 +1,10 @@
+import { FitnessProfileGate } from "../../../shared/profile/FitnessProfileGate";
 import { ProgressScreen } from "../progress/ProgressScreen";
 
 export default function ProgressTab() {
-  return <ProgressScreen />;
+  return (
+    <FitnessProfileGate>
+      <ProgressScreen />
+    </FitnessProfileGate>
+  );
 }

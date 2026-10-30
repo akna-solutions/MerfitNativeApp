@@ -7,6 +7,7 @@ import { AuthStatusIcon } from "../../../shared/auth/components/AuthStatusIcon";
 import { EmailCodeVerification, InitialCodeState } from "../../../shared/auth/components/EmailCodeVerification";
 import { goToDashboardAfterAuth } from "../../../shared/auth/navigation";
 import { useEmailVerificationState } from "../../../shared/auth/useEmailVerificationState";
+import { useProfile } from "../../../shared/profile/ProfileContext";
 import { OnboardingButton } from "../onboarding/components/OnboardingButton";
 import { SuccessScreen } from "../onboarding/components/SuccessScreen";
 
@@ -22,14 +23,17 @@ const CODE_STATES: InitialCodeState[] = ["sent", "failed", "notSent"];
 export default function VerifyEmailRoute() {
   const router = useRouter();
   const { logout } = useAuth();
-  const params = useLocalSearchParams<{ code?: string; from?: string; name?: string }>();
+  const params = useLocalSearchParams<{ code?: string; from?: string; name?: string; shop?: string }>();
   const initialState = CODE_STATES.includes(params.code as InitialCodeState) ? (params.code as InitialCodeState) : "notSent";
   const fromRegistration = params.from === "register";
   const { isSignedIn, email, emailConfirmed, markEmailConfirmed } = useEmailVerificationState();
   const [justVerified, setJustVerified] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
-  const continueToApp = () => goToDashboardAfterAuth(router);
+  const { profile } = useProfile();
+  // Yalnizca alisveris icin kayit olmus hesap MB Shop'tan baslar (kayit/giris yaniti veya yuklenen profil).
+  const shoppingOnly = params.shop === "1" || profile.fitnessProfileCompleted === false;
+  const continueToApp = () => goToDashboardAfterAuth(router, { shoppingOnly });
   const goToLogin = () => {
     if (router.canDismiss()) router.dismissAll();
     router.replace("/pages/login");
@@ -58,7 +62,13 @@ export default function VerifyEmailRoute() {
   }
 
   if (justVerified && fromRegistration) {
-    return <SuccessScreen name={typeof params.name === "string" ? params.name : ""} onStart={continueToApp} />;
+    return (
+      <SuccessScreen
+        name={typeof params.name === "string" ? params.name : ""}
+        variant={shoppingOnly ? "shopping" : "fitness"}
+        onStart={continueToApp}
+      />
+    );
   }
 
   if (justVerified || emailConfirmed === true) {

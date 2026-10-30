@@ -2,6 +2,9 @@ import type { FitnessGoalCode } from "../../../services/api/types";
 
 export type Gender = "male" | "female";
 
+/** Kayit amaci: "shopping" secilirse fitness adimlari (boy, kilo, hedef...) atlanir. */
+export type Purpose = "fitness" | "shopping";
+
 export type HeightUnit = "cm" | "ft_in";
 export type WeightUnit = "kg" | "lb";
 
@@ -26,6 +29,8 @@ export type EquipmentSelection = number | "none";
 
 // Tek bir state objesi - backend'e gönderilecek onboarding profili.
 export type OnboardingData = {
+  /** Kayit amaci (PurposeStep); varsayilan tam uygulama (MB Fit + MB Shop). */
+  purpose: Purpose;
   name: string;
   lastName: string;
   /** Kullanicinin kendi sectigi kullanici adi (AccountStep). "@" ONEKI ICERMEZ. */
@@ -57,6 +62,7 @@ export type OnboardingData = {
 };
 
 export const initialOnboardingData: OnboardingData = {
+  purpose: "fitness",
   name: "",
   lastName: "",
   username: "",

@@ -36,6 +36,9 @@ jest.mock("../../../../shared/auth/googleSignIn", () => ({
   requestGoogleIdToken: jest.fn(),
   refreshGoogleIdToken: jest.fn(async () => null),
 }));
+jest.mock("../../../../shared/profile/ProfileContext", () => ({
+  useProfile: () => ({ profile: { firstName: "Ayşe" }, completeFitnessProfile: jest.fn(), reload: jest.fn() }),
+}));
 jest.mock("../../../../shared/auth/useUsernameAvailability", () => ({
   useUsernameAvailability: () => ({ state: "available" }),
 }));
@@ -71,50 +74,50 @@ beforeEach(() => {
 async function pressContinue(times: number) {
   for (let i = 0; i < times; i++) {
     await waitFor(() => expect(screen.getByText("Devam et")).toBeEnabled());
-    fireEvent.press(screen.getByText("Devam et"));
+    await fireEvent.press(screen.getByText("Devam et"));
   }
 }
 
 async function goToBodyCompositionStep() {
-  await pressContinue(7);
+  await pressContinue(8); // amac + ad, soyad, cinsiyet, yas, boy, kilo, hedef
   await screen.findByText("Vücut ölçülerin (isteğe bağlı)");
 }
 
 async function finishAndSubmit() {
   await pressContinue(4);
   await screen.findByText("MB FIT hesabını oluştur");
-  fireEvent.changeText(screen.getByPlaceholderText("Kullanıcı adı"), "ayse_1");
-  fireEvent.changeText(screen.getByPlaceholderText("E-posta"), "ayse@example.com");
-  fireEvent.changeText(screen.getByPlaceholderText("Şifre"), "123456");
-  fireEvent.changeText(screen.getByPlaceholderText("Şifreyi onayla"), "123456");
+  await fireEvent.changeText(screen.getByPlaceholderText("Kullanıcı adı"), "ayse_1");
+  await fireEvent.changeText(screen.getByPlaceholderText("E-posta"), "ayse@example.com");
+  await fireEvent.changeText(screen.getByPlaceholderText("Şifre"), "123456");
+  await fireEvent.changeText(screen.getByPlaceholderText("Şifreyi onayla"), "123456");
   await waitFor(() => expect(screen.getByText("Hesap oluştur")).toBeEnabled());
-  fireEvent.press(screen.getByText("Hesap oluştur"));
+  await fireEvent.press(screen.getByText("Hesap oluştur"));
 }
 
 describe("Onboarding: düşük yağ oranı uyarısı", () => {
   it("Yağ Kaybı seçilip yağ oranı düşükse uyarır; yeniden değerlendirme hedef adımına döner", async () => {
-    render(<OnboardingContainer />);
+    await render(<OnboardingContainer />);
     await goToBodyCompositionStep();
-    fireEvent.changeText(screen.getByLabelText("Vücut yağ oranı (%)"), "6");
-    fireEvent.press(screen.getByText("Devam et"));
+    await fireEvent.changeText(screen.getByLabelText("Vücut yağ oranı (%)"), "6");
+    await fireEvent.press(screen.getByText("Devam et"));
 
     expect(await screen.findByText(LOW_BODY_FAT_WARNING_MESSAGE)).toBeTruthy();
-    fireEvent.press(screen.getByText(LOW_BODY_FAT_RECONSIDER_LABEL));
+    await fireEvent.press(screen.getByText(LOW_BODY_FAT_RECONSIDER_LABEL));
 
     expect(await screen.findByText("Ana hedefin nedir?")).toBeTruthy();
     expect(mockRegister).not.toHaveBeenCalled();
   });
 
   it("uyarı onaylanırsa devam eder ve kayıt açık onayla gönderilir", async () => {
-    render(<OnboardingContainer />);
+    await render(<OnboardingContainer />);
     await goToBodyCompositionStep();
     // Navy tahmini: 180 cm, boyun 40, bel 74 -> %4.6 (25 yaş erkek için düşük aralık).
-    fireEvent.changeText(screen.getByLabelText("Boyun çevresi (cm)"), "40");
-    fireEvent.changeText(screen.getByLabelText("Bel çevresi (cm, göbek hizası)"), "74");
+    await fireEvent.changeText(screen.getByLabelText("Boyun çevresi (cm)"), "40");
+    await fireEvent.changeText(screen.getByLabelText("Bel çevresi (cm, göbek hizası)"), "74");
     expect(screen.getByText(/Tahmini yağ oranın: %4.6/)).toBeTruthy();
-    fireEvent.press(screen.getByText("Devam et"));
+    await fireEvent.press(screen.getByText("Devam et"));
 
-    fireEvent.press(await screen.findByText(LOW_BODY_FAT_CONTINUE_LABEL));
+    await fireEvent.press(await screen.findByText(LOW_BODY_FAT_CONTINUE_LABEL));
     expect(await screen.findByText("Ne kadar aktifsin?")).toBeTruthy();
 
     await finishAndSubmit();
@@ -130,18 +133,18 @@ describe("Onboarding: düşük yağ oranı uyarısı", () => {
 
   it("Kas Geliştirme hedefinde veya ölçüm yoksa uyarı göstermez", async () => {
     mockGoal = "build_muscle";
-    render(<OnboardingContainer />);
+    await render(<OnboardingContainer />);
     await goToBodyCompositionStep();
-    fireEvent.changeText(screen.getByLabelText("Vücut yağ oranı (%)"), "6");
-    fireEvent.press(screen.getByText("Devam et"));
+    await fireEvent.changeText(screen.getByLabelText("Vücut yağ oranı (%)"), "6");
+    await fireEvent.press(screen.getByText("Devam et"));
     expect(await screen.findByText("Ne kadar aktifsin?")).toBeTruthy();
     expect(screen.queryByText(LOW_BODY_FAT_WARNING_MESSAGE)).toBeNull();
   });
 
   it("aralık dışı ölçümde hata gösterir", async () => {
-    render(<OnboardingContainer />);
+    await render(<OnboardingContainer />);
     await goToBodyCompositionStep();
-    fireEvent.changeText(screen.getByLabelText("Boyun çevresi (cm)"), "5");
+    await fireEvent.changeText(screen.getByLabelText("Boyun çevresi (cm)"), "5");
     expect(screen.getByText("Boyun çevresi 20-80 cm arasında olmalıdır.")).toBeTruthy();
 
   });
@@ -150,13 +153,13 @@ describe("Onboarding: düşük yağ oranı uyarısı", () => {
     mockRegister
       .mockRejectedValueOnce(new ApiError(409, LOW_BODY_FAT_WARNING_MESSAGE, [LOW_BODY_FAT_CONFIRMATION_CODE]))
       .mockResolvedValueOnce({ verificationEmailSent: true });
-    render(<OnboardingContainer />);
+    await render(<OnboardingContainer />);
     await goToBodyCompositionStep();
-    fireEvent.press(screen.getByText("Şimdilik atla"));
+    await fireEvent.press(screen.getByText("Şimdilik atla"));
     await screen.findByText("Ne kadar aktifsin?");
 
     await finishAndSubmit();
-    fireEvent.press(await screen.findByText(LOW_BODY_FAT_CONTINUE_LABEL));
+    await fireEvent.press(await screen.findByText(LOW_BODY_FAT_CONTINUE_LABEL));
 
     await waitFor(() => expect(mockRegister).toHaveBeenCalledTimes(2));
     expect(mockRegister.mock.calls[0][0].confirmLowBodyFatWarning).toBeNull();

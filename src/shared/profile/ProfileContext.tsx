@@ -13,7 +13,11 @@ import { useAuth } from "../auth/AuthContext";
 import { ApiError, isApiError } from "../../services/api/client";
 import { isLowBodyFatConfirmationError } from "../bodyComposition/bodyFat";
 import * as profileApi from "../../services/api/profile";
-import { ProfileResponse, UpdateProfileRequest as ApiUpdateProfileRequest } from "../../services/api/types";
+import {
+    FitnessProfileRequest,
+    ProfileResponse,
+    UpdateProfileRequest as ApiUpdateProfileRequest,
+} from "../../services/api/types";
 import { EMPTY_PROFILE_DATA } from "./mockData";
 import { Goal, ProfileData, TrainingLocation, Weekday, WEEKDAYS } from "./types";
 
@@ -32,6 +36,11 @@ type ProfileContextValue = {
    * kullanici acikca onaylamadan degismemelidir.
    */
   changeGoal: (goal: Goal, options?: { confirmLowBodyFatWarning?: boolean }) => Promise<ChangeGoalResult>;
+  /**
+   * Yalnizca alisveris icin kayit olmus kullanicinin fitness profilini tamamlar (POST /api/profile/fitness) ve
+   * yanittaki profili uygular. Hatalari (dusuk yag orani onayi, dogrulama) cagirana firlatir.
+   */
+  completeFitnessProfile: (request: FitnessProfileRequest) => Promise<void>;
   /** GET /api/profile su an calisiyor mu. */
   isLoading: boolean;
   /** Bu oturumda profil en az bir kez basariyla yuklendi mi. false iken `profile` bos veridir. */
@@ -51,6 +60,8 @@ function mapToProfileData(response: ProfileResponse): ProfileData {
     username: response.username,
     email: response.email,
     emailConfirmed: response.emailConfirmed,
+    // Alani gondermeyen (eski) backend'de herkes tamamlanmis sayilir; MB Fit ekranlari kilitlenmez.
+    fitnessProfileCompleted: response.fitnessProfileCompleted ?? true,
     dateOfBirth: response.dateOfBirth,
     gender: response.gender as ProfileData["gender"],
     age: response.age,
@@ -244,9 +255,25 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const completeFitnessProfile = useCallback(async (request: FitnessProfileRequest) => {
+    const requestId = requestIdRef.current;
+    pendingWritesRef.current++;
+    try {
+      const response = await profileApi.completeFitnessProfile(request);
+      if (requestId === requestIdRef.current) {
+        const next = mapToProfileData(response);
+        profileRef.current = next;
+        setProfile(next);
+        setIsLoaded(true);
+      }
+    } finally {
+      pendingWritesRef.current--;
+    }
+  }, []);
+
   const value = useMemo(
-    () => ({ profile, updateProfile, changeGoal, isLoading, isLoaded, error, reload }),
-    [profile, updateProfile, changeGoal, isLoading, isLoaded, error, reload],
+    () => ({ profile, updateProfile, changeGoal, completeFitnessProfile, isLoading, isLoaded, error, reload }),
+    [profile, updateProfile, changeGoal, completeFitnessProfile, isLoading, isLoaded, error, reload],
   );
 
   return (

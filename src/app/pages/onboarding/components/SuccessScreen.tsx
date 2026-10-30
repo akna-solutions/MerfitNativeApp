@@ -8,9 +8,25 @@ import { OnboardingButton } from "./OnboardingButton";
 type Props = {
   name: string;
   onStart: () => void;
+  /** "shopping": yalnizca alisveris icin acilan hesap; metinler ve buton MB Shop'a gore. */
+  variant?: "fitness" | "shopping";
 };
 
-export function SuccessScreen({ name, onStart }: Props) {
+const COPY = {
+  fitness: {
+    subtitle: "MB FIT yolculuğun şimdi başlıyor.",
+    description: "Antrenman deneyimini kişiselleştirmek için profilini kullanacağız.",
+    action: "Antrenmana Başla",
+  },
+  shopping: {
+    subtitle: "Hesabın hazır.",
+    description: "MB Shop'ta alışverişe başlayabilirsin. Antrenman ve beslenme planı istediğinde MB Fit'ten profilini tamamlaman yeterli.",
+    action: "Alışverişe Başla",
+  },
+};
+
+export function SuccessScreen({ name, onStart, variant = "fitness" }: Props) {
+  const copy = COPY[variant];
   const { colors } = useTheme();
   const fade = useRef(new Animated.Value(0)).current;
 
@@ -49,16 +65,14 @@ export function SuccessScreen({ name, onStart }: Props) {
         <Text style={[styles.title, { color: colors.text }]}>
           Hazırsın{name ? `, ${name}` : ""}.
         </Text>
-        <Text style={[styles.subtitle, { color: colors.text }]}>MB FIT yolculuğun şimdi başlıyor.</Text>
-        <Text style={[styles.description, { color: colors.textSecondary }]}>
-          Antrenman deneyimini kişiselleştirmek için profilini kullanacağız.
-        </Text>
+        <Text style={[styles.subtitle, { color: colors.text }]}>{copy.subtitle}</Text>
+        <Text style={[styles.description, { color: colors.textSecondary }]}>{copy.description}</Text>
       </Animated.View>
 
       <View style={styles.spacer} />
 
       <View style={styles.footer}>
-        <OnboardingButton label="Antrenmana Başla" onPress={onStart} />
+        <OnboardingButton label={copy.action} onPress={onStart} />
       </View>
     </SafeAreaView>
   );
