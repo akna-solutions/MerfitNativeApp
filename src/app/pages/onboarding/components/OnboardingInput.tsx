@@ -30,5 +30,8 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
     fontSize: 16,
     fontWeight: "600",
+    // iOS (Fabric) TextInput gorunumlerini yeniden kullanir; dogrulama kodu alanindaki letterSpacing: 10
+    // (bkz. shared/auth/components/CodeInput) acikca sifirlanmazsa bu input'un placeholder'ina tasiniyor.
+    letterSpacing: 0,
   },
 });
