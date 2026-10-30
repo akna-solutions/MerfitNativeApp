@@ -1,5 +1,5 @@
 import { apiRequest } from "./client";
-import { clearTokens, saveTokens } from "./tokenStorage";
+import { clearTokens, getStoredTokens, saveTokens } from "./tokenStorage";
 import {
   AccountActionResponse,
   AuthResponse,
@@ -87,8 +87,24 @@ export async function googleRegister(request: GoogleRegisterRequest): Promise<Au
   return result;
 }
 
-/** Cihazdaki token'lari temizler (backend'de bir /auth/logout uc noktasi olmadigindan yalnizca client-side). */
+/**
+ * POST /api/auth/logout - refresh token'i sunucuda iptal eder, ardindan cihazdaki token'lari temizler.
+ * Sunucuya ulasilamazsa cikis yine de tamamlanir.
+ */
 export async function logout(): Promise<void> {
+  const tokens = await getStoredTokens();
+  if (tokens?.refreshToken) {
+    try {
+      await apiRequest<void>("/api/auth/logout", {
+        method: "POST",
+        body: { refreshToken: tokens.refreshToken },
+        skipAuth: true,
+        timeoutMs: 5000,
+      });
+    } catch {
+      // Cikis istemci tarafinda her durumda tamamlanir.
+    }
+  }
   await clearTokens();
 }
 
