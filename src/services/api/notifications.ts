@@ -1,6 +1,7 @@
 import { apiRequest } from "./client";
 import {
   DeviceDeactivationReason,
+  NotificationApp,
   NotificationCategory,
   NotificationItem,
   NotificationPreferences,
@@ -10,35 +11,47 @@ import {
   UpdateNotificationPreferencesRequest,
 } from "./types";
 
-/** GET /api/notifications - en yeniden eskiye, sayfali. category verilirse yalnizca o kategori. */
+/** app + category sorgu parametreleri; app verilmezse backend MB FIT kabul eder. */
+function scopeQuery(app?: NotificationApp, category?: NotificationCategory) {
+  const query: Record<string, string> = {};
+  if (app) query.app = app;
+  if (category) query.category = category;
+  return Object.keys(query).length > 0 ? query : undefined;
+}
+
+/**
+ * GET /api/notifications - en yeniden eskiye, sayfali. MB FIT (app="mbfit") ve MB Shop (app="mbshop")
+ * gelen kutulari ayridir; category verilirse yalnizca o kategori.
+ */
 export async function getNotifications(
-  options: { category?: NotificationCategory; page?: number; pageSize?: number } = {},
+  options: { app?: NotificationApp; category?: NotificationCategory; page?: number; pageSize?: number } = {},
   signal?: AbortSignal,
 ): Promise<PagedResult<NotificationItem>> {
-  const { category, page = 1, pageSize = 30 } = options;
+  const { app, category, page = 1, pageSize = 30 } = options;
   return apiRequest<PagedResult<NotificationItem>>("/api/notifications", {
-    query: { page, pageSize, ...(category ? { category } : {}) },
+    query: { page, pageSize, ...scopeQuery(app, category) },
     signal,
   });
 }
 
-/** GET /api/notifications/unread-count */
+/** GET /api/notifications/unread-count - yalnizca verilen bolumun (varsayilan MB FIT) okunmamislari. */
 export async function getUnreadNotificationCount(
   category?: NotificationCategory,
   signal?: AbortSignal,
+  app?: NotificationApp,
 ): Promise<number> {
   const result = await apiRequest<{ count: number }>("/api/notifications/unread-count", {
-    query: category ? { category } : undefined,
+    query: scopeQuery(app, category),
     signal,
   });
   return result.count;
 }
 
-/** POST /api/notifications/read-all - kategori verilirse yalnizca o kategoriyi okundu yapar. */
-export async function markAllNotificationsRead(category?: NotificationCategory): Promise<void> {
+/** POST /api/notifications/read-all - yalnizca verilen bolumu (ve kategoriyi) okundu yapar. */
+export async function markAllNotificationsRead(category?: NotificationCategory, app?: NotificationApp): Promise<void> {
   return apiRequest<void>("/api/notifications/read-all", {
     method: "POST",
-    query: category ? { category } : undefined,
+    query: scopeQuery(app, category),
   });
 }
 

@@ -21,5 +21,7 @@ export const storeRoutes = {
   order: (id: string) => href(`/pages/store/orders/${id}`),
   favorites: () => href("/pages/store/favorites"),
   addresses: () => href("/pages/store/addresses"),
+  notifications: () => href("/pages/store/notifications"),
+  notificationSettings: () => href("/pages/store/notification-settings"),
   progress: () => href("/pages/progress"),
 };

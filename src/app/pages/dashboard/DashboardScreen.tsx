@@ -188,7 +188,7 @@ export function DashboardScreen() {
       loadMonthlyPoints(controller.signal);
       loadWeek(controller.signal);
       loadCampaigns(controller.signal);
-      getUnreadNotificationCount(undefined, controller.signal)
+      getUnreadNotificationCount(undefined, controller.signal, "mbfit")
         .then(setUnreadCount)
         .catch(() => {
           // Sayi alinamazsa zil noktasiz gosterilir.

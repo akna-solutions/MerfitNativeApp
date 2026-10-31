@@ -910,7 +910,10 @@ export type UpdateProfileRequest = Partial<
 };
 
 // ---- Notifications ----
-export type NotificationCategory = "workout" | "nutrition" | "general";
+export type NotificationCategory = "workout" | "nutrition" | "general" | "shop";
+
+/** Bildirimin ait oldugu bolum. MB FIT ve MB Shop bildirimleri ayri gelen kutularinda ve ayri ayarlarda. */
+export type NotificationApp = "mbfit" | "mbshop";
 
 /** GET /api/notifications listesindeki tek bildirim. */
 export type NotificationItem = {
@@ -918,6 +921,8 @@ export type NotificationItem = {
   /** Backend NotificationType adi (orn. "WorkoutReminder"). */
   type: string;
   category: NotificationCategory;
+  /** Eski backend surumlerinde gelmeyebilir; yoksa "mbfit" kabul edilir. */
+  app?: NotificationApp;
   title: string;
   body: string;
   imageUrl: string | null;
@@ -965,6 +970,8 @@ export type NotificationTypeSetting = {
   title: string;
   description: string;
   category: NotificationCategory;
+  /** Eski backend surumlerinde gelmeyebilir; yoksa kategoriden ("shop") turetilir. */
+  app?: NotificationApp;
   isEnabled: boolean;
   /** true ise kullanici kapatamaz. */
   isLocked: boolean;

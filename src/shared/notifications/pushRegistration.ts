@@ -16,6 +16,8 @@ const PUSH_TOKEN_KEY = "merfit.pushToken";
 const ANDROID_PERMISSION_ASKED_KEY = "merfit.pushPermissionAsked";
 
 export const ANDROID_CHANNEL_ID = "default";
+/** MB Shop bildirimlerinin ayri Android kanali (backend Notifications:Expo:ShopAndroidChannelId ile ayni). */
+export const ANDROID_SHOP_CHANNEL_ID = "mbshop";
 
 const isWeb = Platform.OS === "web";
 
@@ -80,6 +82,12 @@ async function ensureAndroidChannel(): Promise<void> {
   if (Platform.OS !== "android") return;
   await Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
     name: "Genel",
+    importance: Notifications.AndroidImportance.DEFAULT,
+  });
+  // Kullanici telefon ayarlarindan MB Shop bildirimlerini MB FIT'ten bagimsiz olarak kapatabilir.
+  await Notifications.setNotificationChannelAsync(ANDROID_SHOP_CHANNEL_ID, {
+    name: "MB Shop",
+    description: "Sipariş durumu ve MB Shop kampanyaları",
     importance: Notifications.AndroidImportance.DEFAULT,
   });
 }

@@ -1,6 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+
+import { getUnreadNotificationCount } from "../../../services/api/notifications";
 
 import { useNavigationGuard } from "../../../shared/navigation/useNavigationGuard";
 import { useTheme } from "../../../shared/theme/ThemeContext";
@@ -33,6 +36,40 @@ export function CartButton() {
     >
       <Ionicons name="cart-outline" size={20} color={colors.text} />
       <Badge count={totals.itemCount} testID="cart-badge" />
+    </Pressable>
+  );
+}
+
+/** MB Shop bildirim kutusu (MB FIT bildirimlerinden ayri); okunmamis MB Shop bildirimi sayisi rozet olarak gosterilir. */
+export function StoreNotificationsButton() {
+  const router = useRouter();
+  const guard = useNavigationGuard();
+  const { colors } = useTheme();
+  const [unread, setUnread] = useState(0);
+
+  useFocusEffect(
+    useCallback(() => {
+      const controller = new AbortController();
+      getUnreadNotificationCount(undefined, controller.signal, "mbshop")
+        .then(setUnread)
+        .catch(() => {
+          // Sayi alinamazsa zil rozetsiz gosterilir.
+        });
+      return () => controller.abort();
+    }, []),
+  );
+
+  return (
+    <Pressable
+      testID="store-notifications-button"
+      onPress={guard(() => router.push(storeRoutes.notifications()))}
+      hitSlop={8}
+      accessibilityRole="button"
+      accessibilityLabel={unread > 0 ? `MB Shop bildirimleri, ${unread} okunmamış` : "MB Shop bildirimleri"}
+      style={[styles.button, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
+    >
+      <Ionicons name="notifications-outline" size={20} color={colors.text} />
+      <Badge count={unread} testID="store-notifications-badge" />
     </Pressable>
   );
 }
