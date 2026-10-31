@@ -22,7 +22,6 @@ import { DateSelector } from "./components/DateSelector";
 import { EditMealItemModal } from "./components/EditMealItemModal";
 import { MacroOverview } from "./components/MacroOverview";
 import { MealsSection } from "./components/MealsSection";
-import { NutritionEmptyState } from "./components/NutritionEmptyState";
 import { NutritionHeader } from "./components/NutritionHeader";
 import { NutritionInsight } from "./components/NutritionInsight";
 import { TodayNutritionPlanCard } from "./components/TodayNutritionPlanCard";
@@ -138,7 +137,6 @@ export function NutritionScreen() {
   );
 
   const headerAnim = useRef(new Animated.Value(0)).current;
-  const calorieCardAnim = useRef(new Animated.Value(0)).current;
   const macrosAnim = useRef(new Animated.Value(0)).current;
 
   // Baslik ve tarih secici yalnizca ilk acilista animasyonla gelir; gun degisince yerinde kalir.
@@ -153,21 +151,13 @@ export function NutritionScreen() {
   // Tarih secicinin altindaki icerik her yeni gun verisinde yeniden animasyonla gelir.
   useEffect(() => {
     if (!data) return;
-    calorieCardAnim.setValue(0);
     macrosAnim.setValue(0);
-    Animated.stagger(110, [
-      Animated.timing(calorieCardAnim, {
-        toValue: 1,
-        duration: 420,
-        useNativeDriver: true,
-      }),
-      Animated.timing(macrosAnim, {
-        toValue: 1,
-        duration: 420,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [data, calorieCardAnim, macrosAnim]);
+    Animated.timing(macrosAnim, {
+      toValue: 1,
+      duration: 420,
+      useNativeDriver: true,
+    }).start();
+  }, [data, macrosAnim]);
 
   const fadeUp = (anim: Animated.Value, distance = 14) => ({
     opacity: anim,
@@ -234,8 +224,6 @@ export function NutritionScreen() {
     void refreshNutritionSilently(selectedDate);
   };
 
-  const hasLoggedFirstMeal = (data?.meals.length ?? 0) > 0;
-
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <SafeAreaView style={styles.flex} edges={["top"]}>
@@ -286,7 +274,7 @@ export function NutritionScreen() {
                 <Text style={styles.retryLabel}>Tekrar dene</Text>
               </Pressable>
             </View>
-          ) : hasLoggedFirstMeal ? (
+          ) : (
             <>
               <Animated.View style={[styles.sectionGap, fadeUp(macrosAnim)]}>
                 <MacroOverview
@@ -324,24 +312,6 @@ export function NutritionScreen() {
                 <CalorieBreakdown meals={data.meals} />
               </View>
             </>
-          ) : (
-            <Animated.View
-              style={[
-                styles.padded,
-                styles.sectionGap,
-                fadeUp(calorieCardAnim),
-              ]}
-            >
-              <NutritionEmptyState
-                onAddFirstMeal={() => openAddMeal("Kahvaltı")}
-              />
-              <View style={styles.sectionGap}>
-                <NutritionInsight
-                  insight={data.insight}
-                  onViewSuggestions={() => setAssistantOpen(true)}
-                />
-              </View>
-            </Animated.View>
           )}
         </ScrollView>
       </SafeAreaView>
