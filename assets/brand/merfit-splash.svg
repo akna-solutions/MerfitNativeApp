@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024"><defs>
+ <linearGradient id="mg" gradientUnits="userSpaceOnUse" x1="240" y1="40" x2="560" y2="480">
+  <stop offset="0" stop-color="#22C6FF"/><stop offset="0.5" stop-color="#2F6BFF"/><stop offset="1" stop-color="#7A3CF5"/>
+ </linearGradient>
+ <linearGradient id="tg" gradientUnits="userSpaceOnUse" x1="560" y1="0" x2="900" y2="0">
+  <stop offset="0" stop-color="#1E8BFF"/><stop offset="1" stop-color="#7A3CF5"/>
+ </linearGradient>
+ <radialGradient id="bg" cx="0.5" cy="0.45" r="0.75">
+  <stop offset="0" stop-color="#12163A"/><stop offset="0.6" stop-color="#08090F"/><stop offset="1" stop-color="#050507"/>
+ </radialGradient>
+ <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+  <stop offset="0" stop-color="#3B4BFF" stop-opacity="0.35"/><stop offset="1" stop-color="#3B4BFF" stop-opacity="0"/>
+ </radialGradient>
+</defs><g transform="translate(512 380) scale(0.95) translate(-411 -256)"><g fill="url(#mg)">
+  <path stroke="url(#mg)" stroke-width="14" stroke-linejoin="round" d="M66 466 L222 82 Q246 40 290 50 Q306 54 318 70 L556 300 L520 352 Q490 378 458 350 L300 200 Q290 194 282 206 L208 404 Z"/>
+  <path stroke="url(#mg)" stroke-width="14" stroke-linejoin="round" d="M262 396 L302 258 L346 300 Z"/>
+  <path stroke="url(#mg)" stroke-width="14" stroke-linejoin="round" d="M478 238 L650 122 L760 118 L534 336 Z"/>
+  <path stroke="url(#mg)" stroke-width="14" stroke-linejoin="round" d="M640 286 L740 204 Q756 196 756 214 L756 412 Q756 462 706 462 L640 462 Z"/>
+</g></g><g transform="translate(512 0) scale(1.22 1) translate(-512 0)"><text x="512" y="880" text-anchor="middle" font-family="Inter" font-weight="900" font-style="italic" font-size="138" letter-spacing="-2"><tspan fill="#FFFFFF">MER</tspan><tspan fill="url(#tg)">FIT</tspan></text></g></svg>
