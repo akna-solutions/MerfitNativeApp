@@ -36,6 +36,8 @@ jest.mock("../../../services/api/notifications", () => ({
 
 jest.mock("react-native", () => ({ Platform: { OS: "ios" } }));
 
+import { Platform } from "react-native";
+
 import * as Notifications from "expo-notifications";
 
 import { deactivatePushDevice, registerPushDevice } from "../../../services/api/notifications";
@@ -49,6 +51,7 @@ const granted = { granted: true, canAskAgain: true, status: "granted" };
 const denied = { granted: false, canAskAgain: true, status: "denied" };
 
 beforeEach(() => {
+  (Platform as { OS: string }).OS = "ios";
   mockSecureStore.clear();
   jest.clearAllMocks();
 });
@@ -94,4 +97,34 @@ test("promptIfNeeded false iken (uygulama one gelince) izin istenmez", async () 
 
   expect(requestPermissions).not.toHaveBeenCalled();
   expect(registerPushDevice).not.toHaveBeenCalled();
+});
+
+describe("Android 13+", () => {
+  // Hic sorulmamis izin icin expo-notifications "denied" dondurur (bildirimler henuz kapali).
+  const neverAsked = { granted: false, canAskAgain: true, status: "denied" };
+
+  beforeEach(() => {
+    (Platform as { OS: string }).OS = "android";
+  });
+
+  test("yeni kayitta (hic sorulmamis) izin istenir ve cihaz android olarak kaydedilir", async () => {
+    getPermissions.mockResolvedValue(neverAsked);
+    requestPermissions.mockResolvedValue(granted);
+
+    await syncPushRegistration({ promptIfNeeded: true });
+
+    expect(requestPermissions).toHaveBeenCalledTimes(1);
+    expect(registerPushDevice).toHaveBeenCalledWith(expect.objectContaining({ platform: "android" }));
+  });
+
+  test("bu kurulumda bir kez sorulup reddedildiyse tekrar sorulmaz", async () => {
+    getPermissions.mockResolvedValue(neverAsked);
+    requestPermissions.mockResolvedValue(neverAsked);
+
+    await syncPushRegistration({ promptIfNeeded: true });
+    await syncPushRegistration({ promptIfNeeded: true });
+
+    expect(requestPermissions).toHaveBeenCalledTimes(1);
+    expect(registerPushDevice).not.toHaveBeenCalled();
+  });
 });
