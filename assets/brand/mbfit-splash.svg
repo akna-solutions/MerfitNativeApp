@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024"><defs>
+ <linearGradient id="g" gradientUnits="userSpaceOnUse" x1="260" y1="760" x2="860" y2="220">
+  <stop offset="0" stop-color="#1D51C0"/><stop offset="0.55" stop-color="#3E7BFA"/><stop offset="1" stop-color="#00A8FF"/>
+ </linearGradient>
+ <radialGradient id="bg" cx="0.5" cy="0.42" r="0.75">
+  <stop offset="0" stop-color="#14203D"/><stop offset="0.55" stop-color="#0A0C10"/><stop offset="1" stop-color="#050507"/>
+ </radialGradient>
+ <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+  <stop offset="0" stop-color="#3E7BFA" stop-opacity="0.45"/><stop offset="1" stop-color="#3E7BFA" stop-opacity="0"/>
+ </radialGradient>
+</defs><g transform="translate(0 -90)"><g transform="translate(512 512) scale(0.78) translate(-512 -512)"><g transform="translate(-36 8)">
+  <path d="M300 712 V352 L512 600 L724 352" fill="none" stroke="url(#g)" stroke-width="118" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M724 712 V380" fill="none" stroke="url(#g)" stroke-width="118" stroke-linecap="round"/>
+  <path d="M724 214 L846 370 L602 370 Z" fill="url(#g)" stroke="url(#g)" stroke-width="40" stroke-linejoin="round"/></g>
+</g></g><text x="512" y="900" text-anchor="middle" font-family="Inter" font-weight="700" font-size="112" letter-spacing="22" dx="11" fill="#FFFFFF">MB FIT</text></svg>
