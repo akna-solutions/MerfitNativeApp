@@ -9,9 +9,10 @@ import { DeviceDeactivationReason } from "../../services/api/types";
 
 // Cihazdaki kalici anahtarlar. Push token'i yalnizca bu cihazda, cikista backend'e "bu token'i
 // pasiflestir" diyebilmek icin saklanir; hicbir ekranda gosterilmez veya loglanmaz.
+// Not: iOS'ta SecureStore (Keychain) uygulama silinip yeniden kurulsa bile korunur. Bu yuzden "izin
+// soruldu mu?" bilgisi burada tutulmaz; isletim sisteminin izin durumu ("undetermined") esas alinir.
 const INSTALLATION_ID_KEY = "merfit.installationId";
 const PUSH_TOKEN_KEY = "merfit.pushToken";
-const PERMISSION_ASKED_KEY = "merfit.pushPermissionAsked";
 
 export const ANDROID_CHANNEL_ID = "default";
 
@@ -104,7 +105,6 @@ export async function requestPushPermission(): Promise<PushPermissionState> {
     await ensureAndroidChannel();
     const current = await Notifications.getPermissionsAsync();
     if (current.granted || !current.canAskAgain) return current.status as PushPermissionState;
-    await writeItem(PERMISSION_ASKED_KEY, "1");
     const result = await Notifications.requestPermissionsAsync();
     return result.status as PushPermissionState;
   } catch {
@@ -135,7 +135,7 @@ let syncInFlight: Promise<void> | null = null;
  * - izin verildiyse Expo push token'i alinip PUT /api/notifications/devices ile kaydedilir
  *   (token degistiyse veya hesap degistiyse backend satiri gunceller);
  * - izin geri alindiysa daha once kaydedilen token "PermissionRevoked" ile pasiflestirilir;
- * - promptIfNeeded true ise ve daha once hic sorulmadiysa izin bir kez istenir.
+ * - promptIfNeeded true ise ve izin bu kurulumda hic sorulmadiysa (sistem durumu "undetermined") izin istenir.
  * Ayni anda tek senkronizasyon calisir; tum hatalar yutulur (push opsiyoneldir).
  */
 export function syncPushRegistration(options: { promptIfNeeded: boolean }): Promise<void> {
@@ -152,8 +152,11 @@ async function doSync({ promptIfNeeded }: { promptIfNeeded: boolean }): Promise<
     await ensureAndroidChannel();
     let permission = await Notifications.getPermissionsAsync();
 
-    if (!permission.granted && promptIfNeeded && permission.canAskAgain && !(await readItem(PERMISSION_ASKED_KEY))) {
-      await writeItem(PERMISSION_ASKED_KEY, "1");
+    // Daha once Keychain'deki bir "soruldu" isaretine bakiliyordu; iOS'ta uygulama silinip yeniden
+    // kurulunca isaret kaliyor ama bildirim izni sifirlaniyordu. Sonuc: yeni kayitta izin hic sorulmuyor,
+    // token alinmiyor ve hesap "kayitli cihaz yok" kaliyordu. "undetermined" = bu kurulumda hic sorulmadi;
+    // reddedilmisse ("denied") her oturumda tekrar sorulmaz, ayarlardan acilabilir.
+    if (!permission.granted && promptIfNeeded && permission.canAskAgain && permission.status === "undetermined") {
       permission = await Notifications.requestPermissionsAsync();
     }
 
