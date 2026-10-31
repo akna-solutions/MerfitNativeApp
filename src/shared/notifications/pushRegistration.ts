@@ -9,10 +9,11 @@ import { DeviceDeactivationReason } from "../../services/api/types";
 
 // Cihazdaki kalici anahtarlar. Push token'i yalnizca bu cihazda, cikista backend'e "bu token'i
 // pasiflestir" diyebilmek icin saklanir; hicbir ekranda gosterilmez veya loglanmaz.
-// Not: iOS'ta SecureStore (Keychain) uygulama silinip yeniden kurulsa bile korunur. Bu yuzden "izin
-// soruldu mu?" bilgisi burada tutulmaz; isletim sisteminin izin durumu ("undetermined") esas alinir.
 const INSTALLATION_ID_KEY = "merfit.installationId";
 const PUSH_TOKEN_KEY = "merfit.pushToken";
+// Yalnizca Android'de kullanilir (bkz. shouldPromptForPermission). iOS'ta Keychain uygulama silinse de
+// korundugu icin bu isaret orada guvenilir degildir.
+const ANDROID_PERMISSION_ASKED_KEY = "merfit.pushPermissionAsked";
 
 export const ANDROID_CHANNEL_ID = "default";
 
@@ -105,6 +106,7 @@ export async function requestPushPermission(): Promise<PushPermissionState> {
     await ensureAndroidChannel();
     const current = await Notifications.getPermissionsAsync();
     if (current.granted || !current.canAskAgain) return current.status as PushPermissionState;
+    if (Platform.OS === "android") await writeItem(ANDROID_PERMISSION_ASKED_KEY, "1");
     const result = await Notifications.requestPermissionsAsync();
     return result.status as PushPermissionState;
   } catch {
@@ -128,6 +130,21 @@ export async function deactivateStoredPushToken(reason: DeviceDeactivationReason
   }
 }
 
+/**
+ * Oturum acilinca izin penceresi gosterilmeli mi?
+ * - iOS: sistem durumu "undetermined" ise bu kurulumda hic sorulmamistir. (Keychain'deki bir isaret
+ *   uygulama silinip kurulunca kaldigi icin kullanilmaz; yoksa yeniden kurulumda izin hic sorulmuyordu.)
+ * - Android 13+: bildirimler henuz acik olmadigi icin expo-notifications hic sorulmamis izni de
+ *   "denied" dondurur; "undetermined" beklenemez. Burada canAskAgain + bu kurulumda daha once
+ *   sorduk mu (SecureStore; yeniden kurulumda Keystore anahtari tasinmadigi icin okunamaz) esas alinir; reddeden kullaniciya
+ *   her oturumda tekrar sorulmaz.
+ */
+async function shouldPromptForPermission(permission: Notifications.NotificationPermissionsStatus): Promise<boolean> {
+  if (permission.granted || !permission.canAskAgain) return false;
+  if (Platform.OS === "ios") return permission.status === "undetermined";
+  return !(await readItem(ANDROID_PERMISSION_ASKED_KEY));
+}
+
 let syncInFlight: Promise<void> | null = null;
 
 /**
@@ -135,7 +152,7 @@ let syncInFlight: Promise<void> | null = null;
  * - izin verildiyse Expo push token'i alinip PUT /api/notifications/devices ile kaydedilir
  *   (token degistiyse veya hesap degistiyse backend satiri gunceller);
  * - izin geri alindiysa daha once kaydedilen token "PermissionRevoked" ile pasiflestirilir;
- * - promptIfNeeded true ise ve izin bu kurulumda hic sorulmadiysa (sistem durumu "undetermined") izin istenir.
+ * - promptIfNeeded true ise ve izin bu kurulumda hic sorulmadiysa izin istenir (bkz. shouldPromptForPermission).
  * Ayni anda tek senkronizasyon calisir; tum hatalar yutulur (push opsiyoneldir).
  */
 export function syncPushRegistration(options: { promptIfNeeded: boolean }): Promise<void> {
@@ -152,11 +169,8 @@ async function doSync({ promptIfNeeded }: { promptIfNeeded: boolean }): Promise<
     await ensureAndroidChannel();
     let permission = await Notifications.getPermissionsAsync();
 
-    // Daha once Keychain'deki bir "soruldu" isaretine bakiliyordu; iOS'ta uygulama silinip yeniden
-    // kurulunca isaret kaliyor ama bildirim izni sifirlaniyordu. Sonuc: yeni kayitta izin hic sorulmuyor,
-    // token alinmiyor ve hesap "kayitli cihaz yok" kaliyordu. "undetermined" = bu kurulumda hic sorulmadi;
-    // reddedilmisse ("denied") her oturumda tekrar sorulmaz, ayarlardan acilabilir.
-    if (!permission.granted && promptIfNeeded && permission.canAskAgain && permission.status === "undetermined") {
+    if (promptIfNeeded && (await shouldPromptForPermission(permission))) {
+      if (Platform.OS === "android") await writeItem(ANDROID_PERMISSION_ASKED_KEY, "1");
       permission = await Notifications.requestPermissionsAsync();
     }
 
