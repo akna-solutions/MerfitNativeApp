@@ -288,6 +288,12 @@ export function ProfileScreen() {
                 title="Adreslerim"
                 subtitle={addresses.length > 0 ? `${addresses.length} kayıtlı adres` : "Teslimat adresi ekle"}
                 onPress={guard(() => router.push(storeRoutes.addresses()))}
+              />
+              <SettingsRow
+                icon="notifications-outline"
+                title="MB Shop Bildirimleri"
+                subtitle="Sipariş durumu ve mağaza kampanyaları"
+                onPress={guard(() => router.push(storeRoutes.notificationSettings()))}
                 isLast
               />
             </SettingsSection>
@@ -318,7 +324,7 @@ export function ProfileScreen() {
               <SettingsRow
                 icon="notifications-outline"
                 title="Bildirimler"
-                subtitle="Antrenman hatırlatmaları"
+                subtitle="MB FIT hatırlatmaları ve duyuruları"
                 onPress={() =>
                   router.push("/pages/profile/notifications" as never)
                 }

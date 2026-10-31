@@ -5,7 +5,7 @@ import { AppState, Platform } from "react-native";
 
 import { markNotificationRead } from "../../services/api/notifications";
 import { useAuth } from "../auth/AuthContext";
-import { parseNotificationId, resolveNotificationRoute } from "./navigation";
+import { inboxRouteFor, notificationAppOf, parseNotificationId, resolveNotificationRoute } from "./navigation";
 import { isPushSupported, syncPushRegistration } from "./pushRegistration";
 
 // Uygulama acikken gelen bildirimler de banner olarak gosterilir; rozet sayisi uygulama ici
@@ -69,7 +69,7 @@ export function PushNotificationsProvider({ children }: { children: ReactNode })
         markNotificationRead(notificationId).catch(() => {});
       }
       const route = resolveNotificationRoute(data);
-      router.push((route ?? "/pages/notifications") as never);
+      router.push((route ?? inboxRouteFor(notificationAppOf(data))) as never);
       try {
         Notifications.clearLastNotificationResponse();
       } catch {}
