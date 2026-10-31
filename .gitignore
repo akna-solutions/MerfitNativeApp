@@ -41,3 +41,6 @@ example
 # generated native folders
 /ios
 /android
+
+# Firebase (Android push) yapilandirmasi; EAS ortam degiskeni GOOGLE_SERVICES_JSON ile verilir
+google-services.json
