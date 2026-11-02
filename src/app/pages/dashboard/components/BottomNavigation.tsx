@@ -72,9 +72,9 @@ const GAP = 6;
 const MAX_PILL_WIDTH = 150;
 const STEP = navStep(NAV_ITEM_SIZE, GAP);
 // Navbar'in arkasindaki icerik, navbar'in ust kenarindan bu kadar yukarida solmaya baslar.
-const FADE_START_ABOVE_NAV = 16;
-// Solma navbar'in ortasinda tamamlanir; butonlar opak oldugu icin gecisin cogu onlarin arkasinda kalir.
-const FADE_HEIGHT = FADE_START_ABOVE_NAV + NAV_ITEM_SIZE / 2;
+const FADE_START_ABOVE_NAV = 28;
+// Solma navbar'in ust kenarinda tamamlanir; butonlarin arasindaki bosluklardan ve arkasindan icerik gorunmez.
+const FADE_HEIGHT = FADE_START_ABOVE_NAV;
 // Tek parca gradyan, ease-in egrisiyle opaklasir; seritli blur gibi bant/cizgi olusturmaz.
 const FADE_STOPS: { alpha: number; at: number }[] = [
   { alpha: 0, at: 0 },
@@ -90,9 +90,11 @@ const PILL_BG = "#FFFFFF";
 const PILL_CONTENT = "#0B0D12";
 export const NAV_ACCENT = "#EBFF4A";
 const ACCENT_CONTENT = "#0B0D12";
+// Pasif butonlar opaktir (arka plan uzerine %8 beyaz / %5 siyah karisiminin karsiligi); arkadaki yazilar seffaf
+// zeminden gorunmez.
 const INACTIVE = {
-  dark: { bg: "rgba(255,255,255,0.08)", border: "rgba(255,255,255,0.16)", icon: "rgba(255,255,255,0.55)" },
-  light: { bg: "rgba(11,13,18,0.05)", border: "rgba(255,255,255,0.95)", icon: "rgba(11,13,18,0.38)" },
+  dark: { bg: "#19191B", border: "#2B2B2E", icon: "rgba(255,255,255,0.55)" },
+  light: { bg: "#E9EAEC", border: "#FFFFFF", icon: "rgba(11,13,18,0.38)" },
 } as const;
 
 function withAlpha(hex: string, alpha: number) {
