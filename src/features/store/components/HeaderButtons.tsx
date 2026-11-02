@@ -40,6 +40,26 @@ export function CartButton() {
   );
 }
 
+/** Store ana sayfasinin sag ustunde: MB Shop tarafindaki profil ekranini (Siparislerim, Adreslerim...) acar. */
+export function StoreProfileButton() {
+  const router = useRouter();
+  const guard = useNavigationGuard();
+  const { colors } = useTheme();
+  return (
+    <Pressable
+      testID="store-profile-button"
+      onPress={guard(() => router.navigate(storeRoutes.profile()))}
+      hitSlop={8}
+      accessibilityRole="button"
+      accessibilityLabel="Profilim"
+      accessibilityHint="Profilini, siparişlerini ve adreslerini açar"
+      style={[styles.button, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
+    >
+      <Ionicons name="person-outline" size={20} color={colors.text} />
+    </Pressable>
+  );
+}
+
 /** MB Shop bildirim kutusu (MB FIT bildirimlerinden ayri); okunmamis MB Shop bildirimi sayisi rozet olarak gosterilir. */
 export function StoreNotificationsButton() {
   const router = useRouter();

@@ -48,12 +48,7 @@ const OrderRow = memo(function OrderRow({ order, onPress }: { order: OrderListIt
   );
 });
 
-type Props = {
-  /** Store navbar'indaki "Siparişlerim" sekmesi olarak gosterilir (geri, Store ana sayfasina doner). */
-  inTabs?: boolean;
-};
-
-export function OrdersScreen({ inTabs = false }: Props) {
+export function OrdersScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const result = useOrderList();
@@ -63,8 +58,6 @@ export function OrdersScreen({ inTabs = false }: Props) {
       title="Siparişlerim"
       subtitle={result.totalCount > 0 ? `${result.totalCount} sipariş` : undefined}
       testID="orders-screen"
-      tabBarClearance={inTabs}
-      onBack={inTabs ? () => router.navigate(storeRoutes.home()) : undefined}
     >
       <FlatList
         data={result.items}

@@ -40,11 +40,13 @@ describe("BottomNavigation", () => {
     expect(screen.getByLabelText("MB Shop")).toBeTruthy();
   });
 
-  it("Store gorunumunde Store menulerini ve uygulamaya donus butonunu gosterir", () => {
+  it("Store gorunumunde Anasayfa, Kategoriler, Sepetim ve uygulamaya donus butonunu gosterir", () => {
     const onChange = jest.fn();
-    render(<BottomNavigation variant="store" active="orders" onChange={onChange} />);
-    for (const id of ["store", "categories", "orders", "profile"]) expect(screen.getByTestId(`nav-${id}`)).toBeTruthy();
-    expect(screen.getByTestId("nav-orders").props.accessibilityState.selected).toBe(true);
+    render(<BottomNavigation variant="store" active="cart" onChange={onChange} />);
+    for (const id of ["store", "categories", "cart"]) expect(screen.getByTestId(`nav-${id}`)).toBeTruthy();
+    expect(screen.queryByTestId("nav-orders")).toBeNull();
+    expect(screen.queryByTestId("nav-profile")).toBeNull();
+    expect(screen.getByTestId("nav-cart").props.accessibilityState.selected).toBe(true);
     fireEvent.press(screen.getByTestId("nav-circle"));
     expect(onChange).toHaveBeenLastCalledWith("home");
   });

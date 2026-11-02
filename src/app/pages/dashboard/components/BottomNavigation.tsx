@@ -12,14 +12,14 @@ import { activePillWidth, dragIndex, isOnPill, navStep, settleIndex } from "../.
 import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 /**
- * Navbar iki gorunumlu: "main" (uygulama) ve "store" (Store bolumu). Ana gorunumde uc, Store gorunumunde dort menu ve
- * sagda tek yuvarlak aksiyon butonu vardir. Ana gorunumde Profilim menusu yoktur; profile Ana Sayfa'daki avatardan
- * gidilir. Ana gorunumde yuvarlak buton Store'a, Store gorunumunde uygulamaya (Ana Sayfa) doner.
+ * Navbar iki gorunumlu: "main" (uygulama) ve "store" (Store bolumu). Iki gorunumde de uc menu ve sagda tek yuvarlak
+ * aksiyon butonu vardir. Navbar'da Profilim menusu yoktur: profile MB Fit'te Ana Sayfa'daki avatardan, MB Shop'ta
+ * Store ana sayfasinin sag ustundeki profil butonundan gidilir; Siparislerim profil ekranindaki Alisveris bolumundedir. Ana gorunumde yuvarlak buton Store'a, Store gorunumunde uygulamaya (Ana Sayfa) doner.
  *
  * Gorunum: secili menu beyaz, genis bir hap icinde siyah ikon + etiket; diger menuler yari saydam, gri, yuvarlak ikon
  * butonlari; en sagda canli sari-yesil yuvarlak aksiyon butonu.
  */
-export type NavTab = "home" | "workouts" | "nutrition" | "store" | "profile" | "categories" | "orders";
+export type NavTab = "home" | "workouts" | "nutrition" | "store" | "profile" | "categories" | "cart";
 export type NavVariant = "main" | "store";
 
 type TabConfig = {
@@ -43,8 +43,7 @@ const VARIANTS: Record<NavVariant, { tabs: TabConfig[]; circle: CircleConfig }> 
     tabs: [
       { id: "store", label: "Anasayfa", icon: "storefront-outline", activeIcon: "storefront" },
       { id: "categories", label: "Kategoriler", icon: "grid-outline", activeIcon: "grid" },
-      { id: "orders", label: "Siparişlerim", icon: "receipt-outline", activeIcon: "receipt" },
-      { id: "profile", label: "Profilim", icon: "person-outline", activeIcon: "person" },
+      { id: "cart", label: "Sepetim", icon: "cart-outline", activeIcon: "cart" },
     ],
     circle: { id: "home", label: "MB Fit", hint: "MB Fit'e geri döner", icon: "barbell-outline", activeIcon: "barbell" },
   },
@@ -65,11 +64,8 @@ type Props = {
 
 // Navbar'in ekranin altindan uzakligi.
 const NAV_BOTTOM_GAP = 6;
-/**
- * Buton yuksekligi (yuvarlak butonlarin capi). Ana gorunumde uc menu oldugu icin butonlar daha buyuktur; Store
- * gorunumundeki dort menu ("Siparislerim" gibi uzun etiketlerle) dar ekranlara sigsin diye daha kucuktur.
- */
-const NAV_ITEM_SIZES: Record<NavVariant, number> = { main: 56, store: 48 };
+/** Buton yuksekligi (yuvarlak butonlarin capi); iki gorunumde de uc menu oldugu icin aynidir. */
+const NAV_ITEM_SIZES: Record<NavVariant, number> = { main: 56, store: 56 };
 export function navItemSize(variant: NavVariant) {
   return NAV_ITEM_SIZES[variant];
 }

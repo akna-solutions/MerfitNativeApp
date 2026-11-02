@@ -7,7 +7,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useNavigationGuard } from "../../../shared/navigation/useNavigationGuard";
 import { useTheme } from "../../../shared/theme/ThemeContext";
-import { CartButton, FavoritesButton, StoreNotificationsButton } from "../components/HeaderButtons";
+import { FavoritesButton, StoreNotificationsButton, StoreProfileButton } from "../components/HeaderButtons";
 import { EmptyState } from "../components/EmptyState";
 import { ProductCard } from "../components/ProductCard";
 import { SearchBar } from "../components/SearchBar";
@@ -159,7 +159,7 @@ export function StoreHomeScreen() {
             <View style={styles.actions}>
               <StoreNotificationsButton />
               <FavoritesButton />
-              <CartButton />
+              <StoreProfileButton />
             </View>
           </View>
           <View style={[styles.padded, styles.searchRow]}>

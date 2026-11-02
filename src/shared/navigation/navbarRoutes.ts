@@ -20,8 +20,8 @@ export function navbarRoute(tab: NavTab, variant: NavVariant): Href {
       return href("/pages/store");
     case "categories":
       return href("/pages/store-categories");
-    case "orders":
-      return href("/pages/store-orders");
+    case "cart":
+      return href("/pages/store-cart");
   }
 }
 

@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useTheme } from "../../../shared/theme/ThemeContext";
 import { storeRoutes } from "../navigation";
@@ -21,11 +21,19 @@ type Props = {
 
 /** Yuzen navbar'in icerigin ustune bindigi yukseklik (tab ekranlariyla ayni alt bosluk). */
 const NAVBAR_CLEARANCE = 100;
+/**
+ * Sekme ekraninda sabit alt cubuk (footer) navbar'in ve ustundeki solmanin tamamen uzerinde durur:
+ * navbar bosluğu (6) + buton (56) + solma (28), guvenli alanin uzerine eklenir.
+ */
+const NAVBAR_FOOTER_CLEARANCE = 90;
 
 /** Store'un yigin (stack) ekranlari icin ortak ust cubuk + guvenli alan. Icerik (liste/scroll) cagirana aittir. */
 export function StoreScreenShell({ title, subtitle, children, right, onBack, footer, testID, tabBarClearance }: Props) {
   const router = useRouter();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  // Sekme ekraninda alt guvenli alani navbar karsilar; footer onun ustune tasinir.
+  const tabFooter = Boolean(tabBarClearance && footer);
 
   const goBack = () => {
     if (onBack) return onBack();
@@ -35,7 +43,10 @@ export function StoreScreenShell({ title, subtitle, children, right, onBack, foo
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]} testID={testID}>
-      <SafeAreaView style={styles.flex} edges={["top", footer ? "bottom" : "left"]}>
+      <SafeAreaView
+        style={[styles.flex, tabFooter && { paddingBottom: insets.bottom + NAVBAR_FOOTER_CLEARANCE }]}
+        edges={["top", footer && !tabFooter ? "bottom" : "left"]}
+      >
         <View style={styles.header}>
           <Pressable
             onPress={goBack}
@@ -58,7 +69,7 @@ export function StoreScreenShell({ title, subtitle, children, right, onBack, foo
           </View>
           <View style={styles.right}>{right}</View>
         </View>
-        <View style={[styles.flex, tabBarClearance && { paddingBottom: NAVBAR_CLEARANCE }]}>{children}</View>
+        <View style={[styles.flex, tabBarClearance && !tabFooter && { paddingBottom: NAVBAR_CLEARANCE }]}>{children}</View>
         {footer ? <View style={[styles.footer, { borderTopColor: colors.border, backgroundColor: colors.background }]}>{footer}</View> : null}
       </SafeAreaView>
     </View>
