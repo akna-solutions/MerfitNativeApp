@@ -17,27 +17,27 @@ jest.mock("@expo/vector-icons", () => ({ Ionicons: () => null }));
 jest.mock("expo-linear-gradient", () => ({ LinearGradient: () => null }));
 jest.mock("react-native-safe-area-context", () => ({ useSafeAreaInsets: () => ({ top: 0, bottom: 20, left: 0, right: 0 }) }));
 
-// 351 px navbar: 3 yuvarlak menu (48) + aksiyon butonu (48) + 4 bosluk (6) = 216 px; secili hap 135 px.
-// Sekmeler arasi adim 48 + 6 = 54 px.
+// Ana gorunum, 351 px navbar: 2 yuvarlak menu (56) + aksiyon butonu (56) + 3 bosluk (6) = 186 px; secili hap 165 px.
+// Sekmeler arasi adim 56 + 6 = 62 px.
 const BAR_WIDTH = 351;
 
 function setup(active: NavTab | null = "home") {
   const onChange = jest.fn();
   const utils = render(<BottomNavigation active={active} onChange={onChange} />);
   act(() => {
-    fireEvent(screen.getByTestId("navbar-bar"), "layout", { nativeEvent: { layout: { x: 0, y: 0, width: BAR_WIDTH, height: 48 } } });
+    fireEvent(screen.getByTestId("navbar-bar"), "layout", { nativeEvent: { layout: { x: 0, y: 0, width: BAR_WIDTH, height: 56 } } });
   });
   return { onChange, ...utils };
 }
 
 describe("BottomNavigation", () => {
-  it("dort ana menu ve ayri bir Store yuvarlak butonu gosterir", () => {
+  it("uc ana menu ve ayri bir Store yuvarlak butonu gosterir; Profilim menusu yoktur", () => {
     setup();
-    for (const id of ["home", "workouts", "nutrition", "profile"]) expect(screen.getByTestId(`nav-${id}`)).toBeTruthy();
+    for (const id of ["home", "workouts", "nutrition"]) expect(screen.getByTestId(`nav-${id}`)).toBeTruthy();
     expect(screen.getByTestId("nav-circle")).toBeTruthy();
     expect(screen.queryByTestId("nav-progress")).toBeNull();
+    expect(screen.queryByTestId("nav-profile")).toBeNull();
     expect(screen.getByLabelText("MB Shop")).toBeTruthy();
-    expect(screen.getByLabelText("Profilim")).toBeTruthy();
   });
 
   it("Store gorunumunde Store menulerini ve uygulamaya donus butonunu gosterir", () => {
@@ -51,8 +51,8 @@ describe("BottomNavigation", () => {
 
   it("dokunma ile secim degistirir ve Store yuvarlak butonu bagimsiz calisir", () => {
     const { onChange } = setup();
-    fireEvent.press(screen.getByTestId("nav-profile"));
-    expect(onChange).toHaveBeenLastCalledWith("profile");
+    fireEvent.press(screen.getByTestId("nav-nutrition"));
+    expect(onChange).toHaveBeenLastCalledWith("nutrition");
     fireEvent.press(screen.getByTestId("nav-workouts"));
     expect(onChange).toHaveBeenLastCalledWith("workouts");
     fireEvent.press(screen.getByTestId("nav-circle"));
@@ -64,9 +64,13 @@ describe("BottomNavigation", () => {
     expect(screen.getByTestId("nav-nutrition").props.accessibilityState.selected).toBe(true);
     expect(screen.getByTestId("nav-home").props.accessibilityState.selected).toBe(false);
 
-    rerender(<BottomNavigation active="profile" onChange={onChange} />);
-    expect(screen.getByTestId("nav-profile").props.accessibilityState.selected).toBe(true);
+    rerender(<BottomNavigation active="workouts" onChange={onChange} />);
+    expect(screen.getByTestId("nav-workouts").props.accessibilityState.selected).toBe(true);
     expect(screen.getByTestId("nav-nutrition").props.accessibilityState.selected).toBe(false);
+
+    // Profil sayfasindayken (navbar'da karsiligi yok) hicbir menu secili gorunmez.
+    rerender(<BottomNavigation active="profile" onChange={onChange} />);
+    for (const id of ["home", "workouts", "nutrition"]) expect(screen.getByTestId(`nav-${id}`).props.accessibilityState.selected).toBe(false);
   });
 
   it("secili menuyu genis hap olarak, digerlerini etiketsiz yuvarlak buton olarak gosterir", () => {
@@ -78,12 +82,12 @@ describe("BottomNavigation", () => {
 
   it("hapi surukleyip birakinca en yakin menuyu secer", async () => {
     const { onChange } = setup("home");
-    // Hap Ana Sayfa'da (x: 0..135). Tutulup ~2 adim (108 px) saga surulur.
+    // Hap Ana Sayfa'da (x: 0..165). Tutulup ~2 adim (124 px) saga surulur.
     act(() => {
       fireGestureHandler(getByGestureTestId("navbar-pan"), [
         { x: 44, translationX: 0, velocityX: 0 },
         { x: 100, translationX: 56, velocityX: 0 },
-        { x: 152, translationX: 108, velocityX: 0 },
+        { x: 168, translationX: 124, velocityX: 0 },
       ]);
     });
     // Gesture Handler/Worklets mock'unda UI->JS gecisi microtask ile calisir.
@@ -99,7 +103,7 @@ describe("BottomNavigation", () => {
         { x: 400, translationX: 900, velocityX: 0 },
       ]);
     });
-    await waitFor(() => expect(onChange).toHaveBeenCalledWith("profile"));
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith("nutrition"));
   });
 
   it("hap disindan baslayan kaydirma menuyu degistirmez", async () => {

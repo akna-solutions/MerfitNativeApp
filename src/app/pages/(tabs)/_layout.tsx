@@ -6,6 +6,7 @@ import {
     BottomNavigation,
     NavTab,
     NavVariant,
+    navItemSize,
 } from "../dashboard/components/BottomNavigation";
 import { useReducedMotion } from "../../../shared/motion/useReducedMotion";
 import { CircleReveal, RevealLoader, RevealOrigin } from "../../../shared/navigation/CircleReveal";
@@ -86,6 +87,7 @@ export default function TabsLayout() {
     </Tabs>
     <CircleReveal
       origin={reveal?.origin ?? null}
+      baseSize={reveal ? navItemSize(reveal.variant) : undefined}
       // Iki yone de gecis ekrani mavi (primary).
       color={colors.primary}
       onCovered={() => reveal && router.navigate(navbarRoute(reveal.target, reveal.variant))}

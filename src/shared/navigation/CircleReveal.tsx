@@ -16,7 +16,7 @@ import { RevealOrigin, revealRadius } from "./revealRadius";
 
 export type { RevealOrigin };
 
-/** Dairenin baslangic capi; yuvarlak butonun capiyla ayni olmalidir. */
+/** Dairenin varsayilan baslangic capi; `baseSize` ile yuvarlak butonun capina esitlenir. */
 export const REVEAL_BASE_SIZE = 48;
 export const REVEAL_GROW_MS = 380;
 const FADE_DELAY_MS = 140;
@@ -42,6 +42,8 @@ type Props = {
   loader?: RevealLoader;
   /** Hedef ekranin verisi hazir mi; yalnizca `loader` ile anlamlidir. */
   ready?: boolean;
+  /** Dairenin baslangic capi; daireyi baslatan yuvarlak butonun capiyla ayni olmalidir. */
+  baseSize?: number;
 };
 
 export type RevealLoader = { icon: keyof typeof Ionicons.glyphMap; title: string; description: string };
@@ -49,7 +51,7 @@ export type RevealLoader = { icon: keyof typeof Ionicons.glyphMap; title: string
 type Phase = "idle" | "growing" | "holding" | "fading";
 
 /** Yuvarlak navbar butonundan baslayip ekrani kaplayan, sonra solarak yeni ekrani gosteren daire. */
-export function CircleReveal({ origin, color, onCovered, onDone, loader, ready = true }: Props) {
+export function CircleReveal({ origin, color, onCovered, onDone, loader, ready = true, baseSize = REVEAL_BASE_SIZE }: Props) {
   const { width, height } = useWindowDimensions();
   const scale = useSharedValue(1);
   const opacity = useSharedValue(0);
@@ -92,7 +94,7 @@ export function CircleReveal({ origin, color, onCovered, onDone, loader, ready =
 
   useEffect(() => {
     if (!origin) return;
-    const endScale = (revealRadius(origin, width, height) * 2) / REVEAL_BASE_SIZE + 0.2;
+    const endScale = (revealRadius(origin, width, height) * 2) / baseSize + 0.2;
     setPhase("growing");
     scale.set(1);
     opacity.set(1);
@@ -138,7 +140,7 @@ export function CircleReveal({ origin, color, onCovered, onDone, loader, ready =
         pointerEvents="auto"
         style={[
           styles.circle,
-          { backgroundColor: color, left: origin.x - REVEAL_BASE_SIZE / 2, top: origin.y - REVEAL_BASE_SIZE / 2 },
+          { backgroundColor: color, width: baseSize, height: baseSize, borderRadius: baseSize / 2, left: origin.x - baseSize / 2, top: origin.y - baseSize / 2 },
           circleStyle,
         ]}
       />
@@ -160,9 +162,6 @@ export function CircleReveal({ origin, color, onCovered, onDone, loader, ready =
 const styles = StyleSheet.create({
   circle: {
     position: "absolute",
-    width: REVEAL_BASE_SIZE,
-    height: REVEAL_BASE_SIZE,
-    borderRadius: REVEAL_BASE_SIZE / 2,
   },
   loader: { alignItems: "center", justifyContent: "center" },
   loaderBody: { alignItems: "center", paddingHorizontal: 40 },
