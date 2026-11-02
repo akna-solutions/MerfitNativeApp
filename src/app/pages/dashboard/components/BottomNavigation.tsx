@@ -3,17 +3,20 @@ import { LinearGradient } from "expo-linear-gradient";
 import { ComponentRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LayoutChangeEvent, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { Gesture, GestureDetector, GestureHandlerRootView } from "react-native-gesture-handler";
-import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { scheduleOnRN } from "react-native-worklets";
 
 import { useReducedMotion } from "../../../../shared/motion/useReducedMotion";
-import { clampIndicatorX, indicatorXForIndex, nearestIndex, settleIndex } from "../../../../shared/navigation/navbarDrag";
+import { activePillWidth, dragIndex, isOnPill, navStep, settleIndex } from "../../../../shared/navigation/navbarDrag";
 import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 /**
- * Navbar iki gorunumlu: "main" (uygulama) ve "store" (Store bolumu). Kapsulda dort menu, sagda tek yuvarlak buton
+ * Navbar iki gorunumlu: "main" (uygulama) ve "store" (Store bolumu). Dort menu ve sagda tek yuvarlak aksiyon butonu
  * vardir. Ana gorunumde yuvarlak buton Store'a, Store gorunumunde uygulamaya (Ana Sayfa) doner.
+ *
+ * Gorunum: secili menu beyaz, genis bir hap icinde siyah ikon + etiket; diger menuler yari saydam, gri, yuvarlak ikon
+ * butonlari; en sagda canli sari-yesil yuvarlak aksiyon butonu.
  */
 export type NavTab = "home" | "workouts" | "nutrition" | "store" | "profile" | "categories" | "orders";
 export type NavVariant = "main" | "store";
@@ -50,7 +53,7 @@ const VARIANTS: Record<NavVariant, { tabs: TabConfig[]; circle: CircleConfig }> 
 type Props = {
   /** Gorunum; varsayilan "main". */
   variant?: NavVariant;
-  /** Secili sekme. `null` ise kapsulde gosterge gizlenir. */
+  /** Secili sekme. `null` ise hicbir menu genis hap olarak gosterilmez. */
   active: NavTab | null;
   onChange: (tab: NavTab) => void;
   /**
@@ -60,18 +63,18 @@ type Props = {
   onCircleOpen?: (origin: { x: number; y: number }) => void;
 };
 
-// Navbar'in ekranin altindan uzakligi ve kapsul yuksekligi.
+// Navbar'in ekranin altindan uzakligi ve buton yuksekligi (yuvarlak butonlarin capi).
 const NAV_BOTTOM_GAP = 6;
-const NAV_HEIGHT = 64;
-const SIDE_MARGIN = 16;
-const GAP = 10;
-/** Kapsul ici dolgu; gosterge bu kadar iceride baslar. */
-const PAD = 4;
-const INDICATOR_HEIGHT = NAV_HEIGHT - PAD * 2;
+export const NAV_ITEM_SIZE = 48;
+const SIDE_MARGIN = 12;
+const GAP = 6;
+/** Secili hap genis ekranlarda bundan fazla uzamaz; navbar ortada toplu durur. */
+const MAX_PILL_WIDTH = 150;
+const STEP = navStep(NAV_ITEM_SIZE, GAP);
 // Navbar'in arkasindaki icerik, navbar'in ust kenarindan bu kadar yukarida solmaya baslar.
 const FADE_START_ABOVE_NAV = 16;
-// Solma navbar'in ortasinda tamamlanir; kapsul opak oldugu icin gecisin cogu onun arkasinda kalir.
-const FADE_HEIGHT = FADE_START_ABOVE_NAV + NAV_HEIGHT / 2;
+// Solma navbar'in ortasinda tamamlanir; butonlar opak oldugu icin gecisin cogu onlarin arkasinda kalir.
+const FADE_HEIGHT = FADE_START_ABOVE_NAV + NAV_ITEM_SIZE / 2;
 // Tek parca gradyan, ease-in egrisiyle opaklasir; seritli blur gibi bant/cizgi olusturmaz.
 const FADE_STOPS: { alpha: number; at: number }[] = [
   { alpha: 0, at: 0 },
@@ -81,65 +84,98 @@ const FADE_STOPS: { alpha: number; at: number }[] = [
   { alpha: 1, at: 1 },
 ];
 const SPRING = { damping: 20, stiffness: 240, mass: 0.7 } as const;
-const ACTIVE_CONTENT = "#FFFFFF";
+
+/** Referans tasarimin renkleri: beyaz secili hap + siyah icerik, sari-yesil aksiyon butonu. */
+const PILL_BG = "#FFFFFF";
+const PILL_CONTENT = "#0B0D12";
+export const NAV_ACCENT = "#EBFF4A";
+const ACCENT_CONTENT = "#0B0D12";
+const INACTIVE = {
+  dark: { bg: "rgba(255,255,255,0.08)", border: "rgba(255,255,255,0.16)", icon: "rgba(255,255,255,0.55)" },
+  light: { bg: "rgba(11,13,18,0.05)", border: "rgba(255,255,255,0.95)", icon: "rgba(11,13,18,0.38)" },
+} as const;
 
 function withAlpha(hex: string, alpha: number) {
   return `${hex}${Math.round(alpha * 255).toString(16).padStart(2, "0")}`;
+}
+
+type TabButtonProps = {
+  tab: TabConfig;
+  selected: boolean;
+  highlighted: boolean;
+  pillWidth: number;
+  animate: boolean;
+  palette: (typeof INACTIVE)[keyof typeof INACTIVE];
+  onPress: () => void;
+};
+
+function TabButton({ tab, selected, highlighted, pillWidth, animate, palette, onPress }: TabButtonProps) {
+  const target = highlighted ? pillWidth : NAV_ITEM_SIZE;
+  const widthStyle = useAnimatedStyle(() => ({ width: animate ? withSpring(target, SPRING) : target }), [target, animate]);
+  const color = highlighted ? PILL_CONTENT : palette.icon;
+
+  return (
+    <Animated.View style={widthStyle}>
+      <Pressable
+        testID={`nav-${tab.id}`}
+        onPress={onPress}
+        style={[
+          styles.item,
+          highlighted
+            ? [styles.pill, { backgroundColor: PILL_BG, borderColor: PILL_BG }]
+            : { backgroundColor: palette.bg, borderColor: palette.border },
+        ]}
+        accessibilityRole="tab"
+        accessibilityLabel={tab.label}
+        accessibilityState={{ selected }}
+        accessibilityHint={selected ? "Seçili menü. Sağa veya sola sürükleyerek de menü değiştirebilirsiniz." : undefined}
+      >
+        <Ionicons name={highlighted ? tab.activeIcon : tab.icon} size={20} color={color} />
+        {highlighted ? (
+          <Text style={[styles.label, { color }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+            {tab.label}
+          </Text>
+        ) : null}
+      </Pressable>
+    </Animated.View>
+  );
 }
 
 export function BottomNavigation({ variant = "main", active, onChange, onCircleOpen }: Props) {
   const { tabs, circle } = VARIANTS[variant];
   const tabCount = tabs.length;
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
-  // MB Fit ve MB Shop ayni mavi (primary) rengi kullanir: kapsuldeki gosterge de yuvarlak buton da mavidir.
-  const indicatorColor = colors.primary;
-  const circleColor = colors.primary;
+  const { colors, isDark } = useTheme();
+  const palette = isDark ? INACTIVE.dark : INACTIVE.light;
   const reducedMotion = useReducedMotion();
   const navBottom = insets.bottom + NAV_BOTTOM_GAP;
-  const fadeAreaHeight = navBottom + NAV_HEIGHT + FADE_START_ABOVE_NAV;
+  const fadeAreaHeight = navBottom + NAV_ITEM_SIZE + FADE_START_ABOVE_NAV;
   // Gradyanin tam opakliga ulastigi nokta: navbar'in ortasi.
   const fadeEnd = FADE_HEIGHT / fadeAreaHeight;
 
   const activeIndex = active ? tabs.findIndex((t) => t.id === active) : -1;
 
+  const [barWidth, setBarWidth] = useState(0);
+  const pillWidth = barWidth > 0 ? activePillWidth(barWidth, NAV_ITEM_SIZE, GAP, MAX_PILL_WIDTH, tabCount) : MAX_PILL_WIDTH;
+
   // Surukleme durumu UI thread'inde (shared value) tutulur; JS tarafi yalnizca gorsel vurgu ve gecis icin bilgilendirilir.
-  const itemWidth = useSharedValue(0);
-  const indicatorX = useSharedValue(PAD);
-  const indicatorOpacity = useSharedValue(activeIndex >= 0 ? 1 : 0);
+  const pillWidthSV = useSharedValue(pillWidth);
   const armed = useSharedValue(false);
-  const dragStartX = useSharedValue(PAD);
+  const dragStartIndex = useSharedValue(activeIndex);
   const hoverIndex = useSharedValue(activeIndex);
-  const [layoutWidth, setLayoutWidth] = useState(0);
-  // Surukleme sirasinda gostergenin altindaki sekme (idle iken null).
+  // Surukleme sirasinda hapin ustunde durdugu sekme (idle iken null).
   const [draggingOver, setDraggingOver] = useState<number | null>(null);
 
-  const moveTo = useCallback(
-    (index: number, animate: boolean) => {
-      const target = indicatorXForIndex(index, itemWidth.get(), PAD);
-      indicatorX.set(animate && !reducedMotion ? withSpring(target, SPRING) : target);
-    },
-    [indicatorX, itemWidth, reducedMotion],
-  );
-
-  const onPillLayout = (e: LayoutChangeEvent) => {
-    const width = e.nativeEvent.layout.width;
-    itemWidth.set((width - PAD * 2) / tabCount);
-    setLayoutWidth(width);
-  };
-
-  // Disaridan (rota degisimi, geri tusu) gelen secimi gostergeye yansitir; surukleme sirasinda dokunmaz.
   useEffect(() => {
-    if (layoutWidth === 0) return;
-    if (activeIndex < 0) {
-      indicatorOpacity.set(withTiming(0, { duration: reducedMotion ? 0 : 160 }));
-      return;
-    }
-    const wasHidden = indicatorOpacity.get() === 0;
+    pillWidthSV.set(pillWidth);
+  }, [pillWidth, pillWidthSV]);
+
+  // Disaridan (rota degisimi, geri tusu) gelen secimi surukleme durumuna yansitir.
+  useEffect(() => {
     hoverIndex.set(activeIndex);
-    moveTo(activeIndex, !wasHidden);
-    indicatorOpacity.set(withTiming(1, { duration: reducedMotion ? 0 : 160 }));
-  }, [activeIndex, layoutWidth, moveTo, hoverIndex, indicatorOpacity, reducedMotion]);
+  }, [activeIndex, hoverIndex]);
+
+  const onBarLayout = (e: LayoutChangeEvent) => setBarWidth(e.nativeEvent.layout.width);
 
   // Web'de (RN-web Pressable), surukleme bitince parmagin/imlecin basladigi menunun Pressable'i de "birakildi" olayi
   // alir ve onPress tetikleyip az once secilen menuyu geri alir. Surukleme sirasinda ve hemen sonrasinda
@@ -172,11 +208,10 @@ export function BottomNavigation({ variant = "main", active, onChange, onCircleO
   const handlePress = (index: number) => {
     if (suppressPressRef.current) return;
     hoverIndex.set(index);
-    moveTo(index, true);
     onChange(tabs[index].id);
   };
 
-  // Gosterge yalnizca kendi hucresinden tutulunca surulur; baska yerden baslayan yatay kaydirma yok sayilir.
+  // Hap yalnizca kendisinden tutulunca surulur; baska yerden baslayan yatay kaydirma yok sayilir.
   // activeOffsetX: kucuk titremeler dokunmayi (tap) bozmaz; failOffsetY: dikey hareket jesti iptal eder.
   const pan = useMemo(
     () =>
@@ -185,20 +220,16 @@ export function BottomNavigation({ variant = "main", active, onChange, onCircleO
         .activeOffsetX([-6, 6])
         .failOffsetY([-32, 32])
         .onBegin((e) => {
-          const w = itemWidth.get();
-          const x = indicatorX.get();
-          armed.set(indicatorOpacity.get() > 0.5 && e.x >= x && e.x <= x + w);
-          dragStartX.set(x);
+          const start = hoverIndex.get();
+          armed.set(isOnPill(e.x, start, STEP, pillWidthSV.get()));
+          dragStartIndex.set(start);
         })
         .onStart(() => {
           if (armed.get()) scheduleOnRN(beginDrag, hoverIndex.get());
         })
         .onUpdate((e) => {
           if (!armed.get()) return;
-          const w = itemWidth.get();
-          const next = clampIndicatorX(dragStartX.get() + e.translationX, w, tabCount, PAD);
-          indicatorX.set(next);
-          const over = nearestIndex(next, w, tabCount, PAD);
+          const over = dragIndex(dragStartIndex.get(), e.translationX, STEP, tabCount);
           if (over !== hoverIndex.get()) {
             hoverIndex.set(over);
             scheduleOnRN(setDraggingOver, over);
@@ -206,29 +237,21 @@ export function BottomNavigation({ variant = "main", active, onChange, onCircleO
         })
         .onEnd((e, success) => {
           if (!armed.get() || !success) return;
-          const w = itemWidth.get();
-          const target = settleIndex(indicatorX.get(), e.velocityX, w, tabCount, PAD);
+          const target = settleIndex(dragStartIndex.get(), e.translationX, e.velocityX, STEP, tabCount);
           hoverIndex.set(target);
-          indicatorX.set(withSpring(indicatorXForIndex(target, w, PAD), SPRING));
           scheduleOnRN(commit, target);
         })
         .onFinalize((_e, success) => {
           if (armed.get()) scheduleOnRN(endDrag);
           if (armed.get() && !success) {
-            // Jest iptal edildi (orn. sistem jesti): gostergeyi onceki konumuna dondur.
-            indicatorX.set(withSpring(dragStartX.get(), SPRING));
+            // Jest iptal edildi (orn. sistem jesti): hapi onceki sekmeye dondur.
+            hoverIndex.set(dragStartIndex.get());
             scheduleOnRN(setDraggingOver, null);
           }
           armed.set(false);
         }),
-    [armed, beginDrag, commit, dragStartX, endDrag, hoverIndex, indicatorOpacity, indicatorX, itemWidth, tabCount],
+    [armed, beginDrag, commit, dragStartIndex, endDrag, hoverIndex, pillWidthSV, tabCount],
   );
-
-  const indicatorStyle = useAnimatedStyle(() => ({
-    width: itemWidth.get(),
-    opacity: indicatorOpacity.get(),
-    transform: [{ translateX: indicatorX.get() }],
-  }));
 
   const shownIndex = draggingOver ?? activeIndex;
   const circleActive = active === circle.id;
@@ -253,63 +276,45 @@ export function BottomNavigation({ variant = "main", active, onChange, onCircleO
       </View>
       {/* Android'de GestureDetector, bir GestureHandlerRootView altinda olmalidir; navbar kendi kokunu getirir. */}
       <GestureHandlerRootView pointerEvents="box-none" style={[styles.wrapper, { bottom: navBottom }]}>
-        <View style={styles.row} pointerEvents="box-none">
-          <GestureDetector gesture={pan}>
-            <View
-              testID="navbar-pill"
-              onLayout={onPillLayout}
-              style={[styles.capsule, { backgroundColor: colors.surface, borderColor: colors.border }]}
-              accessibilityRole="tablist"
-            >
-              <Animated.View
-                testID="navbar-indicator"
-                pointerEvents="none"
-                style={[styles.indicator, { backgroundColor: indicatorColor }, indicatorStyle]}
-              />
-              {tabs.map((tab, index) => {
-                const selected = index === activeIndex;
-                const highlighted = index === shownIndex;
-                const color = highlighted ? ACTIVE_CONTENT : colors.icon;
-                return (
-                  <Pressable
+        <View testID="navbar-bar" onLayout={onBarLayout} style={styles.bar} pointerEvents="box-none">
+          <View style={styles.row} pointerEvents="box-none">
+            <GestureDetector gesture={pan}>
+              <View testID="navbar-pill" style={styles.tabs} accessibilityRole="tablist">
+                {tabs.map((tab, index) => (
+                  <TabButton
                     key={tab.id}
-                    testID={`nav-${tab.id}`}
+                    tab={tab}
+                    selected={index === activeIndex}
+                    highlighted={index === shownIndex}
+                    pillWidth={pillWidth}
+                    animate={!reducedMotion}
+                    palette={palette}
                     onPress={() => handlePress(index)}
-                    style={styles.item}
-                    accessibilityRole="tab"
-                    accessibilityLabel={tab.label}
-                    accessibilityState={{ selected }}
-                    accessibilityHint={selected ? "Seçili menü. Sağa veya sola sürükleyerek de menü değiştirebilirsiniz." : undefined}
-                  >
-                    <Ionicons name={highlighted ? tab.activeIcon : tab.icon} size={21} color={color} />
-                    <Text style={[styles.label, { color }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
-                      {tab.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </GestureDetector>
+                  />
+                ))}
+              </View>
+            </GestureDetector>
 
-          <Pressable
-            ref={circleRef}
-            testID="nav-circle"
-            onPress={handleCirclePress}
-            accessibilityRole="button"
-            accessibilityLabel={circle.label}
-            accessibilityHint={circle.hint}
-            accessibilityState={{ selected: circleActive }}
-            style={[
-              styles.circle,
-              {
-                backgroundColor: circleColor,
-                borderColor: circleActive ? ACTIVE_CONTENT : circleColor,
-                borderWidth: circleActive ? 2 : StyleSheet.hairlineWidth,
-              },
-            ]}
-          >
-            <Ionicons name={circleActive ? circle.activeIcon : circle.icon} size={26} color={ACTIVE_CONTENT} />
-          </Pressable>
+            <Pressable
+              ref={circleRef}
+              testID="nav-circle"
+              onPress={handleCirclePress}
+              accessibilityRole="button"
+              accessibilityLabel={circle.label}
+              accessibilityHint={circle.hint}
+              accessibilityState={{ selected: circleActive }}
+              style={[
+                styles.circle,
+                {
+                  backgroundColor: NAV_ACCENT,
+                  borderColor: circleActive ? ACCENT_CONTENT : NAV_ACCENT,
+                  borderWidth: circleActive ? 2 : StyleSheet.hairlineWidth,
+                },
+              ]}
+            >
+              <Ionicons name={circleActive ? circle.activeIcon : circle.icon} size={22} color={ACCENT_CONTENT} />
+            </Pressable>
+          </View>
         </View>
       </GestureHandlerRootView>
     </>
@@ -317,40 +322,34 @@ export function BottomNavigation({ variant = "main", active, onChange, onCircleO
 }
 
 const shadow = Platform.select({
-  ios: { shadowColor: "#000000", shadowOpacity: 0.28, shadowRadius: 16, shadowOffset: { width: 0, height: 8 } },
-  android: { elevation: 10 },
+  ios: { shadowColor: "#000000", shadowOpacity: 0.18, shadowRadius: 14, shadowOffset: { width: 0, height: 6 } },
+  android: { elevation: 6 },
 });
 
 const styles = StyleSheet.create({
   // Navbar'in arkasinda kalan sayfa icerigini arka plan rengine dogru soldurur.
   fadeArea: { position: "absolute", left: 0, right: 0, bottom: 0 },
-  // Ekranin altina yapisik degil - kenarlardan iceride, yuzen bir kapsul + ayri profil dairesi.
+  // Ekranin altina yapisik degil - kenarlardan iceride, ortalanmis, yuzen bir buton dizisi.
   wrapper: { position: "absolute", left: SIDE_MARGIN, right: SIDE_MARGIN },
+  bar: { alignItems: "center" },
   row: { flexDirection: "row", alignItems: "center", gap: GAP },
-  capsule: {
-    flex: 1,
+  tabs: { flexDirection: "row", alignItems: "center", gap: GAP },
+  item: {
+    height: NAV_ITEM_SIZE,
+    borderRadius: NAV_ITEM_SIZE / 2,
+    borderWidth: 1,
     flexDirection: "row",
     alignItems: "center",
-    height: NAV_HEIGHT,
-    borderRadius: NAV_HEIGHT / 2,
-    padding: PAD,
-    borderWidth: StyleSheet.hairlineWidth,
-    ...shadow,
+    justifyContent: "center",
+    gap: 6,
+    paddingHorizontal: 12,
   },
-  indicator: {
-    position: "absolute",
-    left: 0,
-    top: PAD,
-    height: INDICATOR_HEIGHT,
-    borderRadius: INDICATOR_HEIGHT / 2,
-  },
-  item: { flex: 1, height: INDICATOR_HEIGHT, alignItems: "center", justifyContent: "center", gap: 3, paddingHorizontal: 2 },
-  label: { fontSize: 10, fontWeight: "700", letterSpacing: 0.1, maxWidth: "100%" },
+  pill: { ...shadow },
+  label: { flexShrink: 1, fontSize: 13, fontWeight: "700", letterSpacing: 0.1 },
   circle: {
-    width: NAV_HEIGHT,
-    height: NAV_HEIGHT,
-    borderRadius: NAV_HEIGHT / 2,
-    borderWidth: StyleSheet.hairlineWidth,
+    width: NAV_ITEM_SIZE,
+    height: NAV_ITEM_SIZE,
+    borderRadius: NAV_ITEM_SIZE / 2,
     alignItems: "center",
     justifyContent: "center",
     ...shadow,
