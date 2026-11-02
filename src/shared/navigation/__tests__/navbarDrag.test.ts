@@ -1,35 +1,41 @@
-import { clampIndicatorX, indicatorXForIndex, nearestIndex, settleIndex } from "../navbarDrag";
+import { activePillWidth, dragIndex, isOnPill, navStep, pillSpan, settleIndex } from "../navbarDrag";
 
 describe("navbarDrag", () => {
-  const W = 80;
+  const SIZE = 52;
+  const GAP = 6;
+  const STEP = navStep(SIZE, GAP);
 
-  it("indeksten konuma ve geri donusumu tutarli cevirir", () => {
-    for (let i = 0; i < 4; i++) expect(nearestIndex(indicatorXForIndex(i, W, 6), W, 4, 6)).toBe(i);
+  it("genis hapi kalan alana gore boyutlandirir ve sinirlar", () => {
+    // 343 - (3 x 52 + 4 x 6 + 52) = 111
+    expect(activePillWidth(343, SIZE, GAP, 150)).toBe(111);
+    expect(activePillWidth(1000, SIZE, GAP, 150)).toBe(150);
+    expect(activePillWidth(100, SIZE, GAP, 150)).toBe(SIZE);
   });
 
-  it("en yakin sekmeye yuvarlar (yarim genislik siniri dahil)", () => {
-    expect(nearestIndex(0, W)).toBe(0);
-    expect(nearestIndex(39, W)).toBe(0);
-    expect(nearestIndex(41, W)).toBe(1);
-    expect(nearestIndex(130, W)).toBe(2);
-    expect(nearestIndex(239, W)).toBe(3);
+  it("secili sekmenin hap araligini hesaplar", () => {
+    expect(pillSpan(0, STEP, 111)).toEqual({ start: 0, end: 111 });
+    expect(pillSpan(2, STEP, 111)).toEqual({ start: 116, end: 227 });
   });
 
-  it("sinirlarin disindaki konumlari kapsul icine sikistirir", () => {
-    expect(clampIndicatorX(-50, W)).toBe(0);
-    expect(clampIndicatorX(9999, W)).toBe(W * 3);
-    expect(nearestIndex(-500, W)).toBe(0);
-    expect(nearestIndex(9999, W)).toBe(3);
-    expect(clampIndicatorX(-50, W, 4, 6)).toBe(6);
+  it("yalnizca hapin uzerindeki dokunmalari kabul eder", () => {
+    expect(isOnPill(40, 0, STEP, 111)).toBe(true);
+    expect(isOnPill(150, 0, STEP, 111)).toBe(false);
+    expect(isOnPill(150, 2, STEP, 111)).toBe(true);
+    expect(isOnPill(10, -1, STEP, 111)).toBe(false);
   });
 
-  it("gecersiz genislikte 0 doner", () => {
-    expect(nearestIndex(100, 0)).toBe(0);
+  it("surukleme mesafesini en yakin sekmeye yuvarlar ve sinirlar", () => {
+    expect(dragIndex(0, 28, STEP)).toBe(0);
+    expect(dragIndex(0, 30, STEP)).toBe(1);
+    expect(dragIndex(0, 116, STEP)).toBe(2);
+    expect(dragIndex(1, 9999, STEP)).toBe(3);
+    expect(dragIndex(2, -9999, STEP)).toBe(0);
+    expect(dragIndex(2, 100, 0)).toBe(2);
   });
 
   it("hizli firlatmada hiz yonundeki sekmeye yerlesir", () => {
-    expect(settleIndex(70, 0, W)).toBe(1);
-    expect(settleIndex(60, 900, W)).toBe(2);
-    expect(settleIndex(100, -900, W)).toBe(0);
+    expect(settleIndex(0, 20, 0, STEP)).toBe(0);
+    expect(settleIndex(0, 20, 400, STEP)).toBe(1);
+    expect(settleIndex(2, -10, -900, STEP)).toBe(1);
   });
 });

@@ -17,14 +17,15 @@ jest.mock("@expo/vector-icons", () => ({ Ionicons: () => null }));
 jest.mock("expo-linear-gradient", () => ({ LinearGradient: () => null }));
 jest.mock("react-native-safe-area-context", () => ({ useSafeAreaInsets: () => ({ top: 0, bottom: 20, left: 0, right: 0 }) }));
 
-// 4 sekme x 80 px + 2 x 4 px dolgu = 328 px genisliginde kapsul.
-const PILL_WIDTH = 328;
+// 351 px navbar: 3 yuvarlak menu (48) + aksiyon butonu (48) + 4 bosluk (6) = 216 px; secili hap 135 px.
+// Sekmeler arasi adim 48 + 6 = 54 px.
+const BAR_WIDTH = 351;
 
 function setup(active: NavTab | null = "home") {
   const onChange = jest.fn();
   const utils = render(<BottomNavigation active={active} onChange={onChange} />);
   act(() => {
-    fireEvent(screen.getByTestId("navbar-pill"), "layout", { nativeEvent: { layout: { x: 0, y: 0, width: PILL_WIDTH, height: 64 } } });
+    fireEvent(screen.getByTestId("navbar-bar"), "layout", { nativeEvent: { layout: { x: 0, y: 0, width: BAR_WIDTH, height: 48 } } });
   });
   return { onChange, ...utils };
 }
@@ -68,14 +69,21 @@ describe("BottomNavigation", () => {
     expect(screen.getByTestId("nav-nutrition").props.accessibilityState.selected).toBe(false);
   });
 
-  it("gostergeyi surukleyip birakinca en yakin menuyu secer", async () => {
+  it("secili menuyu genis hap olarak, digerlerini etiketsiz yuvarlak buton olarak gosterir", () => {
+    setup("workouts");
+    expect(screen.getByText("Antrenman")).toBeTruthy();
+    expect(screen.queryByText("Ana Sayfa")).toBeNull();
+    expect(screen.queryByText("Beslenme")).toBeNull();
+  });
+
+  it("hapi surukleyip birakinca en yakin menuyu secer", async () => {
     const { onChange } = setup("home");
-    // Gosterge Ana Sayfa hucresinde (x: 4..84). Orta noktadan tutulur, ~2.2 hucre saga surulur.
+    // Hap Ana Sayfa'da (x: 0..135). Tutulup ~2 adim (108 px) saga surulur.
     act(() => {
       fireGestureHandler(getByGestureTestId("navbar-pan"), [
         { x: 44, translationX: 0, velocityX: 0 },
         { x: 100, translationX: 56, velocityX: 0 },
-        { x: 220, translationX: 176, velocityX: 0 },
+        { x: 152, translationX: 108, velocityX: 0 },
       ]);
     });
     // Gesture Handler/Worklets mock'unda UI->JS gecisi microtask ile calisir.
@@ -83,7 +91,7 @@ describe("BottomNavigation", () => {
     expect(onChange).toHaveBeenCalledTimes(1);
   });
 
-  it("gostergeyi sinirlarin otesine surukleyince son menuye oturur", async () => {
+  it("hapi sinirlarin otesine surukleyince son menuye oturur", async () => {
     const { onChange } = setup("home");
     act(() => {
       fireGestureHandler(getByGestureTestId("navbar-pan"), [
@@ -94,7 +102,7 @@ describe("BottomNavigation", () => {
     await waitFor(() => expect(onChange).toHaveBeenCalledWith("profile"));
   });
 
-  it("gosterge disindan baslayan kaydirma menuyu degistirmez", async () => {
+  it("hap disindan baslayan kaydirma menuyu degistirmez", async () => {
     const { onChange } = setup("home");
     act(() => {
       fireGestureHandler(getByGestureTestId("navbar-pan"), [

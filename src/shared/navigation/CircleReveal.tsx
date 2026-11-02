@@ -17,7 +17,7 @@ import { RevealOrigin, revealRadius } from "./revealRadius";
 export type { RevealOrigin };
 
 /** Dairenin baslangic capi; yuvarlak butonun capiyla ayni olmalidir. */
-export const REVEAL_BASE_SIZE = 64;
+export const REVEAL_BASE_SIZE = 48;
 export const REVEAL_GROW_MS = 380;
 const FADE_DELAY_MS = 140;
 const FADE_MS = 240;
