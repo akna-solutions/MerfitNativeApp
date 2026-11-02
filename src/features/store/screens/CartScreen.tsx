@@ -82,7 +82,12 @@ const CartLine = memo(function CartLine({ item, busy, onQuantity, onRemove, onOp
   );
 });
 
-export function CartScreen() {
+type Props = {
+  /** Store navbar'indaki "Sepetim" sekmesi olarak gosterilir (geri, Store ana sayfasina doner). */
+  inTabs?: boolean;
+};
+
+export function CartScreen({ inTabs = false }: Props) {
   const router = useRouter();
   const { colors } = useTheme();
   const { isLoading, error: storeError, reload } = useStore();
@@ -98,7 +103,8 @@ export function CartScreen() {
     }, [isLoading, storeError, refresh]),
   );
 
-  const goStore = () => router.replace(storeRoutes.home());
+  const goStore = () => (inTabs ? router.navigate(storeRoutes.home()) : router.replace(storeRoutes.home()));
+  const shellTabProps = inTabs ? { tabBarClearance: true, onBack: () => router.navigate(storeRoutes.home()) } : {};
 
   const onQuantity = useCallback(
     async (item: CartLineModel, next: number) => {
@@ -130,7 +136,7 @@ export function CartScreen() {
 
   if (storeError) {
     return (
-      <StoreScreenShell title="Sepetim" testID="cart-screen">
+      <StoreScreenShell title="Sepetim" testID="cart-screen" {...shellTabProps}>
         <EmptyState icon="cloud-offline-outline" title="Sepet yüklenemedi" message={storeError} actionLabel="Tekrar dene" onAction={reload} testID="cart-error" />
       </StoreScreenShell>
     );
@@ -138,7 +144,7 @@ export function CartScreen() {
 
   if (isLoading) {
     return (
-      <StoreScreenShell title="Sepetim" testID="cart-screen">
+      <StoreScreenShell title="Sepetim" testID="cart-screen" {...shellTabProps}>
         <View style={styles.centered} testID="cart-loading">
           <DumbbellSpinner color={colors.primary} size="large" />
         </View>
@@ -148,7 +154,7 @@ export function CartScreen() {
 
   if (items.length === 0) {
     return (
-      <StoreScreenShell title="Sepetim" testID="cart-screen">
+      <StoreScreenShell title="Sepetim" testID="cart-screen" {...shellTabProps}>
         <EmptyState icon="cart-outline" title="Sepetin boş" message="Beğendiğin ürünleri sepete ekleyerek alışverişe başlayabilirsin." actionLabel="MB Shop'a dön" onAction={goStore} testID="cart-empty" />
       </StoreScreenShell>
     );
@@ -161,6 +167,7 @@ export function CartScreen() {
       title="Sepetim"
       subtitle={`${totals.itemCount} ürün`}
       testID="cart-screen"
+      {...shellTabProps}
       footer={
         <View style={styles.footerWrap}>
           {blocked ? (

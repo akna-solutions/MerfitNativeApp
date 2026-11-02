@@ -6,7 +6,7 @@ describe("navbarRoute", () => {
     expect(navbarRoute("profile", "main")).toBe("/pages/profile");
     expect(navbarRoute("profile", "store")).toBe("/pages/store-profile");
     expect(navbarRoute("store", "main")).toBe("/pages/store");
-    expect(navbarRoute("orders", "store")).toBe("/pages/store-orders");
+    expect(navbarRoute("cart", "store")).toBe("/pages/store-cart");
     expect(navbarRoute("categories", "store")).toBe("/pages/store-categories");
   });
 

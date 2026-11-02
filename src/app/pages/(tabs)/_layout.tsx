@@ -30,15 +30,16 @@ const ROUTE_TO_TAB: Record<string, NavTab> = {
   nutrition: "nutrition",
   store: "store",
   "store-categories": "categories",
-  "store-orders": "orders",
+  "store-cart": "cart",
   "store-profile": "profile",
   progress: "home",
   profile: "profile",
 };
 
-// Store bolumunun sekmeleri: bunlardayken navbar Store gorunumune gecer. Kategoriler ve Siparislerim de birer
-// sekmedir; boylece navbar ekranla birlikte kaymaz, yerinde sabit kalir.
-const STORE_ROUTES = new Set(["store", "store-categories", "store-orders", "store-profile"]);
+// Store bolumunun sekmeleri: bunlardayken navbar Store gorunumune gecer. Kategoriler ve Sepetim de birer sekmedir;
+// boylece navbar ekranla birlikte kaymaz, yerinde sabit kalir. Store profili navbar'da degil, Store ana sayfasinin
+// sag ustundeki profil butonundan acilir; acikken navbar'da hicbir menu secili gorunmez.
+const STORE_ROUTES = new Set(["store", "store-categories", "store-cart", "store-profile"]);
 
 export default function TabsLayout() {
   const reducedMotion = useReducedMotion();
@@ -80,7 +81,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="nutrition" />
       <Tabs.Screen name="store" />
       <Tabs.Screen name="store-categories" />
-      <Tabs.Screen name="store-orders" />
+      <Tabs.Screen name="store-cart" />
       <Tabs.Screen name="store-profile" />
       <Tabs.Screen name="progress" />
       <Tabs.Screen name="profile" />
