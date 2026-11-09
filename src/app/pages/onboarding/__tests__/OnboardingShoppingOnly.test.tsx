@@ -42,7 +42,6 @@ jest.mock("../../../../shared/profile/ProfileContext", () => ({
 jest.mock("../../../../shared/auth/useUsernameAvailability", () => ({
   useUsernameAvailability: () => ({ state: "available" }),
 }));
-jest.mock("../../../../services/api/equipment", () => ({ getEquipmentList: jest.fn(async () => [{ id: 4, name: "Dambıl" }]) }));
 
 jest.mock("../steps/NameStep", () => ({ NameStep: require("../../../../test/onboardingStepStubs").FilledNameStep }));
 jest.mock("../steps/LastNameStep", () => ({ LastNameStep: require("../../../../test/onboardingStepStubs").FilledLastNameStep }));
@@ -54,7 +53,10 @@ jest.mock("../steps/GoalStep", () => ({ GoalStep: require("../../../../test/onbo
 jest.mock("../steps/BodyCompositionStep", () => ({ BodyCompositionStep: require("../../../../test/onboardingStepStubs").BodyCompositionStep }));
 jest.mock("../steps/ActivityStep", () => ({ ActivityStep: require("../../../../test/onboardingStepStubs").ActivityStep }));
 jest.mock("../steps/ExperienceStep", () => ({ ExperienceStep: require("../../../../test/onboardingStepStubs").ExperienceStep }));
-jest.mock("../steps/FrequencyStep", () => ({ FrequencyStep: require("../../../../test/onboardingStepStubs").FrequencyStep }));
+jest.mock("../steps/FrequencyStep", () => ({
+  FrequencyStep: require("../../../../test/onboardingStepStubs").FrequencyStep,
+  MIN_AVAILABLE_DAYS: 2,
+}));
 jest.mock("../steps/EquipmentStep", () => ({ EquipmentStep: require("../../../../test/onboardingStepStubs").EquipmentStep }));
 
 jest.setTimeout(20000);
@@ -114,7 +116,8 @@ describe("Onboarding: sadece alışveriş için kayıt", () => {
     expect(request.heightCm).toBeUndefined();
     expect(request.weight).toBeUndefined();
     expect(request.goal).toBeUndefined();
-    expect(request.equipmentIds).toBeUndefined();
+    expect(request.hasEquipment).toBeUndefined();
+    expect(request.availableTrainingDays).toBeUndefined();
     // Kod dogrulaninca "Alisverise basla" ile MB Shop acilir (shop=1).
     await waitFor(() =>
       expect(mockRouter.replace).toHaveBeenCalledWith({
@@ -175,10 +178,11 @@ describe("Onboarding: fitness profilini sonradan tamamlama (mode=fitness)", () =
       goal: "build_muscle",
       activityLevel: "moderate",
       trainingExperience: "beginner",
-      trainingDays: 3,
       trainingLocation: "home",
-      equipmentIds: [],
+      hasEquipment: false,
+      availableTrainingDays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     });
+    expect(request).not.toHaveProperty("trainingDays");
     expect(request).not.toHaveProperty("firstName");
     expect(request).not.toHaveProperty("username");
     expect(request).not.toHaveProperty("email");

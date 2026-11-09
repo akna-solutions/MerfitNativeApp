@@ -1,9 +1,8 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
 import { OnboardingOption } from "../components/OnboardingOption";
 import { useTheme } from "../../../../shared/theme/ThemeContext";
-import { EquipmentListItem } from "../../../../services/api/types";
-import { EquipmentSelection, TrainingLocation } from "../types";
+import { TrainingLocation } from "../types";
 
 const LOCATION_OPTIONS: { label: string; value: TrainingLocation }[] = [
   { label: "Spor salonu", value: "gym" },
@@ -11,41 +10,20 @@ const LOCATION_OPTIONS: { label: string; value: TrainingLocation }[] = [
   { label: "Açık alan", value: "outdoor" },
 ];
 
-export type EquipmentLoadStatus = "loading" | "ready" | "error";
-
 type Props = {
   location: TrainingLocation | null;
   onLocationChange: (value: TrainingLocation) => void;
-  /** GET /api/equipment'ten gelen liste; secenekler sabit kodlanmaz, buradan uretilir. */
-  options: EquipmentListItem[];
-  status: EquipmentLoadStatus;
-  onRetry: () => void;
-  equipment: EquipmentSelection[];
-  onEquipmentChange: (value: EquipmentSelection[]) => void;
+  /** Ekipmanli (tum ekipmanlar) / ekipmansiz (vucut agirligi). Spor salonunda her zaman true. */
+  hasEquipment: boolean | null;
+  onHasEquipmentChange: (value: boolean) => void;
 };
 
-export function EquipmentStep({
-  location,
-  onLocationChange,
-  options,
-  status,
-  onRetry,
-  equipment,
-  onEquipmentChange,
-}: Props) {
+/**
+ * Antrenman yeri ve ekipman durumu. Ekipmanlar tek tek secilmez: "Ekipmanli" tum ekipmanlara erisim,
+ * "Ekipmansiz" yalnizca vucut agirligi demektir. Spor salonunda ekipman sorulmaz.
+ */
+export function EquipmentStep({ location, onLocationChange, hasEquipment, onHasEquipmentChange }: Props) {
   const { colors } = useTheme();
-  const toggleEquipment = (value: EquipmentSelection) => {
-    if (value === "none") {
-      onEquipmentChange(equipment.includes("none") ? [] : ["none"]);
-      return;
-    }
-    const withoutNone = equipment.filter((item) => item !== "none");
-    onEquipmentChange(
-      withoutNone.includes(value)
-        ? withoutNone.filter((item) => item !== value)
-        : [...withoutNone, value],
-    );
-  };
 
   return (
     <View>
@@ -63,41 +41,21 @@ export function EquipmentStep({
           <Text style={[styles.gymNote, { color: colors.text }]}>
             Spor salonunda tüm ekipmanlara erişimin olduğunu varsayıyoruz.
           </Text>
-          {status === "error" ? (
-            <Pressable onPress={onRetry}>
-              <Text style={{ color: colors.text }}>
-                Ekipman listesi alınamadı. Tekrar denemek için dokun.
-              </Text>
-            </Pressable>
-          ) : null}
         </View>
       ) : location ? (
         <View style={styles.equipmentBlock}>
-          <Text style={[styles.equipmentTitle, { color: colors.text }]}>Hangi ekipmanlara sahipsin?</Text>
-          {status === "loading" ? (
-            <Text style={{ color: colors.text }}>Ekipman listesi yükleniyor...</Text>
-          ) : null}
-          {status === "error" ? (
-            <Pressable onPress={onRetry}>
-              <Text style={{ color: colors.text }}>
-                Ekipman listesi alınamadı. Tekrar denemek için dokun.
-              </Text>
-            </Pressable>
-          ) : null}
-          {options.map((option) => (
-            <OnboardingOption
-              key={option.id}
-              label={option.name}
-              shape="check"
-              selected={equipment.includes(option.id)}
-              onPress={() => toggleEquipment(option.id)}
-            />
-          ))}
+          <Text style={[styles.equipmentTitle, { color: colors.text }]}>Ekipmanın var mı?</Text>
           <OnboardingOption
-            label="Ekipman yok"
-            shape="check"
-            selected={equipment.includes("none")}
-            onPress={() => toggleEquipment("none")}
+            label="Ekipmanlı"
+            subtitle="Dambıl, bant, bar gibi ekipmanlarla çalışırım."
+            selected={hasEquipment === true}
+            onPress={() => onHasEquipmentChange(true)}
+          />
+          <OnboardingOption
+            label="Ekipmansız"
+            subtitle="Yalnızca vücut ağırlığıyla çalışırım."
+            selected={hasEquipment === false}
+            onPress={() => onHasEquipmentChange(false)}
           />
         </View>
       ) : null}

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react-native";
+import { fireEvent, render, screen } from "@testing-library/react-native";
 
 import { mockThemeValue } from "../../../../../test/mockTheme";
 import { EquipmentStep } from "../EquipmentStep";
@@ -7,36 +7,31 @@ jest.mock("../../../../../shared/theme/ThemeContext", () => ({
   useTheme: () => mockThemeValue,
 }));
 
-const options = [
-  { id: 1, name: "Dambıl", slug: "dumbbell" },
-  { id: 2, name: "Barfiks barı", slug: "pull-up-bar" },
-];
-
-function renderStep(location: "gym" | "home" | "outdoor") {
+function renderStep(location: "gym" | "home" | "outdoor", onHasEquipmentChange = jest.fn()) {
   return render(
     <EquipmentStep
       location={location}
       onLocationChange={jest.fn()}
-      options={options}
-      status="ready"
-      onRetry={jest.fn()}
-      equipment={[]}
-      onEquipmentChange={jest.fn()}
+      hasEquipment={null}
+      onHasEquipmentChange={onHasEquipmentChange}
     />,
   );
 }
 
 describe("EquipmentStep", () => {
-  it("spor salonunda ekipman sormaz, tum ekipmanlarin var sayildigini soyler", () => {
-    renderStep("gym");
+  it("spor salonunda ekipman sormaz, tum ekipmanlarin var sayildigini soyler", async () => {
+    await renderStep("gym");
     expect(screen.getByText("Spor salonunda tüm ekipmanlara erişimin olduğunu varsayıyoruz.")).toBeTruthy();
-    expect(screen.queryByText("Hangi ekipmanlara sahipsin?")).toBeNull();
-    expect(screen.queryByText("Dambıl")).toBeNull();
+    expect(screen.queryByText("Ekipmanın var mı?")).toBeNull();
   });
 
-  it("evde ekipman secimini gosterir", () => {
-    renderStep("home");
-    expect(screen.getByText("Hangi ekipmanlara sahipsin?")).toBeTruthy();
-    expect(screen.getByText("Dambıl")).toBeTruthy();
+  it("evde yalnizca ekipmanli / ekipmansiz secimi sunar", async () => {
+    const onChange = jest.fn();
+    await renderStep("home", onChange);
+    expect(screen.getByText("Ekipmanın var mı?")).toBeTruthy();
+    await fireEvent.press(screen.getByText("Ekipmansız"));
+    expect(onChange).toHaveBeenCalledWith(false);
+    await fireEvent.press(screen.getByText("Ekipmanlı"));
+    expect(onChange).toHaveBeenCalledWith(true);
   });
 });

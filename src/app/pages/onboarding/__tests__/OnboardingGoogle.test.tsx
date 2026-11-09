@@ -44,7 +44,6 @@ jest.mock("../../../../shared/profile/ProfileContext", () => ({
 jest.mock("../../../../shared/auth/useUsernameAvailability", () => ({
   useUsernameAvailability: () => ({ state: "available" }),
 }));
-jest.mock("../../../../services/api/equipment", () => ({ getEquipmentList: jest.fn(async () => []) }));
 
 // Ilk 12 adim, gecerli bir deger secen taslaklarla degistirilir (bkz. test/onboardingStepStubs); testin konusu son adim.
 jest.mock("../steps/NameStep", () => ({ NameStep: require("../../../../test/onboardingStepStubs").NameStep }));
@@ -57,7 +56,10 @@ jest.mock("../steps/GoalStep", () => ({ GoalStep: require("../../../../test/onbo
 jest.mock("../steps/BodyCompositionStep", () => ({ BodyCompositionStep: require("../../../../test/onboardingStepStubs").BodyCompositionStep }));
 jest.mock("../steps/ActivityStep", () => ({ ActivityStep: require("../../../../test/onboardingStepStubs").ActivityStep }));
 jest.mock("../steps/ExperienceStep", () => ({ ExperienceStep: require("../../../../test/onboardingStepStubs").ExperienceStep }));
-jest.mock("../steps/FrequencyStep", () => ({ FrequencyStep: require("../../../../test/onboardingStepStubs").FrequencyStep }));
+jest.mock("../steps/FrequencyStep", () => ({
+  FrequencyStep: require("../../../../test/onboardingStepStubs").FrequencyStep,
+  MIN_AVAILABLE_DAYS: 2,
+}));
 jest.mock("../steps/EquipmentStep", () => ({ EquipmentStep: require("../../../../test/onboardingStepStubs").EquipmentStep }));
 
 // 13 adimli akis ilk testte (soguk baslangic) varsayilan 5 sn sinirini asabiliyor.
@@ -118,8 +120,11 @@ describe("Onboarding: Google ile kayıt", () => {
       weight: 78,
       goal: "build_muscle",
       trainingLocation: "home",
-      equipmentIds: [],
+      hasEquipment: false,
+      availableTrainingDays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     });
+    expect(request).not.toHaveProperty("equipmentIds");
+    expect(request).not.toHaveProperty("trainingDays");
     expect(request).not.toHaveProperty("email");
     expect(request).not.toHaveProperty("password");
     expect(mockRegister).not.toHaveBeenCalled();

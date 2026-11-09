@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { StyleSheet, Text } from "react-native";
 
 import {
@@ -7,9 +7,7 @@ import {
   isApiError,
   NetworkError,
 } from "../../../services/api/client";
-import { getEquipmentList } from "../../../services/api/equipment";
 import {
-  EquipmentListItem,
   FitnessProfileRequest,
   GoogleRegisterRequest,
   RegisterRequest,
@@ -41,9 +39,9 @@ import { AccountStep } from "./steps/AccountStep";
 import { ActivityStep } from "./steps/ActivityStep";
 import { AgeStep } from "./steps/AgeStep";
 import { BodyCompositionStep, BodyCompositionValues } from "./steps/BodyCompositionStep";
-import { EquipmentLoadStatus, EquipmentStep } from "./steps/EquipmentStep";
+import { EquipmentStep } from "./steps/EquipmentStep";
 import { ExperienceStep } from "./steps/ExperienceStep";
-import { FrequencyStep } from "./steps/FrequencyStep";
+import { FrequencyStep, MIN_AVAILABLE_DAYS } from "./steps/FrequencyStep";
 import { GenderStep } from "./steps/GenderStep";
 import { GoalStep } from "./steps/GoalStep";
 import { HeightStep } from "./steps/HeightStep";
@@ -137,7 +135,7 @@ type ProfileFields = Omit<RegisterRequest, "email" | "password" | "confirmPasswo
  * OnboardingData (RN state) -> kayit isteklerinin ortak onboarding alanlari (backend AccountProfileRequest).
  * Sayisal alanlar backend'de decimal/int oldugundan bos string'ler yerine null gonderiyoruz.
  */
-function toProfileFields(data: OnboardingData, allEquipmentIds: number[]): ProfileFields {
+function toProfileFields(data: OnboardingData): ProfileFields {
   const age = parseInt(data.age, 10);
   const heightCm = data.height ? parseFloat(data.height) : null;
   const heightFeet = data.heightFeet ? parseInt(data.heightFeet, 10) : null;
@@ -166,14 +164,11 @@ function toProfileFields(data: OnboardingData, allEquipmentIds: number[]): Profi
     confirmLowBodyFatWarning: data.confirmLowBodyFatWarning ? true : null,
     activityLevel: data.activityLevel,
     trainingExperience: data.trainingExperience,
-    trainingDays: data.trainingDays,
     trainingLocation: data.trainingLocation,
-    // Spor salonunda tum ekipmanlar var sayilir (ekipman secimi sorulmaz).
-    // "none" yalnizca istemci secenegidir; backend'e yalnizca gercek Equipment.Id'leri gider.
-    equipmentIds:
-      data.trainingLocation === "gym"
-        ? allEquipmentIds
-        : data.equipment.filter((item): item is number => item !== "none"),
+    // Ekipmanlar tek tek secilmez; spor salonu her zaman ekipmanlidir.
+    hasEquipment: data.trainingLocation === "gym" ? true : data.hasEquipment === true,
+    // Haftalik gun sayisini algoritma belirler; yalnizca musait gunler gonderilir.
+    availableTrainingDays: data.availableDays,
   };
 }
 
@@ -189,21 +184,21 @@ function toShoppingProfileFields(data: OnboardingData): ProfileFields {
   };
 }
 
-function toAccountFields(data: OnboardingData, allEquipmentIds: number[]): ProfileFields {
-  return data.purpose === "shopping" ? toShoppingProfileFields(data) : toProfileFields(data, allEquipmentIds);
+function toAccountFields(data: OnboardingData): ProfileFields {
+  return data.purpose === "shopping" ? toShoppingProfileFields(data) : toProfileFields(data);
 }
 
 /** OnboardingData -> POST /api/profile/fitness (alisveris hesabinin fitness profilini tamamlama). */
-function toFitnessProfileRequest(data: OnboardingData, allEquipmentIds: number[]): FitnessProfileRequest {
+function toFitnessProfileRequest(data: OnboardingData): FitnessProfileRequest {
   const { firstName: _firstName, lastName: _lastName, username: _username, shoppingOnly: _shoppingOnly, ...fitness } =
-    toProfileFields(data, allEquipmentIds);
+    toProfileFields(data);
   return fitness;
 }
 
 /** OnboardingData -> RegisterRequest (e-posta/sifre ile kayit). */
-function toRegisterRequest(data: OnboardingData, allEquipmentIds: number[]): RegisterRequest {
+function toRegisterRequest(data: OnboardingData): RegisterRequest {
   return {
-    ...toAccountFields(data, allEquipmentIds),
+    ...toAccountFields(data),
     email: data.email.trim(),
     password: data.password,
     confirmPassword: data.confirmPassword,
@@ -260,31 +255,8 @@ export function OnboardingContainer() {
   const [completedName, setCompletedName] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [equipmentList, setEquipmentList] = useState<EquipmentListItem[]>([]);
-  const [equipmentStatus, setEquipmentStatus] = useState<EquipmentLoadStatus>("loading");
-  const [equipmentAttempt, setEquipmentAttempt] = useState(0);
   const [lowBodyFatPrompt, setLowBodyFatPrompt] = useState<LowBodyFatPrompt | null>(null);
   const usernameAvailability = useUsernameAvailability(data.username);
-
-  // Ekipman listesini akisin basinda cekiyoruz; EquipmentStep secenekleri bu listeden uretir
-  // (sabit kodlanmis slug'lar yok). Basarisiz olursa kullanici adimda tekrar deneyebilir.
-  useEffect(() => {
-    let isMounted = true;
-    setEquipmentStatus("loading");
-    getEquipmentList()
-      .then((list) => {
-        if (!isMounted) return;
-        setEquipmentList(list);
-        setEquipmentStatus("ready");
-      })
-      .catch((error) => {
-        console.warn("Ekipman listesi alinamadi:", error);
-        if (isMounted) setEquipmentStatus("error");
-      });
-    return () => {
-      isMounted = false;
-    };
-  }, [equipmentAttempt]);
 
   const update = <K extends keyof OnboardingData>(
     key: K,
@@ -331,7 +303,7 @@ export function OnboardingContainer() {
     setSubmitError(null);
     setIsSubmitting(true);
     try {
-      await completeFitnessProfile(toFitnessProfileRequest(submitData, equipmentList.map((item) => item.id)));
+      await completeFitnessProfile(toFitnessProfileRequest(submitData));
       setCompletedName(profile.firstName);
     } catch (error) {
       if (isLowBodyFatConfirmationError(error)) {
@@ -361,7 +333,7 @@ export function OnboardingContainer() {
     setSubmitError(null);
     setIsSubmitting(true);
     try {
-      const result = await register(toRegisterRequest(submitData, equipmentList.map((item) => item.id)));
+      const result = await register(toRegisterRequest(submitData));
       // E-posta dogrulanmadan uygulamaya gecilmez: kayittan sonra dogrudan kod ekranina gidilir;
       // kod dogrulaninca "Hazırsın" ekrani gosterilir.
       goToEmailVerificationAfterAuth(router, {
@@ -390,7 +362,7 @@ export function OnboardingContainer() {
       // ID token ~1 saat gecerli; onboarding uzun surduyse sessizce yenisi alinir.
       const idToken = (await refreshGoogleIdToken()) ?? signup.idToken;
       const request: GoogleRegisterRequest = {
-        ...toAccountFields(submitData, equipmentList.map((item) => item.id)),
+        ...toAccountFields(submitData),
         idToken,
       };
       const result = await googleRegister(request);
@@ -733,14 +705,14 @@ export function OnboardingContainer() {
           <OnboardingScreen
             step={stepNumber}
             totalSteps={totalSteps}
-            title="Ne sıklıkla antrenman yapmak istiyorsun?"
+            title="Hangi günler antrenman yapabilirsin?"
             onBack={goBack}
             onContinue={goNext}
-            continueDisabled={!data.trainingDays}
+            continueDisabled={data.availableDays.length < MIN_AVAILABLE_DAYS}
           >
             <FrequencyStep
-              value={data.trainingDays}
-              onChange={(value) => update("trainingDays", value)}
+              value={data.availableDays}
+              onChange={(value) => update("availableDays", value)}
             />
           </OnboardingScreen>
         );
@@ -758,21 +730,15 @@ export function OnboardingContainer() {
             continueDisabled={
               (completingProfile && isSubmitting) ||
               !data.trainingLocation ||
-              equipmentStatus === "loading" ||
-              // Spor salonunda tum ekipman ID'leri gonderilir; liste gelmeden devam edilemez.
-              (data.trainingLocation === "gym" && equipmentStatus !== "ready") ||
-              // Liste alinamadiysa gercek secim yapilamaz; yalnizca "Ekipman yok" ile devam edilebilir.
-              (equipmentStatus === "error" && !data.equipment.includes("none"))
+              // Ev/acik alanda ekipmanli mi ekipmansiz mi oldugu secilmeli.
+              (data.trainingLocation !== "gym" && data.hasEquipment === null)
             }
           >
             <EquipmentStep
               location={data.trainingLocation}
               onLocationChange={(value) => update("trainingLocation", value)}
-              options={equipmentList}
-              status={equipmentStatus}
-              onRetry={() => setEquipmentAttempt((n) => n + 1)}
-              equipment={data.equipment}
-              onEquipmentChange={(value) => update("equipment", value)}
+              hasEquipment={data.hasEquipment}
+              onHasEquipmentChange={(value) => update("hasEquipment", value)}
             />
             {completingProfile && submitError ? (
               <Text style={[styles.error, { color: colors.danger }]} accessibilityLiveRegion="polite">
