@@ -182,11 +182,18 @@ export type RegisterRequest = {
   confirmLowBodyFatWarning?: boolean | null;
   activityLevel?: string | null;
   trainingExperience?: string | null;
+  /** Eski surumler icin (haftalik gun sayisi). Backend yok sayar; gun sayisini algoritma belirler. */
   trainingDays?: number | null;
   trainingLocation?: string | null;
-  /** Backend'de Equipment tablosunun sayisal Id'lerini bekler; EquipmentStep, secenekleri
-   * GET /api/equipment'ten urettigi icin secilen Id'ler dogrudan buraya konur. */
+  /** Eski surumler icin (tek tek secilen ekipmanlar). Yeni surum yalnizca hasEquipment gonderir. */
   equipmentIds?: number[] | null;
+  /** Ekipmanli (true: tum ekipmanlar) / ekipmansiz (false: vucut agirligi). Spor salonunda her zaman true. */
+  hasEquipment?: boolean | null;
+  /**
+   * Kullanicinin antrenman yapabilecegi gunler ("Mon".."Sun", en az 2). Bos/null: tum hafta. Haftalik gun sayisini
+   * ve hangi gunlerin kullanilacagini algoritma bu gunler arasindan belirler.
+   */
+  availableTrainingDays?: string[] | null;
   /**
    * Yalnizca MB Shop'ta alisveris icin kayit: true ise fitness alanlari (boy, kilo, hedef...) sorulmaz ve
    * backend bunlari yok sayar. Kullanici MB Fit'i actiginda POST /api/profile/fitness ile profilini tamamlar.
@@ -887,8 +894,17 @@ export type ProfileResponse = {
   equipment: string;
   trainingLocation: string | null;
   workoutDurationMin: number;
+  /** Algoritmanin belirledigi haftalik gun sayisi (= trainingDays.length). */
   trainingDaysPerWeek: number;
+  /**
+   * Programdaki gunler (aktif program yoksa algoritmanin musait gunlerden sececegi gunler). PUT isteginde ise
+   * kullanicinin musait gunleri olarak yorumlanir (en az 2; bos liste "degisiklik yok").
+   */
   trainingDays: string[];
+  /** Kullanicinin musait gunleri; bos ise tum hafta. Eski backend gondermez. */
+  availableTrainingDays?: string[];
+  /** Ekipmanli / ekipmansiz. Eski backend gondermez (bkz. equipment). */
+  hasEquipment?: boolean;
   unitSystem: string;
   appearance: string;
   notifications: ProfileNotificationSettings;

@@ -411,11 +411,10 @@ function bodySubtitle(profile: ProfileData): string {
 }
 
 function trainingSubtitle(profile: ProfileData): string {
-  if (profile.trainingDays.length > 0) {
-    return profile.trainingDays.map((day) => WEEKDAY_SHORT_LABELS[day]).join(", ");
-  }
-  if (profile.trainingDaysPerWeek > 0) return `Haftada ${profile.trainingDaysPerWeek} gün`;
-  return "Antrenman günleri ve seviyesi";
+  const parts: string[] = [];
+  if (profile.trainingDaysPerWeek > 0) parts.push(`Haftada ${profile.trainingDaysPerWeek} gün`);
+  parts.push(profile.hasEquipment ? "Ekipmanlı" : "Ekipmansız");
+  return parts.join(" · ");
 }
 
 const styles = StyleSheet.create({

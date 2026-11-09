@@ -1,4 +1,5 @@
 import type { FitnessGoalCode } from "../../../services/api/types";
+import { WEEKDAYS, type Weekday } from "../../../shared/profile/types";
 
 export type Gender = "male" | "female";
 
@@ -20,12 +21,6 @@ export type ActivityLevel =
 export type TrainingExperience = "beginner" | "intermediate" | "advanced";
 
 export type TrainingLocation = "gym" | "home" | "outdoor";
-
-/**
- * Secilen ekipmanlar: GET /api/equipment listesinden gelen sayisal Equipment.Id degerleri.
- * "none" (Ekipman yok) yalnizca istemcide bulunan bir secenektir; backend'e gonderilmez.
- */
-export type EquipmentSelection = number | "none";
 
 // Tek bir state objesi - backend'e gönderilecek onboarding profili.
 export type OnboardingData = {
@@ -53,9 +48,11 @@ export type OnboardingData = {
   confirmLowBodyFatWarning: boolean;
   activityLevel: ActivityLevel | null;
   trainingExperience: TrainingExperience | null;
-  trainingDays: number | null;
+  /** Antrenman yapabilecegi gunler (en az 2). Gun sayisini algoritma belirler. */
+  availableDays: Weekday[];
   trainingLocation: TrainingLocation | null;
-  equipment: EquipmentSelection[];
+  /** Ekipmanli / ekipmansiz; spor salonunda sorulmaz (her zaman ekipmanli). */
+  hasEquipment: boolean | null;
   email: string;
   password: string;
   confirmPassword: string;
@@ -82,9 +79,10 @@ export const initialOnboardingData: OnboardingData = {
   confirmLowBodyFatWarning: false,
   activityLevel: null,
   trainingExperience: null,
-  trainingDays: null,
+  // Varsayilan: tum hafta musait; kullanici musait olmadigi gunlerin isaretini kaldirir.
+  availableDays: [...WEEKDAYS],
   trainingLocation: null,
-  equipment: [],
+  hasEquipment: null,
   email: "",
   password: "",
   confirmPassword: "",

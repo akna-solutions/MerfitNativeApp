@@ -25,6 +25,8 @@ export const EMPTY_PROFILE_DATA: ProfileData = {
   workoutDurationMin: 0,
   trainingDaysPerWeek: 0,
   trainingDays: [],
+  availableTrainingDays: [],
+  hasEquipment: false,
 
   unitSystem: "metric",
   appearance: "system",

@@ -70,10 +70,14 @@ export type ProfileData = {
   /** Kayitta secilen antrenman yeri; secilmediyse null. */
   trainingLocation: TrainingLocation | null;
   workoutDurationMin: number;
-  /** Kayitta secilen haftalik antrenman gunu sayisi. */
+  /** Algoritmanin belirledigi haftalik antrenman gunu sayisi (kullanici secmez). */
   trainingDaysPerWeek: number;
-  /** Aktif programdaki gunler (backend WorkoutPlanDay). Program yoksa bos. */
+  /** Programdaki gunler; program yoksa algoritmanin musait gunlerden sececegi gunler. */
   trainingDays: Weekday[];
+  /** Kullanicinin antrenman yapabilecegi gunler; bos ise tum hafta. */
+  availableTrainingDays: Weekday[];
+  /** Ekipmanli (tum ekipmanlar) / ekipmansiz (vucut agirligi). */
+  hasEquipment: boolean;
 
   unitSystem: UnitSystem;
   appearance: AppearanceMode;

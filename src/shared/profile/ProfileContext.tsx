@@ -53,6 +53,10 @@ type ProfileContextValue = {
 
 const ProfileContext = createContext<ProfileContextValue | null>(null);
 
+function toWeekdays(days: string[] | undefined): Weekday[] {
+  return (days ?? []).filter((day): day is Weekday => WEEKDAYS.includes(day as Weekday));
+}
+
 function mapToProfileData(response: ProfileResponse): ProfileData {
   return {
     firstName: response.firstName,
@@ -74,9 +78,10 @@ function mapToProfileData(response: ProfileResponse): ProfileData {
     trainingLocation: (response.trainingLocation ?? null) as TrainingLocation | null,
     workoutDurationMin: response.workoutDurationMin,
     trainingDaysPerWeek: response.trainingDaysPerWeek ?? 0,
-    trainingDays: (response.trainingDays ?? []).filter((day): day is Weekday =>
-      WEEKDAYS.includes(day as Weekday),
-    ),
+    trainingDays: toWeekdays(response.trainingDays),
+    availableTrainingDays: toWeekdays(response.availableTrainingDays),
+    // Eski backend hasEquipment gondermez; ekipman kategorisinden turetilir.
+    hasEquipment: response.hasEquipment ?? response.equipment !== "BODYWEIGHT",
     unitSystem: response.unitSystem as ProfileData["unitSystem"],
     appearance: response.appearance as ProfileData["appearance"],
     notifications: response.notifications,
@@ -109,10 +114,21 @@ function deriveDateOfBirthFromAge(age: number, currentDateOfBirth: string): stri
 }
 
 function mapPatchToApiRequest(patch: Partial<ProfileData>, current: ProfileData): ApiUpdateProfileRequest {
-  // equipment backend'de antrenman yerinden turetilen salt okunur bir alandir; geri gonderilmez.
-  // trainingDays kullanicinin sectigi gunlerdir; backend haftalik gun sayisini bu listeden turetir.
-  const { age, equipment: _equipment, ...rest } = patch;
+  // equipment salt okunur bir alandir; geri gonderilmez (yerine hasEquipment).
+  // trainingDays programdaki (algoritmanin sectigi) gunlerdir, gonderilmez. Kullanicinin musait gunleri
+  // availableTrainingDays'tir ve backend'e trainingDays olarak gider; gun sayisini algoritma belirler.
+  const {
+    age,
+    equipment: _equipment,
+    trainingDays: _plannedDays,
+    trainingDaysPerWeek: _dayCount,
+    availableTrainingDays,
+    ...rest
+  } = patch;
   const request: ApiUpdateProfileRequest = { ...rest };
+  if (availableTrainingDays && availableTrainingDays.length > 0) {
+    request.trainingDays = availableTrainingDays;
+  }
 
   if (age !== undefined && patch.dateOfBirth === undefined) {
     request.dateOfBirth = deriveDateOfBirthFromAge(age, current.dateOfBirth);

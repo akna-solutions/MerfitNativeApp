@@ -27,7 +27,9 @@ export const GoalStep = autoSelect("build_muscle");
 export const BodyCompositionStep = () => null;
 export const ActivityStep = autoSelect("moderate");
 export const ExperienceStep = autoSelect("beginner");
-export const FrequencyStep = autoSelect(3);
+/** Musait gunler varsayilan olarak tum haftadir; adim degistirmeden gecer. */
+export const FrequencyStep = () => null;
+export const MIN_AVAILABLE_DAYS = 2;
 
 export function HeightStep(props: { cmValue: string; onCmChange: (v: string) => void }) {
   useEffect(() => {
@@ -39,12 +41,12 @@ export function HeightStep(props: { cmValue: string; onCmChange: (v: string) => 
 export function EquipmentStep(props: {
   location: string | null;
   onLocationChange: (v: string) => void;
-  onEquipmentChange: (v: string[]) => void;
+  onHasEquipmentChange: (v: boolean) => void;
 }) {
   useEffect(() => {
     if (!props.location) {
       props.onLocationChange("home");
-      props.onEquipmentChange(["none"]);
+      props.onHasEquipmentChange(false);
     }
   }, []);
   return null;

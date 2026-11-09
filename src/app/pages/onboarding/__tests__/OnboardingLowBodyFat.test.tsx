@@ -42,7 +42,6 @@ jest.mock("../../../../shared/profile/ProfileContext", () => ({
 jest.mock("../../../../shared/auth/useUsernameAvailability", () => ({
   useUsernameAvailability: () => ({ state: "available" }),
 }));
-jest.mock("../../../../services/api/equipment", () => ({ getEquipmentList: jest.fn(async () => []) }));
 
 // Olcum adimi gercek bilesenle calisir; digerleri gecerli deger secen taslaklardir (erkek, 25 yas, 180 cm).
 jest.mock("../steps/NameStep", () => ({ NameStep: require("../../../../test/onboardingStepStubs").FilledNameStep }));
@@ -60,7 +59,10 @@ jest.mock("../steps/GoalStep", () => ({
 }));
 jest.mock("../steps/ActivityStep", () => ({ ActivityStep: require("../../../../test/onboardingStepStubs").ActivityStep }));
 jest.mock("../steps/ExperienceStep", () => ({ ExperienceStep: require("../../../../test/onboardingStepStubs").ExperienceStep }));
-jest.mock("../steps/FrequencyStep", () => ({ FrequencyStep: require("../../../../test/onboardingStepStubs").FrequencyStep }));
+jest.mock("../steps/FrequencyStep", () => ({
+  FrequencyStep: require("../../../../test/onboardingStepStubs").FrequencyStep,
+  MIN_AVAILABLE_DAYS: 2,
+}));
 jest.mock("../steps/EquipmentStep", () => ({ EquipmentStep: require("../../../../test/onboardingStepStubs").EquipmentStep }));
 
 jest.setTimeout(20000);
