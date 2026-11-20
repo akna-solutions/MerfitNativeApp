@@ -6,6 +6,7 @@ const ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   workouts: "barbell-outline",
   pr: "trophy-outline",
   weekly: "calendar-outline",
+  steps: "footsteps-outline",
 };
 
 type Props = { icon: string | null | undefined; size: number; color: string };

@@ -29,6 +29,7 @@ import { useAchievementCelebration } from "../../../shared/achievements/useAchie
 import { fetchCalendar, peekCalendar } from "../../../shared/calendar/calendarCache";
 import { toDateKey, weekKeys as buildWeekKeys } from "../../../shared/calendar/dates";
 import { useNavigationGuard } from "../../../shared/navigation/useNavigationGuard";
+import { useStepCounter } from "../../../shared/steps/StepCounterContext";
 import { usePersonalizationStatus } from "../../../shared/personalization/usePersonalizationStatus";
 import { useWeightReminder } from "../../../shared/weightReminder/useWeightReminder";
 import { WeightReminderModal } from "../../../shared/weightReminder/WeightReminderModal";
@@ -40,6 +41,7 @@ import { GoalProgressCard } from "./components/GoalProgressCard";
 import { PersonalizationPendingState } from "./components/PersonalizationPendingState";
 import { QuickStats, QuickStatAction } from "./components/QuickStats";
 import { RestDayCard } from "./components/RestDayCard";
+import { StepActivityCard } from "./components/StepActivityCard";
 import { TodayStartCard } from "./components/TodayStartCard";
 import { usableImageUrls } from "./components/useImageCycle";
 import { WeeklyActivitySection } from "./components/WeeklyActivitySection";
@@ -101,6 +103,7 @@ export function DashboardScreen() {
   const [campaigns, setCampaigns] = useState<LoadState<CampaignListItem[]>>({ data: [], loading: true, error: false });
 
   const personalization = usePersonalizationStatus(true);
+  const stepCounter = useStepCounter();
   const previousPersonalizationStatus = useRef(personalization.status);
 
   const celebration = useAchievementCelebration();
@@ -480,6 +483,20 @@ export function DashboardScreen() {
             </View>
           ) : null}
 
+          <Animated.View style={[styles.padded, styles.stepGap, fadeUp(todayAnim)]}>
+            <StepActivityCard
+              status={stepCounter.status}
+              ready={stepCounter.ready}
+              steps={stepCounter.todaySteps}
+              goal={stepCounter.dailyGoal}
+              settings={stepCounter.settings}
+              mustOpenSettings={stepCounter.mustOpenSettings}
+              onPress={guard(() => router.push("/pages/activity" as never))}
+              onEnable={() => void stepCounter.requestPermission()}
+              onOpenSettings={stepCounter.openSettings}
+            />
+          </Animated.View>
+
           <Animated.View style={fadeUp(statsAnim)}>
             {data.hasCompletedFirstWorkout ? (
               <>
@@ -541,6 +558,7 @@ const styles = StyleSheet.create({
   gapTop: { marginTop: 28 },
   todayRow: { marginTop: 24, flexDirection: "row", gap: 12 },
   planLinkGap: { marginTop: 14 },
+  stepGap: { marginTop: 14 },
   planLink: {
     flexDirection: "row",
     alignItems: "center",
