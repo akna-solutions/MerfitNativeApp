@@ -33,6 +33,15 @@ export function StepActivityCard({ status, ready, steps, goal, settings, mustOpe
   const { colors } = useTheme();
   const progress = goalProgress(steps, goal);
   const { distanceKm, calories } = estimateFromSteps(steps, settings);
+  // Izin butonu olan durumlarda kart dugme icinde dugme olmasin diye tiklanabilir degil; "Detay" baglantisi calisir.
+  const hasInlineAction = ready && (status === "undetermined" || status === "denied");
+
+  const detailLabel = (
+    <>
+      <Text style={[styles.detail, { color: colors.primary }]}>Detay</Text>
+      <Ionicons name="chevron-forward" size={14} color={colors.primary} />
+    </>
+  );
 
   const header = (
     <View style={styles.header}>
@@ -42,10 +51,13 @@ export function StepActivityCard({ status, ready, steps, goal, settings, mustOpe
         </View>
         <Text style={[styles.badge, { color: colors.textSecondary }]}>GÜNLÜK ADIM</Text>
       </View>
-      <View style={styles.headerRight}>
-        <Text style={[styles.detail, { color: colors.primary }]}>Detay</Text>
-        <Ionicons name="chevron-forward" size={14} color={colors.primary} />
-      </View>
+      {hasInlineAction ? (
+        <Pressable style={styles.headerRight} onPress={onPress} hitSlop={10} accessibilityRole="link">
+          {detailLabel}
+        </Pressable>
+      ) : (
+        <View style={styles.headerRight}>{detailLabel}</View>
+      )}
     </View>
   );
 
@@ -122,6 +134,15 @@ export function StepActivityCard({ status, ready, steps, goal, settings, mustOpe
     status === "granted"
       ? `Bugün ${formatSteps(steps)} adım, hedef ${formatSteps(goal)}. ${formatPercent(progress.percent)} tamamlandı. Detay için dokun`
       : "Günlük adım. Detay için dokun";
+
+  if (hasInlineAction) {
+    return (
+      <View testID="step-activity-card" style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        {header}
+        {renderBody()}
+      </View>
+    );
+  }
 
   return (
     <Pressable
