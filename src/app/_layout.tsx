@@ -10,6 +10,7 @@ import { StoreProvider } from "../features/store/state/StoreContext";
 import { PushNotificationsProvider } from "../shared/notifications/PushNotificationsProvider";
 import { PlusProvider } from "../shared/plus/PlusContext";
 import { ProfileProvider } from "../shared/profile/ProfileContext";
+import { StepCounterProvider } from "../shared/steps/StepCounterContext";
 import { ThemeProvider, useTheme } from "../shared/theme/ThemeContext";
 
 function RootNavigation() {
@@ -42,7 +43,9 @@ export default function RootLayout() {
             <PlusProvider>
               <PushNotificationsProvider>
                 <StoreProvider>
-                  <RootNavigation />
+                  <StepCounterProvider>
+                    <RootNavigation />
+                  </StepCounterProvider>
                 </StoreProvider>
               </PushNotificationsProvider>
             </PlusProvider>

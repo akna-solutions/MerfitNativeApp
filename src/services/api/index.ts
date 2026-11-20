@@ -12,6 +12,7 @@ export * as nutritionApi from "./nutrition";
 export * as nutritionAssistantApi from "./nutritionAssistant";
 export * as profileApi from "./profile";
 export * as progressApi from "./progress";
+export * as stepsApi from "./steps";
 export * from "./types";
 export * as workoutsApi from "./workouts";
 export * as workoutSessionsApi from "./workoutSessions";

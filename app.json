@@ -18,7 +18,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "permissions": ["android.permission.CAMERA"],
+      "permissions": ["android.permission.CAMERA", "android.permission.ACTIVITY_RECOGNITION"],
       "package": "com.anonymous.MBFitNativeApp"
     },
     "web": {
@@ -50,6 +50,12 @@
           "photosPermission": "Öğününü fotoğrafla eklemek için seçtiğin yemek fotoğrafına erişmemiz gerekiyor.",
           "cameraPermission": "Öğün eklerken ürün barkodunu okutmak ve yemeğinin fotoğrafını çekmek için kameranıza erişmemiz gerekiyor.",
           "microphonePermission": false
+        }
+      ],
+      [
+        "expo-sensors",
+        {
+          "motionPermission": "Günlük adımlarını, yürüme mesafeni ve yaktığın tahmini kaloriyi hesaplamak için hareket ve fitness verilerine erişmemiz gerekiyor."
         }
       ],
       "expo-font",
