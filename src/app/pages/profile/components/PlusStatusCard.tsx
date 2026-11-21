@@ -1,6 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { GlassSurface } from "../../../../shared/glass/GlassSurface";
+import { glassBlueTint, glassTokens, useLiquidGlass } from "../../../../shared/glass/liquidGlass";
 import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
@@ -9,16 +11,16 @@ type Props = {
 };
 
 export function PlusStatusCard({ isPlusUser, onPress }: Props) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
+  const liquidGlass = useLiquidGlass();
   return (
-    <Pressable
-      onPress={onPress}
-      style={[
-        styles.card,
-        { backgroundColor: colors.card },
-        isPlusUser && { borderColor: colors.primary },
-      ]}
-    >
+    <Pressable onPress={onPress} style={({ pressed }) => (liquidGlass && pressed ? styles.pressedGlass : null)}>
+      <GlassSurface
+        enabled={liquidGlass}
+        tintColor={glassBlueTint(isDark)}
+        style={[styles.card, isPlusUser && { borderColor: colors.primary }]}
+        fallbackStyle={{ backgroundColor: colors.card }}
+      >
       <View style={[styles.iconWrap, { backgroundColor: colors.cardActive }]}>
         <Ionicons name="flash" size={16} color={colors.primary} />
       </View>
@@ -46,11 +48,13 @@ export function PlusStatusCard({ isPlusUser, onPress }: Props) {
       ) : (
         <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
       )}
+      </GlassSurface>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
+  pressedGlass: { transform: [{ scale: 0.985 }] },
   card: {
     flexDirection: "row",
     alignItems: "center",

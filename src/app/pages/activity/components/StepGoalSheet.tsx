@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { formatSteps } from "../../../../shared/steps/format";
+import { GlassSurface } from "../../../../shared/glass/GlassSurface";
+import { glassTokens, useLiquidGlass } from "../../../../shared/glass/liquidGlass";
 import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 export const PRESET_GOALS = [5_000, 7_500, 10_000, 12_500, 15_000];
@@ -17,7 +19,10 @@ type Props = {
 
 /** Gunluk adim hedefi secimi: hazir hedefler veya ozel hedef. Kaydedince yuzde aninda guncellenir. */
 export function StepGoalSheet({ visible, currentGoal, minGoal, maxGoal, onClose, onSave }: Props) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
+  // iOS 26+: pencere Liquid Glass'tir, arkadaki ekran hafif karartilmis haliyle camdan bulanik gorunur.
+  const liquidGlass = useLiquidGlass();
+  const glass = glassTokens(isDark);
   const isPreset = PRESET_GOALS.includes(currentGoal);
   const [selected, setSelected] = useState<number | "custom">(isPreset ? currentGoal : "custom");
   const [custom, setCustom] = useState(isPreset ? "" : String(currentGoal));
@@ -35,9 +40,15 @@ export function StepGoalSheet({ visible, currentGoal, minGoal, maxGoal, onClose,
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
-      <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Kapat" />
+      <Pressable style={[styles.backdrop, liquidGlass && { backgroundColor: glass.dimmedBackdrop }]} onPress={onClose} accessibilityLabel="Kapat" />
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.sheetWrap}>
-        <View style={[styles.sheet, { backgroundColor: colors.surface, borderColor: colors.border }]} testID="step-goal-sheet">
+        <GlassSurface
+          enabled={liquidGlass}
+          style={styles.sheet}
+          fallbackStyle={{ backgroundColor: colors.surface, borderColor: colors.border }}
+          glassStyle={{ borderColor: glass.edge }}
+          testID="step-goal-sheet"
+        >
           <View style={[styles.grabber, { backgroundColor: colors.border }]} />
           <Text style={[styles.title, { color: colors.text }]}>Günlük adım hedefi</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
@@ -114,7 +125,7 @@ export function StepGoalSheet({ visible, currentGoal, minGoal, maxGoal, onClose,
           >
             <Text style={styles.saveLabel}>{value === null ? "Hedef seç" : `${formatSteps(value)} adım olarak kaydet`}</Text>
           </Pressable>
-        </View>
+        </GlassSurface>
       </KeyboardAvoidingView>
     </Modal>
   );

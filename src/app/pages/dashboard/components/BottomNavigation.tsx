@@ -3,10 +3,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import { ComponentRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LayoutChangeEvent, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { Gesture, GestureDetector, GestureHandlerRootView } from "react-native-gesture-handler";
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
+import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { scheduleOnRN } from "react-native-worklets";
 
+import { GlassGroup, GlassSurface } from "../../../../shared/glass/GlassSurface";
+import { glassTokens, useLiquidGlass } from "../../../../shared/glass/liquidGlass";
 import { useReducedMotion } from "../../../../shared/motion/useReducedMotion";
 import { activePillWidth, dragIndex, isOnPill, navStep, settleIndex } from "../../../../shared/navigation/navbarDrag";
 import { useTheme } from "../../../../shared/theme/ThemeContext";
@@ -18,6 +20,12 @@ import { useTheme } from "../../../../shared/theme/ThemeContext";
  *
  * Gorunum: secili menu beyaz, genis bir hap icinde siyah ikon + etiket; diger menuler yari saydam, gri, yuvarlak ikon
  * butonlari; en sagda canli sari-yesil yuvarlak aksiyon butonu.
+ *
+ * iOS 26+ (Liquid Glass): uc menu tek bir yuzen cam kapsulun icinde durur, aksiyon butonu da ayri bir cam dairedir;
+ * ikisi ayni `GlassContainer` icinde oldugu icin birbirine yakin kenarlarda akiskan bicimde kaynasir. Arkadaki sayfa
+ * icerigi camdan gercek zamanli bulanik gorunur; bu yuzden alttaki opak solma burada hafifletilir. Secili menu cam
+ * ustunde dolu bir hap olarak (koyu temada beyaz, acik temada siyah) yumusak bir gecisle belirir. Android, eski iOS
+ * surumleri ve "Saydamligi azalt" acikken yukaridaki mevcut tasarim aynen kullanilir.
  */
 export type NavTab = "home" | "workouts" | "nutrition" | "store" | "profile" | "categories" | "cart";
 export type NavVariant = "main" | "store";
@@ -88,6 +96,19 @@ const FADE_STOPS: { alpha: number; at: number }[] = [
   { alpha: 1, at: 1 },
 ];
 const SPRING = { damping: 20, stiffness: 240, mass: 0.7 } as const;
+/** Cam kapsulun ic boslugu; menuler bu kadar kuculur ki kapsul aksiyon butonuyla ayni yukseklikte kalsin. */
+const GLASS_PADDING = 4;
+/** Cam ustundeki secili hap: MB Fit'in siyah/beyaz kimligi, her iki temada da yuksek kontrast. */
+const GLASS_PILL = {
+  dark: { bg: "#FFFFFF", content: "#0B0D12" },
+  light: { bg: "#0B0D12", content: "#FFFFFF" },
+} as const;
+// Cam yolunda arkadaki icerik camdan gorunmelidir; solma yalnizca navbar'in altinda hafif bir okunabilirlik zemini birakir.
+const GLASS_FADE_STOPS: { alpha: number; at: number }[] = [
+  { alpha: 0, at: 0 },
+  { alpha: 0.18, at: 0.55 },
+  { alpha: 0.4, at: 1 },
+];
 
 /** Referans tasarimin renkleri: beyaz secili hap + siyah icerik, sari-yesil aksiyon butonu. */
 const PILL_BG = "#FFFFFF";
@@ -113,14 +134,21 @@ type TabButtonProps = {
   itemSize: number;
   animate: boolean;
   palette: (typeof INACTIVE)[keyof typeof INACTIVE];
+  /** Liquid Glass: zemin camdan gelir; secili hap cam ustunde solarak belirir. */
+  glass: { pillBg: string; pillContent: string; inactiveIcon: string } | null;
   onPress: () => void;
 };
 
-function TabButton({ tab, selected, highlighted, pillWidth, itemSize, animate, palette, onPress }: TabButtonProps) {
+function TabButton({ tab, selected, highlighted, pillWidth, itemSize, animate, palette, glass, onPress }: TabButtonProps) {
   const target = highlighted ? pillWidth : itemSize;
   const sizes = contentSizes(itemSize);
   const widthStyle = useAnimatedStyle(() => ({ width: animate ? withSpring(target, SPRING) : target }), [target, animate]);
-  const color = highlighted ? PILL_CONTENT : palette.icon;
+  const pillOpacity = highlighted ? 1 : 0;
+  const pillStyle = useAnimatedStyle(
+    () => ({ opacity: animate ? withTiming(pillOpacity, { duration: 180 }) : pillOpacity }),
+    [pillOpacity, animate],
+  );
+  const color = glass ? (highlighted ? glass.pillContent : glass.inactiveIcon) : highlighted ? PILL_CONTENT : palette.icon;
 
   return (
     <Animated.View style={widthStyle}>
@@ -130,15 +158,23 @@ function TabButton({ tab, selected, highlighted, pillWidth, itemSize, animate, p
         style={[
           styles.item,
           { height: itemSize, borderRadius: itemSize / 2 },
-          highlighted
-            ? [styles.pill, { backgroundColor: PILL_BG, borderColor: PILL_BG }]
-            : { backgroundColor: palette.bg, borderColor: palette.border },
+          glass
+            ? styles.glassItem
+            : highlighted
+              ? [styles.pill, { backgroundColor: PILL_BG, borderColor: PILL_BG }]
+              : { backgroundColor: palette.bg, borderColor: palette.border },
         ]}
         accessibilityRole="tab"
         accessibilityLabel={tab.label}
         accessibilityState={{ selected }}
         accessibilityHint={selected ? "Seçili menü. Sağa veya sola sürükleyerek de menü değiştirebilirsiniz." : undefined}
       >
+        {glass ? (
+          <Animated.View
+            pointerEvents="none"
+            style={[StyleSheet.absoluteFill, { borderRadius: itemSize / 2, backgroundColor: glass.pillBg }, pillStyle]}
+          />
+        ) : null}
         <Ionicons name={highlighted ? tab.activeIcon : tab.icon} size={sizes.icon} color={color} />
         {highlighted ? (
           <Text style={[styles.label, { color, fontSize: sizes.font }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
@@ -154,20 +190,33 @@ export function BottomNavigation({ variant = "main", active, onChange, onCircleO
   const { tabs, circle } = VARIANTS[variant];
   const tabCount = tabs.length;
   const itemSize = navItemSize(variant);
-  const step = navStep(itemSize, GAP);
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const palette = isDark ? INACTIVE.dark : INACTIVE.light;
   const reducedMotion = useReducedMotion();
+  const liquidGlass = useLiquidGlass();
+  const glassColors = useMemo(() => {
+    if (!liquidGlass) return null;
+    const pill = isDark ? GLASS_PILL.dark : GLASS_PILL.light;
+    return { pillBg: pill.bg, pillContent: pill.content, inactiveIcon: glassTokens(isDark).inactiveIcon };
+  }, [liquidGlass, isDark]);
+  // Cam kapsulde menuler ic bosluk kadar kuculur; kapsulun toplam yuksekligi aksiyon butonuyla esit kalir.
+  const tabSize = liquidGlass ? itemSize - GLASS_PADDING * 2 : itemSize;
+  const step = navStep(tabSize, GAP);
   const navBottom = insets.bottom + NAV_BOTTOM_GAP;
   const fadeAreaHeight = navBottom + itemSize + FADE_START_ABOVE_NAV;
   // Gradyanin tam opakliga ulastigi nokta: navbar'in ortasi.
   const fadeEnd = FADE_HEIGHT / fadeAreaHeight;
+  const fadeStops = liquidGlass ? GLASS_FADE_STOPS : FADE_STOPS;
+  const fadeSpan = liquidGlass ? 1 : fadeEnd;
 
   const activeIndex = active ? tabs.findIndex((t) => t.id === active) : -1;
 
   const [barWidth, setBarWidth] = useState(0);
-  const pillWidth = barWidth > 0 ? activePillWidth(barWidth, itemSize, GAP, MAX_PILL_WIDTH, tabCount) : MAX_PILL_WIDTH;
+  const pillWidth =
+    barWidth > 0
+      ? activePillWidth(barWidth - (liquidGlass ? GLASS_PADDING * 2 : 0), tabSize, GAP, MAX_PILL_WIDTH, tabCount, itemSize)
+      : MAX_PILL_WIDTH;
 
   // Surukleme durumu UI thread'inde (shared value) tutulur; JS tarafi yalnizca gorsel vurgu ve gecis icin bilgilendirilir.
   const pillWidthSV = useSharedValue(pillWidth);
@@ -280,32 +329,41 @@ export function BottomNavigation({ variant = "main", active, onChange, onCircleO
     <>
       <View pointerEvents="none" style={[styles.fadeArea, { height: fadeAreaHeight }]}>
         <LinearGradient
-          colors={FADE_STOPS.map((stop) => withAlpha(colors.background, stop.alpha)) as [string, string, ...string[]]}
-          locations={FADE_STOPS.map((stop) => stop.at * fadeEnd) as [number, number, ...number[]]}
+          colors={fadeStops.map((stop) => withAlpha(colors.background, stop.alpha)) as [string, string, ...string[]]}
+          locations={fadeStops.map((stop) => stop.at * fadeSpan) as [number, number, ...number[]]}
           style={StyleSheet.absoluteFill}
         />
       </View>
       {/* Android'de GestureDetector, bir GestureHandlerRootView altinda olmalidir; navbar kendi kokunu getirir. */}
       <GestureHandlerRootView pointerEvents="box-none" style={[styles.wrapper, { bottom: navBottom }]}>
         <View testID="navbar-bar" onLayout={onBarLayout} style={styles.bar} pointerEvents="box-none">
-          <View style={styles.row} pointerEvents="box-none">
-            <GestureDetector gesture={pan}>
-              <View testID="navbar-pill" style={styles.tabs} accessibilityRole="tablist">
-                {tabs.map((tab, index) => (
-                  <TabButton
-                    key={tab.id}
-                    tab={tab}
-                    selected={index === activeIndex}
-                    highlighted={index === shownIndex}
-                    pillWidth={pillWidth}
-                    itemSize={itemSize}
-                    animate={!reducedMotion}
-                    palette={palette}
-                    onPress={() => handlePress(index)}
-                  />
-                ))}
-              </View>
-            </GestureDetector>
+          <GlassGroup enabled={liquidGlass} spacing={GAP * 2} style={styles.row} pointerEvents="box-none">
+            <GlassSurface
+              enabled={liquidGlass}
+              interactive
+              style={liquidGlass ? [styles.glassCapsule, { borderRadius: itemSize / 2 }] : undefined}
+              pointerEvents="box-none"
+            >
+              {/* Surukleme koordinatlari menu dizisine gore hesaplanir; jest bu yuzden kapsulun ic boslugu disinda kalir. */}
+              <GestureDetector gesture={pan}>
+                <View testID="navbar-pill" style={styles.tabs} accessibilityRole="tablist">
+                  {tabs.map((tab, index) => (
+                    <TabButton
+                      key={tab.id}
+                      tab={tab}
+                      selected={index === activeIndex}
+                      highlighted={index === shownIndex}
+                      pillWidth={pillWidth}
+                      itemSize={tabSize}
+                      animate={!reducedMotion}
+                      palette={palette}
+                      glass={glassColors}
+                      onPress={() => handlePress(index)}
+                    />
+                  ))}
+                </View>
+              </GestureDetector>
+            </GlassSurface>
 
             <Pressable
               ref={circleRef}
@@ -315,21 +373,35 @@ export function BottomNavigation({ variant = "main", active, onChange, onCircleO
               accessibilityLabel={circle.label}
               accessibilityHint={circle.hint}
               accessibilityState={{ selected: circleActive }}
-              style={[
+              style={({ pressed }) => [
                 styles.circle,
-                {
-                  width: itemSize,
-                  height: itemSize,
-                  borderRadius: itemSize / 2,
-                  backgroundColor: NAV_ACCENT,
-                  borderColor: circleActive ? ACCENT_CONTENT : NAV_ACCENT,
-                  borderWidth: circleActive ? 2 : StyleSheet.hairlineWidth,
-                },
+                { width: itemSize, height: itemSize, borderRadius: itemSize / 2 },
+                // Cam ustunde opaklik degistirilmez (efekt bozulur); basili geri bildirim hafif kuculmedir.
+                liquidGlass && pressed && !reducedMotion ? styles.glassPressed : null,
+                liquidGlass
+                  ? styles.glassCircle
+                  : {
+                      backgroundColor: NAV_ACCENT,
+                      borderColor: circleActive ? ACCENT_CONTENT : NAV_ACCENT,
+                      borderWidth: circleActive ? 2 : StyleSheet.hairlineWidth,
+                    },
               ]}
             >
-              <Ionicons name={circleActive ? circle.activeIcon : circle.icon} size={contentSizes(itemSize).circleIcon} color={ACCENT_CONTENT} />
+              {liquidGlass ? (
+                // Aksiyon butonu da camdir; vurgu rengiyle tonlanir ki navbar'daki tek aksiyon oldugu belli olsun.
+                <GlassSurface
+                  enabled
+                  tintColor={NAV_ACCENT}
+                  pointerEvents="none"
+                  style={[styles.glassCircleFill, { borderRadius: itemSize / 2 }]}
+                >
+                  <Ionicons name={circleActive ? circle.activeIcon : circle.icon} size={contentSizes(itemSize).circleIcon} color={ACCENT_CONTENT} />
+                </GlassSurface>
+              ) : (
+                <Ionicons name={circleActive ? circle.activeIcon : circle.icon} size={contentSizes(itemSize).circleIcon} color={ACCENT_CONTENT} />
+              )}
             </Pressable>
-          </View>
+          </GlassGroup>
         </View>
       </GestureHandlerRootView>
     </>
@@ -358,6 +430,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   pill: { ...shadow },
+  // Cam yolunda menulerin kendi zemini/kenari yoktur; zemin kapsulun camidir.
+  glassItem: { backgroundColor: "transparent", borderWidth: 0 },
+  glassCapsule: { padding: GLASS_PADDING },
+  glassCircle: { backgroundColor: "transparent", shadowOpacity: 0, elevation: 0 },
+  glassPressed: { transform: [{ scale: 0.94 }] },
+  glassCircleFill: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center" },
   label: { flexShrink: 1, fontWeight: "700", letterSpacing: 0.1 },
   circle: {
     alignItems: "center",

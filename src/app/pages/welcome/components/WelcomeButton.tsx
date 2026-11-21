@@ -1,7 +1,7 @@
-import { GlassView } from "expo-glass-effect";
 import { useRef } from "react";
 import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
 
+import { GlassSurface } from "../../../../shared/glass/GlassSurface";
 import { colors } from "../theme";
 
 type Props = {
@@ -35,9 +35,10 @@ export function WelcomeButton({ label, onPress, variant }: Props) {
             <Text style={styles.primaryLabel}>{label}</Text>
           </View>
         ) : (
-          <GlassView glassEffectStyle="clear" style={styles.secondary}>
+          // Video ustunde hafif "clear" cam; destek yoksa (Android, iOS 25-, API'siz betalar) ayni yari saydam buton.
+          <GlassSurface variant="clear" colorScheme="dark" style={styles.secondary}>
             <Text style={styles.secondaryLabel}>{label}</Text>
-          </GlassView>
+          </GlassSurface>
         )}
       </Animated.View>
     </Pressable>
