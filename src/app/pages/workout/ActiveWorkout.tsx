@@ -139,6 +139,7 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [personalRecords, setPersonalRecords] = useState<PersonalRecord[]>([]);
+  const [serverCalories, setServerCalories] = useState<number | null>(null);
 
   const [exerciseIndex, setExerciseIndex] = useState(0);
   const [phase, setPhase] = useState<WorkoutPhase>("exercise");
@@ -343,9 +344,10 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
       await flushSetLogs(sessionId);
       const summary = await completeWorkoutSession(sessionId, {
         durationSeconds: Math.max(1, elapsedSec),
-        // Ozet ekranindaki tahminle ayni deger; gonderilmezse dashboard'daki kalori hep 0 kaliyordu.
+        // Eski sunucular icin yedek tahmin; guncel sunucu kaloriyi sure/tur/zorluk/kiloya gore kendisi hesaplar.
         caloriesBurned: estimateWorkoutCalories(setLogs.current.size),
       });
+      setServerCalories(summary.caloriesBurned ?? null);
       setPersonalRecords(
         summary.newPersonalRecords.map((pr) => ({
           exerciseName: pr.exerciseName,
@@ -532,6 +534,7 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
         progress={progress}
         personalRecords={personalRecords}
         saveStatus={saveStatus}
+        serverCalories={serverCalories}
         onDone={handleDone}
         onViewHistory={
           saveStatus === "saved" ? () => router.replace("/pages/workout/history") : undefined

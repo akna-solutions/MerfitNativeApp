@@ -14,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { getCampaigns } from "../../../services/api/campaigns";
 import { ApiError } from "../../../services/api/client";
 import { getDashboard } from "../../../services/api/dashboard";
+import { EnergyDay, getEnergyDay } from "../../../services/api/energyBalance";
 import { getLeaderboard } from "../../../services/api/leaderboard";
 import { getTodayPlan } from "../../../services/api/myPlan";
 import { getUnreadNotificationCount } from "../../../services/api/notifications";
@@ -30,11 +31,12 @@ import { fetchCalendar, peekCalendar } from "../../../shared/calendar/calendarCa
 import { toDateKey, weekKeys as buildWeekKeys } from "../../../shared/calendar/dates";
 import { useNavigationGuard } from "../../../shared/navigation/useNavigationGuard";
 import { useStepCounter } from "../../../shared/steps/StepCounterContext";
+import { withLiveSteps } from "../../../shared/energy/energy";
 import { usePersonalizationStatus } from "../../../shared/personalization/usePersonalizationStatus";
 import { useWeightReminder } from "../../../shared/weightReminder/useWeightReminder";
 import { WeightReminderModal } from "../../../shared/weightReminder/WeightReminderModal";
 import { useTheme } from "../../../shared/theme/ThemeContext";
-import { CalorieRingCard } from "./components/CalorieRingCard";
+import { CalorieBalanceCard } from "./components/CalorieBalanceCard";
 import { CampaignsSection } from "./components/CampaignsSection";
 import { DashboardHeader } from "./components/DashboardHeader";
 import { GoalProgressCard } from "./components/GoalProgressCard";
@@ -169,6 +171,20 @@ export function DashboardScreen() {
     [weekKeys],
   );
 
+  // Kalori dengesi karti: sunucu hesabi (besin, adim, antrenman, profil). Ekran her odaga geldiginde yenilenir;
+  // boylece baska ekranda eklenen/silinen besin ya da tamamlanan antrenman hemen yansir.
+  const [energy, setEnergy] = useState<LoadState<EnergyDay | null>>({ data: null, loading: true, error: false });
+  const loadEnergy = useCallback(async (signal?: AbortSignal) => {
+    setEnergy((previous) => ({ ...previous, loading: true, error: false }));
+    try {
+      const response = await getEnergyDay(toDateKey(new Date()), signal);
+      setEnergy({ data: response, loading: false, error: false });
+    } catch {
+      if (signal?.aborted) return;
+      setEnergy((previous) => ({ ...previous, loading: false, error: true }));
+    }
+  }, []);
+
   const loadCampaigns = useCallback(async (signal?: AbortSignal) => {
     setCampaigns((previous) => ({ ...previous, loading: true, error: false }));
     try {
@@ -190,6 +206,7 @@ export function DashboardScreen() {
       loadTodayPlan(controller.signal);
       loadMonthlyPoints(controller.signal);
       loadWeek(controller.signal);
+      loadEnergy(controller.signal);
       loadCampaigns(controller.signal);
       getUnreadNotificationCount(undefined, controller.signal, "mbfit")
         .then(setUnreadCount)
@@ -197,7 +214,7 @@ export function DashboardScreen() {
           // Sayi alinamazsa zil noktasiz gosterilir.
         });
       return () => controller.abort();
-    }, [loadDashboard, loadTodayPlan, loadMonthlyPoints, loadWeek, loadCampaigns]),
+    }, [loadDashboard, loadTodayPlan, loadMonthlyPoints, loadWeek, loadEnergy, loadCampaigns]),
   );
 
   // PersonalizationJob Pending/Processing -> Completed'e gectiginde, artik gercek kisisel
@@ -248,8 +265,11 @@ export function DashboardScreen() {
     week.data?.days.forEach((day) => map.set(day.date, day));
     return map;
   }, [week.data]);
-  const todayKey = week.data?.today ?? toDateKey(new Date());
-  const todayCalendar = weekDays.get(todayKey);
+  // Sunucuya henuz gitmemis adimlar kartta anlik yansitilir (sunucunun adim basina kalori katsayisiyla).
+  const liveEnergy = useMemo(
+    () => (energy.data ? withLiveSteps(energy.data, stepCounter.todaySteps, stepCounter.settings.caloriesPerStep) : null),
+    [energy.data, stepCounter.todaySteps, stepCounter.settings.caloriesPerStep],
+  );
 
   const goToWorkout = (workout: WorkoutSummary) => {
     router.push({
@@ -454,12 +474,11 @@ export function DashboardScreen() {
 
           <Animated.View style={[styles.padded, styles.todayRow, fadeUp(todayAnim)]}>
             {renderStartCard()}
-            <CalorieRingCard
-              today={todayCalendar}
-              dailyTarget={week.data?.dailyCalorieTarget ?? null}
-              loading={week.loading && !week.data}
-              error={week.error && !week.data}
-              onPress={guard(() => router.navigate("/pages/nutrition" as never))}
+            <CalorieBalanceCard
+              day={liveEnergy}
+              loading={energy.loading && !energy.data}
+              error={energy.error && !energy.data}
+              onPress={guard(() => router.push("/pages/energy" as never))}
             />
           </Animated.View>
 
