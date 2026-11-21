@@ -10,6 +10,7 @@ import {
   PaymentMethod,
   Product,
   ProductFilters,
+  ProductRecommendations,
   ProductSummary,
   Review,
   ReviewFilters,
@@ -34,6 +35,8 @@ export interface CatalogService {
   getProducts(filters: ProductFilters, page: number, pageSize: number, signal?: AbortSignal): Promise<Page<ProductSummary>>;
   /** Urun yoksa ApiError(404) firlatir. */
   getProduct(id: string, signal?: AbortSignal): Promise<Product>;
+  /** Benzer ve onerilen urunler; urun yoksa ApiError(404). */
+  getRecommendations(id: string, signal?: AbortSignal): Promise<ProductRecommendations>;
 }
 
 export interface CartService {

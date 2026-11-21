@@ -208,6 +208,9 @@ export type ProductFilters = {
   excludeId?: string;
 };
 
+/** Urun detayindaki oneri satirlari (sunucu hesaplar). */
+export type ProductRecommendations = { similar: ProductSummary[]; recommended: ProductSummary[]; personalized: boolean };
+
 export type Page<T> = { items: T[]; page: number; totalCount: number; hasNextPage: boolean };
 
 // ---- Urun yorumlari ----

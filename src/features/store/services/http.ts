@@ -24,6 +24,10 @@ export function createHttpStoreServices(): StoreServices {
         return { items: result.items.map(toProductSummary), page: result.page, totalCount: result.totalCount, hasNextPage: result.hasNextPage };
       },
       getProduct: async (id, signal) => toProduct(await storeApi.getProduct(numericId(id, "Ürün"), signal)),
+      getRecommendations: async (id, signal) => {
+        const dto = await storeApi.getProductRecommendations(numericId(id, "Ürün"), undefined, signal);
+        return { similar: dto.similar.map(toProductSummary), recommended: dto.recommended.map(toProductSummary), personalized: dto.personalized };
+      },
     },
     cart: {
       get: async (signal) => toCart(await storeApi.getCart(signal)),
