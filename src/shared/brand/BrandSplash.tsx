@@ -8,7 +8,8 @@ import { aspectOf, BRAND_BLACK, BRAND_BLUE, NATIVE_SPLASH_WORDMARK_WIDTH, WORDMA
 import { useReducedMotion } from "../motion/useReducedMotion";
 
 export const SPLASH_TAGLINE = "Daha akıllı antrenman. Daha iyi yaşam.";
-export const SPLASH_BADGE = "Antrenman · Beslenme · İlerleme";
+/** Buyuk harf metin elle yazilir: toUpperCase Turkce "i/İ" donusumunu her platformda dogru yapmaz. */
+export const SPLASH_BADGE = "ANTRENMAN · BESLENME · İLERLEME";
 
 /** Logonun yerlestigi son genislik (dp). */
 const LOGO_WIDTH = 168;
@@ -151,7 +152,6 @@ export function BrandSplash({ ready, onFinish }: Props) {
 
         <View style={[styles.below, { top: center + markHeight / 2 + 30 }]}>
           <Animated.View style={[styles.badge, rise(badge, -6)]}>
-            <View style={styles.badgeDot} />
             <Text style={styles.badgeText}>{SPLASH_BADGE}</Text>
           </Animated.View>
         </View>
@@ -181,24 +181,28 @@ const styles = StyleSheet.create({
     left: 24,
     right: 24,
     textAlign: "center",
-    color: "rgba(255,255,255,0.88)",
-    fontSize: 16,
-    fontWeight: "500",
-    letterSpacing: 0.3,
+    color: "#FFFFFF",
+    fontSize: 17,
+    fontWeight: "600",
+    letterSpacing: 0.2,
   },
   below: { position: "absolute", left: 24, right: 24, alignItems: "center" },
   badge: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 999,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(255,255,255,0.14)",
-    backgroundColor: "rgba(255,255,255,0.04)",
+    borderColor: "rgba(255,255,255,0.16)",
+    backgroundColor: "rgba(255,255,255,0.07)",
   },
-  badgeDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: BRAND_BLUE, marginRight: 8 },
-  badgeText: { color: "rgba(255,255,255,0.82)", fontSize: 12.5, fontWeight: "600", letterSpacing: 0.3 },
+  badgeText: {
+    color: "rgba(255,255,255,0.86)",
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 1.6,
+  },
   progressTrack: {
     position: "absolute",
     bottom: 72,

@@ -16,8 +16,8 @@ import { useStore } from "../../../features/store/hooks";
 
 // Yuvarlak buton gecisinde marka siyahi ekranda hedef bolumun yazi logosu ve kisa aciklamasi (bkz. CircleReveal).
 const LOADERS: Partial<Record<NavTab, RevealLoader>> = {
-  store: { brand: "shop", title: "MB Shop", description: "Takviyeler, ekipmanlar ve kampanyalar" },
-  home: { brand: "fit", title: "MB Fit", description: "Antrenman, beslenme ve ilerleme" },
+  store: { brand: "shop", title: "MB Shop", description: "TAKVİYE · EKİPMAN · KAMPANYA" },
+  home: { brand: "fit", title: "MB Fit", description: "ANTRENMAN · BESLENME · İLERLEME" },
 };
 
 // Tab route dosya adları ile navbar'daki NavTab id'leri birebir aynı değil
