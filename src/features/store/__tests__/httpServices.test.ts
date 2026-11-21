@@ -123,3 +123,62 @@ describe("MB Shop HTTP servisleri", () => {
     expect(request).not.toHaveBeenCalled();
   });
 });
+
+describe("Yorum servisleri", () => {
+  beforeEach(() => request.mockReset());
+
+  it("yorum fotograf yolunu API adresine baglar ve kimlikleri metne cevirir", async () => {
+    request.mockResolvedValueOnce({
+      items: [
+        {
+          id: 5,
+          productId: 101,
+          rating: 4,
+          title: null,
+          comment: "Güzel ürün, tavsiye ederim.",
+          isVerifiedPurchase: true,
+          status: "published",
+          createdAt: "2026-11-01T10:00:00Z",
+          editedAt: null,
+          author: { displayName: "Ayşe K.", avatarUrl: null },
+          images: [{ id: 9, url: "/api/store/review-images/0123456789abcdef0123456789abcdef", width: 800, height: 600 }],
+          helpfulCount: 2,
+          notHelpfulCount: 0,
+          myVote: null,
+          isMine: false,
+          reportedByMe: false,
+        },
+      ],
+      page: 1,
+      pageSize: 10,
+      totalCount: 1,
+      totalPages: 1,
+      hasNextPage: false,
+    });
+    const page = await services.reviews.list("101", { sort: "helpful", rating: 4, withPhotos: true }, 1, 10);
+    expect(request).toHaveBeenCalledWith("/api/store/products/101/reviews", {
+      query: { page: 1, pageSize: 10, sort: "helpful", rating: 4, withPhotos: true, verifiedOnly: undefined },
+      signal: undefined,
+    });
+    expect(page.items[0]).toMatchObject({ id: "5", authorName: "Ayşe K.", isMine: false });
+    expect(page.items[0].images[0].url).toMatch(/^https?:\/\/.+\/api\/store\/review-images\/0123456789abcdef0123456789abcdef$/);
+  });
+
+  it("oy null ise oyu kaldirir (DELETE); kendi yorumu yoksa getMine null doner", async () => {
+    request.mockResolvedValueOnce({ reviewId: 5, helpfulCount: 1, notHelpfulCount: 0, myVote: null });
+    await expect(services.reviews.vote("5", null)).resolves.toEqual({ reviewId: "5", helpfulCount: 1, notHelpfulCount: 0, myVote: null });
+    expect(request).toHaveBeenCalledWith("/api/store/reviews/5/vote", { method: "DELETE" });
+
+    request.mockResolvedValueOnce({ reviewId: 5, helpfulCount: 2, notHelpfulCount: 0, myVote: true });
+    await services.reviews.vote("5", true);
+    expect(request).toHaveBeenLastCalledWith("/api/store/reviews/5/vote", { method: "PUT", body: { isHelpful: true } });
+
+    request.mockResolvedValueOnce(undefined);
+    await expect(services.reviews.getMine("101")).resolves.toBeNull();
+  });
+
+  it("sayisal olmayan kimlikle istek atmaz", async () => {
+    await expect(services.reviews.remove("abc")).rejects.toMatchObject({ status: 404 });
+    expect(request).not.toHaveBeenCalled();
+  });
+});

@@ -8,6 +8,7 @@ import { CartButton } from "../components/HeaderButtons";
 import { EmptyState } from "../components/EmptyState";
 import { DiscountBadge, PriceTag } from "../components/PriceTag";
 import { ProductImage } from "../components/ProductImage";
+import { ProductReviewsSection } from "../components/reviews/ProductReviewsSection";
 import { QuantityStepper } from "../components/QuantityStepper";
 import { GUTTER, ProductRow, SectionHeader } from "../components/StoreSections";
 import { StoreScreenShell } from "../components/StoreScreenShell";
@@ -256,6 +257,8 @@ function ProductDetailContent({ product }: { product: Product }) {
               </View>
             </>
           ) : null}
+
+          <ProductReviewsSection productId={product.id} />
         </View>
 
         {similar.items.length > 0 ? (

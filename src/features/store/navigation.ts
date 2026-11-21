@@ -19,6 +19,10 @@ export const storeRoutes = {
   orderSuccess: (orderId: string) => ({ pathname: "/pages/store/order-success", params: { orderId } } as unknown as Href),
   orders: () => href("/pages/store/orders"),
   order: (id: string) => href(`/pages/store/orders/${id}`),
+  /** Urunun tum yorumlari (siralama ve filtreler). */
+  reviews: (productId: string) => href(`/pages/store/reviews/${productId}`),
+  /** Yorum yaz; kullanicinin zaten yorumu varsa ayni ekran duzenleme acar. */
+  writeReview: (productId: string) => href(`/pages/store/write-review/${productId}`),
   favorites: () => href("/pages/store/favorites"),
   addresses: () => href("/pages/store/addresses"),
   /** MB Shop tarafindaki profil sekmesi (navbar'da degil; Store ana sayfasinin sag ustunden acilir). */
