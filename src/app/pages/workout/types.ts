@@ -17,7 +17,17 @@ export type Exercise = {
   /** Tekrar araliginin ust siniri (reps alt sinirdir); aralik yoksa null/undefined. */
   repsMax?: number | null;
   /** Bir sonraki hedef (cift progresyon): onerilen agirlik ve kullaniciya gosterilecek metin. */
-  progression?: { message: string; suggestedWeightKg: number | null } | null;
+  progression?: {
+    message: string;
+    suggestedWeightKg: number | null;
+    previousWeightKg?: number | null;
+    /** false: oneri kosullu (orn. RIR girilmedi); agirlik kutusu onceki agirlikla baslar. */
+    isConfident?: boolean;
+  } | null;
+  /** Katalog egzersiz kimligi (antrenman sonu rahatsizlik bildirimi icin). */
+  exerciseId?: number;
+  /** Hedef RIR (kisisel antrenman motoru); yoksa RIR secimi yine opsiyonel gosterilir. */
+  targetRir?: number | null;
 };
 
 export type WorkoutSession = {
@@ -29,11 +39,16 @@ export type WorkoutSession = {
 export type SetLog = {
   weight: number;
   reps: number;
+  rir?: number | null;
+  /** false: set basarisiz / yarim kaldi. */
+  isCompleted?: boolean;
 };
 
 export type ExerciseProgress = {
   currentSet: number; // 1-indexed
   completedSets: SetLog[];
+  /** Kaydedilen isinma seti sayisi (calisma setlerine ve hacme sayilmaz). */
+  warmupSets?: number;
 };
 
 export type WorkoutPhase =

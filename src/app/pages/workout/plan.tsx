@@ -23,6 +23,8 @@ import {
 import { usePersonalizationStatus } from "../../../shared/personalization/usePersonalizationStatus";
 import { GOAL_LABELS, Goal } from "../../../shared/profile/types";
 import { useTheme } from "../../../shared/theme/ThemeContext";
+import { activeWorkoutParams } from "../../../shared/workout/planDays";
+import { rirLabel } from "../../../shared/workout/progression";
 
 // Backend DayOfWeek.ToString() degerleri, Pazartesi'den baslayacak sekilde.
 const WEEK_ORDER = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -56,7 +58,8 @@ function formatExercise(exercise: MyPlanExercise): string {
   }
   if (!exercise.reps) return `${exercise.sets} set`;
   const reps = exercise.repsMax && exercise.repsMax > exercise.reps ? `${exercise.reps}-${exercise.repsMax}` : `${exercise.reps}`;
-  return `${exercise.sets} × ${reps}`;
+  const rir = exercise.targetRir !== null && exercise.targetRir !== undefined ? ` · RIR ${rirLabel(exercise.targetRir)}` : "";
+  return `${exercise.sets} × ${reps}${rir}`;
 }
 
 /** Kullanicinin aktif kisisel antrenman programinin haftalik gorunumu (GET /api/my-plan). */
@@ -115,15 +118,12 @@ export default function WorkoutPlanScreen() {
   const startDay = (day: MyPlanDay) => {
     // Plan gunu kimligi yalnizca bugunun antrenmani icin biliniyor (GET /api/my-plan/today);
     // baska bir gunun antrenmani serbest antrenman olarak baslar.
+    // Kisisel antrenman motoru gunlerinde katalog antrenmani yoktur; oturum plan gunu kimligiyle baslar.
     const isServerToday = today?.day?.dayOfWeek === day.dayOfWeek && today.workoutPlanDayId;
-    router.push({
-      pathname: "/pages/workout/active/[id]",
-      params: {
-        id: String(day.workout.id),
-        title: day.workout.title,
-        workoutPlanDayId: isServerToday ? String(today?.workoutPlanDayId) : undefined,
-      },
-    } as never);
+    const planDayId = day.workout.id === null ? day.workoutPlanDayId : isServerToday ? today?.workoutPlanDayId : undefined;
+    const params = activeWorkoutParams(day.workout, planDayId);
+    if (!params) return;
+    router.push({ pathname: "/pages/workout/active/[id]", params } as never);
   };
 
   // Kardiyo bitirici ayri bir katalog antrenmanidir; plan gunune baglanmadan serbest antrenman olarak baslar.
@@ -203,11 +203,34 @@ export default function WorkoutPlanScreen() {
                 <Text style={[styles.muted, { color: colors.textSecondary }]}>
                   Kişisel antrenman programın oluşturulduğunda haftalık günlerin burada görünecek.
                 </Text>
+                <Pressable
+                  style={[styles.retryButton, { backgroundColor: colors.primary }]}
+                  onPress={() => router.push("/pages/training" as never)}
+                >
+                  <Text style={styles.retryLabel}>Program oluştur</Text>
+                </Pressable>
               </>
             )}
           </View>
         ) : (
           <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
+            <Pressable
+              onPress={() => router.push("/pages/training" as never)}
+              style={[styles.engineCard, { backgroundColor: colors.card, borderColor: colors.primary }]}
+              accessibilityRole="button"
+            >
+              <View style={styles.engineText}>
+                <Text style={[styles.planName, { color: colors.text }]}>
+                  {plan.source === "Engine" || plan.source === "Manual" ? "Kişisel programın" : "Kişisel program oluştur"}
+                </Text>
+                <Text style={[styles.planMeta, { color: colors.textSecondary }]}>
+                  {plan.source === "Engine" || plan.source === "Manual"
+                    ? "Versiyonlar, gelişim analizi ve egzersiz alternatifleri"
+                    : "Hedefine, ekipmanına ve geçmiş performansına göre programını oluştur"}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.primary} />
+            </Pressable>
             <View style={[styles.summaryCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Text style={[styles.planName, { color: colors.text }]}>{plan.name}</Text>
               <Text style={[styles.planMeta, { color: colors.textSecondary }]}>
@@ -332,6 +355,8 @@ const styles = StyleSheet.create({
   retryLabel: { color: "#FFFFFF", fontSize: 14, fontWeight: "700" },
   list: { paddingHorizontal: 20, paddingBottom: 32, gap: 12 },
   summaryCard: { borderRadius: 18, borderWidth: StyleSheet.hairlineWidth, padding: 16 },
+  engineCard: { borderRadius: 18, borderWidth: 1, padding: 16, flexDirection: "row", alignItems: "center", gap: 12 },
+  engineText: { flex: 1 },
   planName: { fontSize: 16, fontWeight: "700" },
   planMeta: { fontSize: 12, marginTop: 4 },
   planSummary: { fontSize: 13, lineHeight: 19, marginTop: 8 },

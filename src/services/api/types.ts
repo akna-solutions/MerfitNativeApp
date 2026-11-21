@@ -276,7 +276,8 @@ export type PersonalizationStatusResponse = {
 
 // ---- My Plan (kisisel antrenman programi - Faz 2) ----
 export type MyPlanWorkout = {
-  id: number;
+  /** Katalog antrenmani. Kisisel antrenman motoru gunlerinde null (gun egzersizleri plan egzersizleridir). */
+  id: number | null;
   title: string;
   durationMin: number;
   imageUrl: string | null;
@@ -301,10 +302,21 @@ export type MyPlanExercise = {
   durationSeconds: number | null;
   /** Egzersiz gorseli (katalogdan); yoksa veya eski backend ise null/undefined. */
   imageUrl?: string | null;
+  /** Hedef RIR (sette kalan tekrar); motor programlarinda dolu. */
+  targetRir?: number | null;
+  /** "FromHistory" | "RampUp" | "Bodyweight" */
+  weightGuidance?: string | null;
+  /** Yalnizca gecmis kayitlardan hesaplanan onerilen agirlik; bilinmiyorsa null. */
+  suggestedWeightKg?: number | null;
 };
 
 export type MyPlanDay = {
   dayOfWeek: string;
+  /** Plan gunu kimligi (yeni backend her gun icin gonderir). */
+  workoutPlanDayId?: number;
+  /** Motor gunlerinde gun basligi (or. "Üst Vücut A"). */
+  title?: string | null;
+  focus?: string | null;
   workout: MyPlanWorkout;
   exercises: MyPlanExercise[];
   /** Ana antrenmandan sonra yapilacak kardiyo bitirici (ayri katalog antrenmani); yoksa null. */
@@ -321,6 +333,10 @@ export type MyWorkoutPlanResponse = {
   isActive: boolean;
   summary: string | null;
   days: MyPlanDay[];
+  /** "Catalog" | "Engine" | "Manual" (eski backend gondermez). */
+  source?: string | null;
+  programVersion?: number | null;
+  splitType?: string | null;
 } | null;
 
 /** GET /api/my-plan/today */
@@ -456,6 +472,10 @@ export type WorkoutSetLogEntry = {
   reps: number | null;
   durationSeconds: number | null;
   rpe: number | null;
+  /** Sette kalan tekrar; girilmediyse null. */
+  rir?: number | null;
+  isWarmup?: boolean;
+  isCompleted?: boolean;
 };
 
 export type PreviousBest = {
@@ -484,11 +504,24 @@ export type WorkoutSessionExercise = {
   lastPerformance: LastPerformance | null;
   /** Cift progresyon onerisi (bir sonraki hedef); eski backend gondermiyorsa undefined. */
   progression?: ProgressionSuggestion | null;
+  /** Hedef RIR (kisisel antrenman motoru); yoksa null/undefined. */
+  targetRir?: number | null;
+  weightGuidance?: string | null;
+  /** Gecmisten hesaplanan baslangic agirligi; bilinmiyorsa null (uydurma agirlik yok). */
+  suggestedStartWeightKg?: number | null;
 };
 
-/** Backend ProgressiveOverloadAdvisor onerisi. */
+/** Backend progresyon onerisi (katalog planlarinda ProgressiveOverloadAdvisor, motor planlarinda ProgressionEngine). */
 export type ProgressionSuggestion = {
-  action: "start" | "increase_weight" | "keep_weight" | "increase_reps";
+  action:
+    | "start"
+    | "increase_weight"
+    | "keep_weight"
+    | "increase_reps"
+    | "calibrate"
+    | "consider_increase"
+    | "reduce_weight"
+    | "hold_discomfort";
   previousWeightKg: number | null;
   suggestedWeightKg: number | null;
   increaseKg: number | null;
@@ -496,6 +529,11 @@ export type ProgressionSuggestion = {
   targetRepsMax: number;
   /** Kullaniciya gosterilecek kisa metin. */
   message: string;
+  targetRir?: number | null;
+  /** false: karar kosullu (orn. RIR girilmedigi icin artis kesin degil). */
+  isConfident?: boolean;
+  trend?: string | null;
+  reasons?: string[];
 };
 
 export type LastPerformance = {
@@ -507,7 +545,7 @@ export type LastPerformance = {
 /** GET /api/workout-sessions - antrenman gecmisi listesindeki tek bir tamamlanmis oturum. */
 export type WorkoutHistoryItem = {
   id: number;
-  workoutId: number;
+  workoutId: number | null;
   title: string;
   startedAt: string;
   completedAt: string;
@@ -521,7 +559,8 @@ export type WorkoutHistoryItem = {
 
 export type WorkoutSession = {
   id: number;
-  workoutId: number;
+  workoutId: number | null;
+  workoutPlanDayId?: number | null;
   title: string;
   status: WorkoutSessionStatus;
   startedAt: string;
@@ -537,6 +576,35 @@ export type LogWorkoutSetRequest = {
   reps?: number | null;
   durationSeconds?: number | null;
   rpe?: number | null;
+  /** 0-10; bos birakilabilir (RIR girilmezse sistem kesin agirlik artisi onermez). */
+  rir?: number | null;
+  isWarmup?: boolean;
+  /** false: set basarisiz / yarim kaldi. */
+  isCompleted?: boolean;
+};
+
+export type SubmitWorkoutFeedbackRequest = {
+  /** 1-5 */
+  difficulty?: number | null;
+  fatigue?: number | null;
+  recovery?: number | null;
+  satisfaction?: number | null;
+  hasDiscomfort: boolean;
+  discomfortExerciseIds?: number[];
+  note?: string | null;
+};
+
+export type WorkoutFeedback = {
+  sessionId: number;
+  difficulty: number | null;
+  fatigue: number | null;
+  recovery: number | null;
+  satisfaction: number | null;
+  hasDiscomfort: boolean;
+  discomfortExerciseIds: number[];
+  note: string | null;
+  /** Rahatsizlik bildirildiyse guvenli yonlendirme metni. */
+  safetyMessage: string | null;
 };
 
 export type CompleteWorkoutSessionRequest = {
@@ -1250,3 +1318,184 @@ export type WeightReminderResponse = {
 };
 
 export type WeightReminderSnoozeAction = "later" | "dismiss";
+
+// ---- Kisisel antrenman motoru (api/training) ----
+export type TrainingFocus = "Hypertrophy" | "Strength" | "FatLoss" | "GeneralFitness" | "Endurance";
+
+export type TrainingPreferences = {
+  focus?: TrainingFocus | null;
+  daysPerWeek?: number | null;
+  sessionMinutes?: number | null;
+  priorityMuscleGroupIds?: number[];
+  preferredExerciseIds?: number[];
+  avoidedExerciseIds?: number[];
+  limitedMuscleGroupIds?: number[];
+  limitationsNote?: string | null;
+  /** null/undefined = degistirme; bos liste = secim yok (profil bilgisi kullanilir). */
+  equipmentIds?: number[] | null;
+  /** Yanitta: "selected" | "full" | "bodyweight" */
+  equipmentMode?: string | null;
+};
+
+export type TrainingChange = { type: string; message: string };
+
+export type TrainingAlternative = {
+  exerciseId: number;
+  name: string;
+  mechanic: string | null;
+  imageUrl: string | null;
+  reason: string | null;
+};
+
+export type TrainingExercise = {
+  planExerciseId: number;
+  exerciseId: number;
+  name: string;
+  imageUrl: string | null;
+  videoUrl: string | null;
+  order: number;
+  targetMuscleGroupId: number | null;
+  targetMuscle: string | null;
+  mechanic: string | null;
+  sets: number;
+  repsMin: number | null;
+  repsMax: number | null;
+  durationSeconds: number | null;
+  targetRir: number | null;
+  targetRirLabel: string | null;
+  restSeconds: number | null;
+  weightGuidance: string | null;
+  suggestedWeightKg: number | null;
+  weightInstruction: string | null;
+  selectionReason: string | null;
+  alternatives: TrainingAlternative[];
+};
+
+export type TrainingDay = {
+  workoutPlanDayId: number;
+  dayOfWeek: string;
+  order: number;
+  title: string;
+  focus: string | null;
+  estimatedMinutes: number;
+  exercises: TrainingExercise[];
+};
+
+export type TrainingRegionVolume = {
+  region: string;
+  label: string;
+  targetSets: number;
+  directSets: number;
+  indirectSets: number;
+  totalSets: number;
+};
+
+export type TrainingProgram = {
+  id: number;
+  version: number;
+  /** "Proposed" | "Active" | "Archived" | "Rejected" */
+  status: string;
+  /** "Engine" | "Manual" | "Catalog" */
+  source: string;
+  name: string;
+  focus: string | null;
+  splitType: string | null;
+  splitLabel: string | null;
+  startDate: string;
+  endDate: string | null;
+  blockWeeks: number;
+  currentWeek: number | null;
+  isDeload: boolean;
+  previousPlanId: number | null;
+  engineVersion: string | null;
+  days: TrainingDay[];
+  weeklyVolume: TrainingRegionVolume[];
+  splitReasons: string[];
+  notes: string[];
+  metadataWarnings: string[];
+  changes: TrainingChange[];
+};
+
+export type TrainingProgramSummary = {
+  id: number;
+  version: number;
+  status: string;
+  source: string;
+  splitLabel: string | null;
+  isDeload: boolean;
+  startDate: string;
+  endDate: string | null;
+  createdAt: string;
+  completedSessions: number;
+};
+
+export type TrainingRecovery = {
+  /** "Unknown" | "Good" | "Watch" | "DeloadRecommended" */
+  status: string;
+  signals: string[];
+  recommendations: TrainingChange[];
+  discomfortExerciseIds: number[];
+  decliningExerciseIds: number[];
+  daysSinceLastTrained: Record<string, number | null>;
+  dataGaps: string[];
+};
+
+export type TrainingUpdateRecommendation = {
+  hasActiveProgram: boolean;
+  isUpdateRecommended: boolean;
+  reasons: string[];
+  pendingProposalId: number | null;
+  currentWeek: number | null;
+  blockWeeks: number | null;
+  recovery: TrainingRecovery | null;
+};
+
+export type TrainingExercisePoint = {
+  date: string;
+  sessionId: number;
+  topWeightKg: number | null;
+  topReps: number | null;
+  /** Tahmini 1RM (Epley) - gercek olcum degil. */
+  estimatedOneRepMax: number | null;
+  volumeKg: number;
+  workingSets: number;
+};
+
+export type TrainingExerciseProgress = {
+  exerciseId: number;
+  name: string;
+  region: string;
+  exposureCount: number;
+  firstEstimatedOneRepMax: number | null;
+  lastEstimatedOneRepMax: number | null;
+  estimatedOneRepMaxChangePercent4Weeks: number | null;
+  estimatedOneRepMaxChangePercent12Weeks: number | null;
+  firstTopWeightKg: number | null;
+  lastTopWeightKg: number | null;
+  lastBestReps: number | null;
+  totalVolumeKg: number;
+  trend: string;
+  points: TrainingExercisePoint[];
+};
+
+export type TrainingInsight = { type: string; message: string; region: string | null; exerciseId: number | null };
+
+export type TrainingProgress = {
+  completedSessions4Weeks: number;
+  completedSessions12Weeks: number;
+  completionRate4Weeks: number | null;
+  exercises: TrainingExerciseProgress[];
+  regionWeeks: { region: string; label: string; weekStart: string; sets: number; volumeKg: number }[];
+  insights: TrainingInsight[];
+  dataNotes: string[];
+};
+
+export type TrainingCoachTopic = "program" | "progress" | "changes" | "alternative" | "recovery" | "question";
+
+export type TrainingCoachResponse = {
+  message: string;
+  /** "ai" (dogrulanmis AI yaniti) | "rules" (kural tabanli metin) */
+  source: string;
+  referencedExerciseIds: number[];
+  validationNote: string | null;
+};
