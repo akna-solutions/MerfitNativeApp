@@ -17,6 +17,11 @@ type Props = {
   onDone: () => void;
   /** Kayıt tamamlandıysa antrenman geçmişine götürür. */
   onViewHistory?: () => void;
+  /**
+   * Sunucunun kaydettigi antrenman kalorisi (sure, tur, zorluk ve kiloya gore tek formul; takvim, ana sayfa ve
+   * kalori dengesi ayni degeri gosterir). Kayit bitene kadar null: o arada yerel tahmin gosterilir.
+   */
+  serverCalories?: number | null;
 };
 
 export function WorkoutSummary({
@@ -28,6 +33,7 @@ export function WorkoutSummary({
   saveStatus,
   onDone,
   onViewHistory,
+  serverCalories = null,
 }: Props) {
   const { colors } = useTheme();
   const setCount = Object.values(progress).reduce(
@@ -39,7 +45,7 @@ export function WorkoutSummary({
       sum + item.completedSets.reduce((s, set) => s + set.weight * set.reps, 0),
     0,
   );
-  const estimatedCalories = estimateWorkoutCalories(setCount);
+  const estimatedCalories = serverCalories !== null ? Math.round(serverCalories) : estimateWorkoutCalories(setCount);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={["top", "bottom"]}>

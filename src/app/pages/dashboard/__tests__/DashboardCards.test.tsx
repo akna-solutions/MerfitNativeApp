@@ -1,8 +1,8 @@
 import { act, fireEvent, render, screen } from "@testing-library/react-native";
 
-import { makeDay } from "../../../../test/calendarFixtures";
 import { mockThemeValue } from "../../../../test/mockTheme";
-import { CalorieRingCard } from "../components/CalorieRingCard";
+import { makeEnergyDay } from "../../../../test/energyFixtures";
+import { CalorieBalanceCard } from "../components/CalorieBalanceCard";
 import { CampaignsSection } from "../components/CampaignsSection";
 import { QuickStats } from "../components/QuickStats";
 import { TodayStartCard } from "../components/TodayStartCard";
@@ -50,25 +50,40 @@ describe("TodayStartCard", () => {
   });
 });
 
-describe("CalorieRingCard", () => {
-  it("alinan ve harcanan kaloriyi ayri gosterir", () => {
-    const today = makeDay({
-      isToday: true,
-      nutrition: { ...makeDay().nutrition, logged: true, consumedCalories: 1500, calorieRatio: 0.75 },
-      activity: { caloriesBurned: 320, activeMinutes: 40 },
-    });
-    render(<CalorieRingCard today={today} dailyTarget={2000} loading={false} error={false} onPress={jest.fn()} />);
-    expect(screen.getByText("1500")).toBeTruthy();
-    expect(screen.getByText("/ 2000")).toBeTruthy();
-    expect(screen.getByText("320")).toBeTruthy();
-    expect(screen.getByTestId("calorie-ring-progress")).toBeTruthy();
+describe("CalorieBalanceCard", () => {
+  it("alinan, harcanan, denge ve kalan kaloriyi sunucu degerlerinden gosterir", async () => {
+    const onPress = jest.fn();
+    await render(<CalorieBalanceCard day={makeEnergyDay()} loading={false} error={false} onPress={onPress} />);
+    expect(screen.getByText("1.200 kcal")).toBeTruthy();
+    expect(screen.getByText("1.300 kcal")).toBeTruthy();
+    expect(screen.getByText("800")).toBeTruthy();
+    expect(screen.getByText("kcal kaldı")).toBeTruthy();
+    expect(screen.getByText("−100 kcal")).toBeTruthy();
+    expect(screen.getByText("Kalori açığı · hedef 2.000")).toBeTruthy();
+    expect(screen.getByTestId("calorie-balance-progress")).toBeTruthy();
+    await fireEvent.press(screen.getByTestId("calorie-balance-card"));
+    expect(onPress).toHaveBeenCalled();
   });
 
-  it("hedef yoksa halkayi doldurmaz", () => {
-    const today = makeDay({ nutrition: { ...makeDay().nutrition, logged: true, consumedCalories: 900 } });
-    render(<CalorieRingCard today={today} dailyTarget={null} loading={false} error={false} onPress={jest.fn()} />);
-    expect(screen.queryByTestId("calorie-ring-progress")).toBeNull();
-    expect(screen.getByText("Hedef hesaplanmadı")).toBeTruthy();
+  it("hedef asildiginda asilan miktari, profil eksikse dengeyi uydurmadan gosterir", async () => {
+    const { rerender } = await render(
+      <CalorieBalanceCard day={makeEnergyDay({ intakeCalories: 2300, remainingCalories: -300, balance: 400, tone: "orange" })} loading={false} error={false} onPress={jest.fn()} />,
+    );
+    expect(screen.getByText("300")).toBeTruthy();
+    expect(screen.getByText("kcal aşıldı")).toBeTruthy();
+    expect(screen.getByText("+400 kcal")).toBeTruthy();
+
+    await rerender(
+      <CalorieBalanceCard day={makeEnergyDay({ expenditureCalories: null, balance: null })} loading={false} error={false} onPress={jest.fn()} />,
+    );
+    expect(screen.getByText("Profil eksik")).toBeTruthy();
+    expect(screen.getByText("Harcanan hesaplanamadı · hedef 2.000")).toBeTruthy();
+  });
+
+  it("hata durumunda sifir yerine tire gosterir", async () => {
+    await render(<CalorieBalanceCard day={null} loading={false} error onPress={jest.fn()} />);
+    expect(screen.getByText("Veri alınamadı")).toBeTruthy();
+    expect(screen.queryByTestId("calorie-balance-progress")).toBeNull();
   });
 });
 
