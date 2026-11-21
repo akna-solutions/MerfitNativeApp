@@ -2,7 +2,6 @@ import { act, render, screen } from "@testing-library/react-native";
 
 import { BrandSplash, SPLASH_BADGE, SPLASH_TAGLINE } from "../BrandSplash";
 
-jest.mock("@expo/vector-icons", () => ({ Ionicons: () => null }));
 jest.mock("expo-splash-screen", () => ({ hideAsync: jest.fn(() => Promise.resolve()) }));
 jest.mock("../../motion/useReducedMotion", () => ({ useReducedMotion: () => true }));
 
