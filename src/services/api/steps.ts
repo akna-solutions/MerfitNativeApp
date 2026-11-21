@@ -7,7 +7,12 @@ import { apiRequest } from "./client";
  */
 
 export type StepSettings = {
+  /** Sunucunun profile gore belirledigi gunluk hedef; kullanici degistiremez. */
   dailyGoal: number;
+  /** "auto": hedef sunucuda belirlendi. Eski sunucu/onbellek yanitlarinda yoktur. */
+  goalSource?: "auto";
+  /** Hedefin neye gore belirlendigi (orn. "Hedefin aktivite seviyene göre otomatik belirlendi."). */
+  goalReason?: string;
   defaultDailyGoal: number;
   minDailyGoal: number;
   maxDailyGoal: number;
@@ -67,11 +72,6 @@ export function syncSteps(request: StepSyncRequest, signal?: AbortSignal): Promi
 /** GET /api/activity/steps/settings */
 export function getStepSettings(signal?: AbortSignal): Promise<StepSettings> {
   return apiRequest<StepSettings>("/api/activity/steps/settings", { signal });
-}
-
-/** PUT /api/activity/steps/goal - date verilirse o gunun kaydindaki hedef de guncellenir. */
-export function updateStepGoal(dailyGoal: number, date?: string, signal?: AbortSignal): Promise<StepSettings> {
-  return apiRequest<StepSettings>("/api/activity/steps/goal", { method: "PUT", body: { dailyGoal, date }, signal });
 }
 
 /** GET /api/activity/steps/days/{date} - saatlik adimlar dahil. */
