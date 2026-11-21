@@ -3,10 +3,8 @@ import { Animated, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { WelcomeButton } from "./WelcomeButton";
+import { BrandWordmark } from "../../../../shared/brand/BrandMark";
 import { colors } from "../theme";
-
-// MB FIT logosu asset olarak eklendiğinde (örn. assets/images/mbfit-logo.png)
-// aşağıdaki <Text> wordmark'ı <Image source={require("@/assets/images/mbfit-logo.png")} /> ile değiştir.
 
 type Props = {
   onGetStarted: () => void;
@@ -53,7 +51,7 @@ export function WelcomeContent({ onGetStarted, onLogin }: Props) {
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <Animated.View style={[styles.logoBlock, rise(logoAnim, -10)]}>
-        <Text style={styles.logoText}>MB FIT</Text>
+        <BrandWordmark width={124} />
         <Text style={styles.slogan}>DAHA AKILLI ANTRENMAN. DAHA İYİ YAŞAM.</Text>
       </Animated.View>
 
@@ -89,18 +87,12 @@ export function WelcomeContent({ onGetStarted, onLogin }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, paddingHorizontal: 24 },
   logoBlock: { alignItems: "center", marginTop: 28 },
-  logoText: {
-    color: colors.textPrimary,
-    fontSize: 22,
-    fontWeight: "700",
-    letterSpacing: 4,
-  },
   slogan: {
     color: colors.textMuted,
     fontSize: 10,
     fontWeight: "500",
     letterSpacing: 2.4,
-    marginTop: 8,
+    marginTop: 12,
   },
   spacer: { flex: 1 },
   bottomBlock: { paddingBottom: 8 },

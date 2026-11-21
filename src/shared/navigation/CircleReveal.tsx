@@ -1,4 +1,3 @@
-import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import Animated, {
@@ -13,6 +12,8 @@ import Animated, {
 import { scheduleOnRN } from "react-native-worklets";
 
 import { RevealOrigin, revealRadius } from "./revealRadius";
+import { BrandWordmark } from "../brand/BrandMark";
+import { BRAND_BLUE } from "../brand/brandMark";
 
 export type { RevealOrigin };
 
@@ -25,7 +26,9 @@ const FADE_MS = 240;
 export const LOADER_MIN_MS = 700;
 /** Hedef hic hazir olmasa bile ekran bu sureden sonra acilir; ortu dokunmalari sonsuza dek kilitlemesin. */
 export const LOADER_MAX_MS = 4000;
-const SPIN_MS = 1100;
+const PROGRESS_MS = 1100;
+const PROGRESS_TRACK = 120;
+const PROGRESS_BAR = 44;
 
 type Props = {
   /** Dairenin buyumeye basladigi nokta (pencere koordinatlari); null ise gosterilmez. */
@@ -36,7 +39,8 @@ type Props = {
   /** Daire solup bittiginde cagrilir. */
   onDone: () => void;
   /**
-   * Verilirse ekran kaplandiktan sonra ortada bu ikon doner, altinda baslik ve kisa aciklama yazar;
+   * Verilirse ekran kaplandiktan sonra ortada hedef bolumun yazi logosu ("MB | FIT" ya da "MB | SHOP"),
+   * altinda kisa aciklama ve ince bir yukleniyor cizgisi gorunur;
    * `ready` olana kadar (en az LOADER_MIN_MS, en fazla LOADER_MAX_MS) ortu kalkmaz.
    */
   loader?: RevealLoader;
@@ -46,7 +50,13 @@ type Props = {
   baseSize?: number;
 };
 
-export type RevealLoader = { icon: keyof typeof Ionicons.glyphMap; title: string; description: string };
+export type RevealLoader = {
+  /** Gosterilecek yazi logosu. */
+  brand: "fit" | "shop";
+  /** Erisilebilirlik etiketi icin bolum adi (orn. "MB Shop"). */
+  title: string;
+  description: string;
+};
 
 type Phase = "idle" | "growing" | "holding" | "fading";
 
@@ -55,7 +65,7 @@ export function CircleReveal({ origin, color, onCovered, onDone, loader, ready =
   const { width, height } = useWindowDimensions();
   const scale = useSharedValue(1);
   const opacity = useSharedValue(0);
-  const spin = useSharedValue(0);
+  const progress = useSharedValue(0);
   const [phase, setPhase] = useState<Phase>("idle");
   const coveredAtRef = useRef(0);
   const coveredRef = useRef(onCovered);
@@ -119,17 +129,19 @@ export function CircleReveal({ origin, color, onCovered, onDone, loader, ready =
   const showLoader = withLoader && (phase === "holding" || phase === "fading");
   useEffect(() => {
     if (!showLoader) return;
-    spin.set(0);
-    spin.set(withRepeat(withTiming(1, { duration: SPIN_MS, easing: Easing.linear }), -1, false));
-    return () => cancelAnimation(spin);
-  }, [showLoader, spin]);
+    progress.set(0);
+    progress.set(withRepeat(withTiming(1, { duration: PROGRESS_MS, easing: Easing.inOut(Easing.cubic) }), -1, false));
+    return () => cancelAnimation(progress);
+  }, [showLoader, progress]);
 
   const circleStyle = useAnimatedStyle(() => ({
     opacity: opacity.get(),
     transform: [{ scale: scale.get() }],
   }));
   const loaderStyle = useAnimatedStyle(() => ({ opacity: opacity.get() }));
-  const spinStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${spin.get() * 360}deg` }] }));
+  const progressStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: -PROGRESS_BAR + progress.get() * (PROGRESS_TRACK + PROGRESS_BAR) }],
+  }));
 
   if (!origin) return null;
 
@@ -147,11 +159,11 @@ export function CircleReveal({ origin, color, onCovered, onDone, loader, ready =
       {showLoader ? (
         <Animated.View testID="circle-reveal-loader" pointerEvents="none" style={[StyleSheet.absoluteFill, styles.loader, loaderStyle]}>
           <View style={styles.loaderBody} accessibilityRole="progressbar" accessibilityLabel={`${loader!.title} yükleniyor`}>
-            <Animated.View style={spinStyle}>
-              <Ionicons name={loader!.icon} size={56} color="#FFFFFF" />
-            </Animated.View>
-            <Text style={styles.loaderTitle}>{loader!.title}</Text>
+            <BrandWordmark variant={loader!.brand} width={loader!.brand === "shop" ? 200 : 168} />
             <Text style={styles.loaderDescription}>{loader!.description}</Text>
+            <View style={styles.progressTrack}>
+              <Animated.View style={[styles.progressBar, progressStyle]} />
+            </View>
           </View>
         </Animated.View>
       ) : null}
@@ -165,6 +177,21 @@ const styles = StyleSheet.create({
   },
   loader: { alignItems: "center", justifyContent: "center" },
   loaderBody: { alignItems: "center", paddingHorizontal: 40 },
-  loaderTitle: { color: "#FFFFFF", fontSize: 26, fontWeight: "800", marginTop: 18, letterSpacing: 0.3 },
-  loaderDescription: { color: "rgba(255,255,255,0.8)", fontSize: 13, fontWeight: "500", marginTop: 6, textAlign: "center" },
+  loaderDescription: {
+    color: "rgba(255,255,255,0.7)",
+    fontSize: 13,
+    fontWeight: "500",
+    letterSpacing: 0.3,
+    marginTop: 18,
+    textAlign: "center",
+  },
+  progressTrack: {
+    width: PROGRESS_TRACK,
+    height: 2,
+    borderRadius: 1,
+    marginTop: 28,
+    overflow: "hidden",
+    backgroundColor: "rgba(255,255,255,0.1)",
+  },
+  progressBar: { width: PROGRESS_BAR, height: 2, borderRadius: 1, backgroundColor: BRAND_BLUE },
 });
