@@ -7,7 +7,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } fr
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { scheduleOnRN } from "react-native-worklets";
 
-import { GlassSurface } from "../../../../shared/glass/GlassSurface";
+import { GlassGroup, GlassSurface } from "../../../../shared/glass/GlassSurface";
 import { glassTokens, useLiquidGlass } from "../../../../shared/glass/liquidGlass";
 import { useReducedMotion } from "../../../../shared/motion/useReducedMotion";
 import { activePillWidth, dragIndex, isOnPill, navStep, settleIndex } from "../../../../shared/navigation/navbarDrag";
@@ -98,21 +98,16 @@ const FADE_STOPS: { alpha: number; at: number }[] = [
 const SPRING = { damping: 20, stiffness: 240, mass: 0.7 } as const;
 /** Cam kapsulun ic boslugu; menuler bu kadar kuculur ki kapsul aksiyon butonuyla ayni yukseklikte kalsin. */
 const GLASS_PADDING = 4;
-/**
- * Cam ustundeki secili hap (iOS 26 sekme cubugu gibi): camin icinde hafif bir vurgu kapsulu, ikon ve etiket MB Fit
- * mavisi. Dolu siyah/beyaz hap cam ustunde fazla agir duruyordu.
- */
+/** Cam ustundeki secili hap: MB Fit'in siyah/beyaz kimligi, her iki temada da yuksek kontrast. */
 const GLASS_PILL = {
-  dark: { bg: "rgba(255,255,255,0.14)" },
-  light: { bg: "rgba(11,13,18,0.07)" },
+  dark: { bg: "#FFFFFF", content: "#0B0D12" },
+  light: { bg: "#0B0D12", content: "#FFFFFF" },
 } as const;
-// Cam yolunda solma navbar'in arkasina kadar yumusakca koyulasir: icerik camdan sezilir ama yazilar camin ustunde
-// birbirine karismaz (Apple'in kaydirma kenari efektine benzer).
+// Cam yolunda arkadaki icerik camdan gorunmelidir; solma yalnizca navbar'in altinda hafif bir okunabilirlik zemini birakir.
 const GLASS_FADE_STOPS: { alpha: number; at: number }[] = [
   { alpha: 0, at: 0 },
-  { alpha: 0.45, at: 0.35 },
-  { alpha: 0.8, at: 0.7 },
-  { alpha: 0.92, at: 1 },
+  { alpha: 0.18, at: 0.55 },
+  { alpha: 0.4, at: 1 },
 ];
 
 /** Referans tasarimin renkleri: beyaz secili hap + siyah icerik, sari-yesil aksiyon butonu. */
@@ -203,8 +198,8 @@ export function BottomNavigation({ variant = "main", active, onChange, onCircleO
   const glassColors = useMemo(() => {
     if (!liquidGlass) return null;
     const pill = isDark ? GLASS_PILL.dark : GLASS_PILL.light;
-    return { pillBg: pill.bg, pillContent: colors.primary, inactiveIcon: glassTokens(isDark).inactiveIcon };
-  }, [liquidGlass, isDark, colors.primary]);
+    return { pillBg: pill.bg, pillContent: pill.content, inactiveIcon: glassTokens(isDark).inactiveIcon };
+  }, [liquidGlass, isDark]);
   // Cam kapsulde menuler ic bosluk kadar kuculur; kapsulun toplam yuksekligi aksiyon butonuyla esit kalir.
   const tabSize = liquidGlass ? itemSize - GLASS_PADDING * 2 : itemSize;
   const step = navStep(tabSize, GAP);
@@ -342,8 +337,7 @@ export function BottomNavigation({ variant = "main", active, onChange, onCircleO
       {/* Android'de GestureDetector, bir GestureHandlerRootView altinda olmalidir; navbar kendi kokunu getirir. */}
       <GestureHandlerRootView pointerEvents="box-none" style={[styles.wrapper, { bottom: navBottom }]}>
         <View testID="navbar-bar" onLayout={onBarLayout} style={styles.bar} pointerEvents="box-none">
-          {/* Kapsul ve aksiyon butonu ayri cam parcalaridir; birbirine kaynamalari (GlassContainer) ekranda leke gibi duruyordu. */}
-          <View style={styles.row} pointerEvents="box-none">
+          <GlassGroup enabled={liquidGlass} spacing={GAP * 2} style={styles.row} pointerEvents="box-none">
             <GlassSurface
               enabled={liquidGlass}
               interactive
@@ -394,15 +388,20 @@ export function BottomNavigation({ variant = "main", active, onChange, onCircleO
               ]}
             >
               {liquidGlass ? (
-                // Aksiyon butonu kapsulle ayni camdir; ikon MB Fit mavisidir (sari-yesil ton camda fazla bagiriyordu).
-                <GlassSurface enabled pointerEvents="none" style={[styles.glassCircleFill, { borderRadius: itemSize / 2 }]}>
-                  <Ionicons name={circleActive ? circle.activeIcon : circle.icon} size={contentSizes(itemSize).icon + 1} color={colors.primary} />
+                // Aksiyon butonu da camdir; vurgu rengiyle tonlanir ki navbar'daki tek aksiyon oldugu belli olsun.
+                <GlassSurface
+                  enabled
+                  tintColor={NAV_ACCENT}
+                  pointerEvents="none"
+                  style={[styles.glassCircleFill, { borderRadius: itemSize / 2 }]}
+                >
+                  <Ionicons name={circleActive ? circle.activeIcon : circle.icon} size={contentSizes(itemSize).circleIcon} color={ACCENT_CONTENT} />
                 </GlassSurface>
               ) : (
                 <Ionicons name={circleActive ? circle.activeIcon : circle.icon} size={contentSizes(itemSize).circleIcon} color={ACCENT_CONTENT} />
               )}
             </Pressable>
-          </View>
+          </GlassGroup>
         </View>
       </GestureHandlerRootView>
     </>

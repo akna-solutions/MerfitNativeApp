@@ -1,6 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { GlassSurface } from "../../../../shared/glass/GlassSurface";
+import { glassBlueTint, glassTokens, useLiquidGlass } from "../../../../shared/glass/liquidGlass";
 import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
@@ -17,7 +19,8 @@ export function ProfileIdentity({
   onEditPress,
   onAvatarPress,
 }: Props) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
+  const liquidGlass = useLiquidGlass();
   const initial = fullName.trim().charAt(0).toLocaleUpperCase("tr-TR") || "M";
 
   return (
@@ -43,11 +46,20 @@ export function ProfileIdentity({
         <Text style={[styles.username, { color: colors.textSecondary }]}>{username}</Text>
       ) : null}
 
+      {/* iOS 26+: "Profili Düzenle" bir cam kapsuldur; basili geri bildirim opaklik yerine hafif kuculmedir. */}
       <Pressable
         onPress={onEditPress}
-        style={[styles.editButton, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
+        style={({ pressed }) => [styles.editPressable, liquidGlass && pressed ? styles.pressedGlass : null]}
       >
-        <Text style={[styles.editLabel, { color: colors.text }]}>Profili Düzenle</Text>
+        <GlassSurface
+          enabled={liquidGlass}
+          style={styles.editButton}
+          fallbackStyle={{ backgroundColor: colors.inputBackground, borderColor: colors.border }}
+          glassStyle={{ borderColor: glassTokens(isDark).edge }}
+          pointerEvents="none"
+        >
+          <Text style={[styles.editLabel, { color: colors.text }]}>Profili Düzenle</Text>
+        </GlassSurface>
       </Pressable>
     </View>
   );
@@ -85,8 +97,9 @@ const styles = StyleSheet.create({
     marginTop: 14,
   },
   username: { fontSize: 13, marginTop: 2 },
+  editPressable: { marginTop: 16 },
+  pressedGlass: { transform: [{ scale: 0.96 }] },
   editButton: {
-    marginTop: 16,
     height: 38,
     paddingHorizontal: 20,
     borderRadius: 19,
