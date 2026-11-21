@@ -12,6 +12,8 @@ import {
   Product,
   ProductFilters,
   ProductSummary,
+  Review,
+  ReviewReportReason,
   SelectedVariant,
 } from "../features/store/types";
 
@@ -124,9 +126,40 @@ export type FakeStore = {
   favorites: string[];
   /** Kart odemesi gibi gercek odeme saglayicisi yokken kapali yontemler. */
   cardAvailable: boolean;
+  /** Urun yorumlari (yalnizca test verisi). `isMine` oturumdaki kullaniciyi temsil eder. */
+  reviews: FakeReview[];
+  reports: { reviewId: string; reason: ReviewReportReason; description: string | null }[];
+  /** Sunucu onayli alisveris kararini taklit eder: bu urunleri teslim alinmis siparislerde satin aldi. */
+  purchasedProductIds: string[];
+  uploadedPhotos: string[];
 };
 
-export function createFakeStore(init: { cart?: Omit<CartRow, "id">[]; addresses?: DeliveryAddress[]; favorites?: string[] } = {}): FakeStore {
+export type FakeReview = Omit<Review, "isMine" | "myVote" | "reportedByMe"> & { mine: boolean; myVote: boolean | null; reportedByMe: boolean; deleted?: boolean };
+
+export function fakeReview(overrides: Partial<FakeReview> & Pick<FakeReview, "id" | "productId">): FakeReview {
+  return {
+    rating: 5,
+    title: null,
+    comment: "Test yorumu: ürün beklediğim gibi geldi.",
+    isVerifiedPurchase: false,
+    status: "published",
+    createdAt: "2026-10-10T10:00:00Z",
+    editedAt: null,
+    authorName: "Test K.",
+    authorAvatar: null,
+    images: [],
+    helpfulCount: 0,
+    notHelpfulCount: 0,
+    mine: false,
+    myVote: null,
+    reportedByMe: false,
+    ...overrides,
+  };
+}
+
+export function createFakeStore(
+  init: { cart?: Omit<CartRow, "id">[]; addresses?: DeliveryAddress[]; favorites?: string[]; reviews?: FakeReview[]; purchasedProductIds?: string[] } = {},
+): FakeStore {
   const products = fakeProducts();
   const categories = fakeCategories();
   let seq = 1000;
@@ -141,6 +174,10 @@ export function createFakeStore(init: { cart?: Omit<CartRow, "id">[]; addresses?
     orders: [],
     favorites: init.favorites ?? [],
     cardAvailable: false,
+    reviews: init.reviews ?? [],
+    reports: [],
+    purchasedProductIds: init.purchasedProductIds ?? [],
+    uploadedPhotos: [],
   };
 
   const find = (id: string) => products.find((p) => p.id === id && p.isActive);
@@ -457,6 +494,127 @@ export function createFakeStore(init: { cart?: Omit<CartRow, "id">[]; addresses?
           return updated;
         }),
     },
+    reviews: (() => {
+      const toReview = (r: FakeReview): Review => {
+        const { mine, deleted: _deleted, ...rest } = r;
+        return { ...rest, isMine: mine };
+      };
+      const active = (productId: string) => state.reviews.filter((r) => r.productId === productId && !r.deleted && (r.status === "published" || r.mine));
+      const published = (productId: string) => state.reviews.filter((r) => r.productId === productId && !r.deleted && r.status === "published");
+      const findReview = (id: string) => {
+        const r = state.reviews.find((x) => x.id === id && !x.deleted);
+        if (!r) throw notFound("Yorum bulunamadı.");
+        return r;
+      };
+      const own = (id: string) => {
+        const r = findReview(id);
+        if (!r.mine) throw new ApiError(403, "Bu yorum üzerinde işlem yetkin yok.");
+        return r;
+      };
+      const replace = (r: FakeReview) => {
+        state.reviews = state.reviews.map((x) => (x.id === r.id ? r : x));
+        return r;
+      };
+      const sorters: Record<string, (a: FakeReview, b: FakeReview) => number> = {
+        newest: (a, b) => b.createdAt.localeCompare(a.createdAt),
+        oldest: (a, b) => a.createdAt.localeCompare(b.createdAt),
+        rating_desc: (a, b) => b.rating - a.rating,
+        rating_asc: (a, b) => a.rating - b.rating,
+        helpful: (a, b) => b.helpfulCount - a.helpfulCount,
+      };
+      const service: StoreServices["reviews"] = {
+        getSummary: (productId) =>
+          later(() => {
+            const list = published(productId);
+            const total = list.length;
+            const avg = total ? Math.round((list.reduce((s, r) => s + r.rating, 0) / total) * 10) / 10 : 0;
+            return {
+              productId,
+              averageRating: avg,
+              reviewCount: total,
+              distribution: [5, 4, 3, 2, 1].map((rating) => {
+                const count = list.filter((r) => r.rating === rating).length;
+                return { rating, count, percentage: total ? Math.round((count / total) * 1000) / 10 : 0 };
+              }),
+              withPhotosCount: list.filter((r) => r.images.length > 0).length,
+              verifiedPurchaseCount: list.filter((r) => r.isVerifiedPurchase).length,
+              myReviewId: state.reviews.find((r) => r.productId === productId && r.mine && !r.deleted)?.id ?? null,
+              hasVerifiedPurchase: state.purchasedProductIds.includes(productId),
+            };
+          }),
+        list: (productId, filters, pageNo, pageSize) =>
+          later(() => {
+            let list = active(productId);
+            if (filters.rating) list = list.filter((r) => r.rating === filters.rating);
+            if (filters.withPhotos) list = list.filter((r) => r.images.length > 0);
+            if (filters.verifiedOnly) list = list.filter((r) => r.isVerifiedPurchase);
+            list = [...list].sort(sorters[filters.sort] ?? sorters.newest);
+            const items = list.slice((pageNo - 1) * pageSize, pageNo * pageSize).map(toReview);
+            return { items, page: pageNo, totalCount: list.length, hasNextPage: pageNo * pageSize < list.length };
+          }),
+        getMine: (productId) =>
+          later(() => {
+            const r = state.reviews.find((x) => x.productId === productId && x.mine && !x.deleted);
+            return r ? toReview(r) : null;
+          }),
+        create: (productId, input) =>
+          later(() => {
+            if (state.reviews.some((r) => r.productId === productId && r.mine && !r.deleted)) throw conflict("Bu ürüne zaten yorum yaptın.", "REVIEW_EXISTS");
+            const r = fakeReview({
+              id: nextId(),
+              productId,
+              ...input,
+              mine: true,
+              authorName: "Ben",
+              createdAt: "2026-10-30T10:00:00Z",
+              isVerifiedPurchase: state.purchasedProductIds.includes(productId),
+            });
+            state.reviews = [...state.reviews, r];
+            return toReview(r);
+          }),
+        update: (reviewId, input) => later(() => toReview(replace({ ...own(reviewId), ...input, editedAt: "2026-10-31T10:00:00Z" }))),
+        remove: (reviewId) =>
+          later(() => {
+            replace({ ...own(reviewId), deleted: true, images: [] });
+          }),
+        addImage: (reviewId, photo) =>
+          later(() => {
+            const r = own(reviewId);
+            if (r.images.length >= 5) throw conflict("En fazla 5 fotoğraf eklenebilir.", "TOO_MANY_IMAGES");
+            const image = { id: nextId(), url: `https://example.test/review-images/${seq}`, width: 800, height: 600 };
+            state.uploadedPhotos.push(photo.uri);
+            replace({ ...r, images: [...r.images, image] });
+            return image;
+          }),
+        removeImage: (reviewId, imageId) =>
+          later(() => {
+            const r = own(reviewId);
+            replace({ ...r, images: r.images.filter((i) => i.id !== imageId) });
+          }),
+        vote: (reviewId, isHelpful) =>
+          later(() => {
+            const r = findReview(reviewId);
+            if (r.mine) throw new ApiError(403, "Kendi yorumuna oy veremezsin.");
+            let { helpfulCount, notHelpfulCount } = r;
+            if (r.myVote === true) helpfulCount--;
+            if (r.myVote === false) notHelpfulCount--;
+            if (isHelpful === true) helpfulCount++;
+            if (isHelpful === false) notHelpfulCount++;
+            replace({ ...r, helpfulCount, notHelpfulCount, myVote: isHelpful });
+            return { reviewId, helpfulCount, notHelpfulCount, myVote: isHelpful };
+          }),
+        report: (reviewId, reason, description) =>
+          later(() => {
+            const r = findReview(reviewId);
+            if (r.mine) throw new ApiError(403, "Kendi yorumunu bildiremezsin.");
+            if (r.reportedByMe) return { alreadyReported: true };
+            state.reports.push({ reviewId, reason, description });
+            replace({ ...r, reportedByMe: true });
+            return { alreadyReported: false };
+          }),
+      };
+      return service;
+    })(),
   };
   return state;
 }

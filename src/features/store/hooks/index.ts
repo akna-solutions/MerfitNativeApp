@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 import { describeError, useStore } from "../state/StoreContext";
-import { CheckoutOptions, Order, OrderListItem, Product, ProductFilters, ProductSummary } from "../types";
+import { CheckoutOptions, Order, OrderListItem, Product, ProductFilters, ProductSummary, Review, ReviewFilters, ReviewSummary } from "../types";
 import { FALLBACK_PRODUCT_ICON } from "../components/categoryIcons";
 
 export { useStore } from "../state/StoreContext";
@@ -187,4 +187,56 @@ export function useProductQuery(filters: ProductFilters, options: { pageSize?: n
 export function useOrderList(pageSize = 20) {
   const { services, ordersVersion } = useStore();
   return usePagedList<OrderListItem>((page, signal) => services.orders.list(page, pageSize, signal), `orders:${pageSize}:${ordersVersion}`);
+}
+
+// ---- Urun yorumlari ----
+
+// Yorum yazilinca/duzenlenince/silinince urunun ozeti ve listeleri yeniden yuklensin diye urun basina surum sayaci.
+const reviewVersions = new Map<string, number>();
+const reviewListeners = new Set<() => void>();
+
+/** Bu urunun yorum verisi degisti: acik ozet/liste/benim yorumum ekranlari yeniden yuklenir. */
+export function invalidateProductReviews(productId: string) {
+  reviewVersions.set(productId, (reviewVersions.get(productId) ?? 0) + 1);
+  reviewListeners.forEach((listener) => listener());
+}
+
+function useReviewsVersion(productId: string | undefined) {
+  return useSyncExternalStore(
+    useCallback((listener: () => void) => {
+      reviewListeners.add(listener);
+      return () => reviewListeners.delete(listener);
+    }, []),
+    () => (productId ? (reviewVersions.get(productId) ?? 0) : 0),
+  );
+}
+
+/** Ortalama puan, toplam ve 5-1 dagilim (yalnizca yayindaki yorumlar; sunucu hesaplar). */
+export function useReviewSummary(productId: string | undefined) {
+  const { services } = useStore();
+  const version = useReviewsVersion(productId);
+  const result = useServerData<ReviewSummary>(productId ? (signal) => services.reviews.getSummary(productId, signal) : null, [services, productId, version]);
+  return { summary: result.data, isLoading: result.isLoading, error: result.error, reload: result.reload };
+}
+
+/** Kullanicinin bu urundeki yorumu (yoksa null). */
+export function useMyReview(productId: string | undefined) {
+  const { services } = useStore();
+  const version = useReviewsVersion(productId);
+  const result = useServerData<Review | null>(productId ? (signal) => services.reviews.getMine(productId, signal) : null, [services, productId, version]);
+  return { review: result.data, isLoading: result.isLoading, error: result.error, reload: result.reload };
+}
+
+/** Sunucuda siralanan/filtrelenen sayfali yorum listesi. */
+export function useReviewList(productId: string | undefined, filters: ReviewFilters, pageSize = 10) {
+  const { services } = useStore();
+  const version = useReviewsVersion(productId);
+  const filtersRef = useRef(filters);
+  filtersRef.current = filters;
+  const key = JSON.stringify({ productId, ...filters, pageSize, version });
+  return usePagedList<Review>(
+    (page, signal) => services.reviews.list(productId!, filtersRef.current, page, pageSize, signal),
+    key,
+    Boolean(productId),
+  );
 }

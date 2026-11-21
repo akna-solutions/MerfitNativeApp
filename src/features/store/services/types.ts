@@ -1,4 +1,26 @@
-import { Campaign, Cart, Category, CheckoutOptions, DeliveryAddress, Order, OrderListItem, Page, PaymentMethod, Product, ProductFilters, ProductSummary, SelectedVariant } from "../types";
+import {
+  Campaign,
+  Cart,
+  Category,
+  CheckoutOptions,
+  DeliveryAddress,
+  Order,
+  OrderListItem,
+  Page,
+  PaymentMethod,
+  Product,
+  ProductFilters,
+  ProductSummary,
+  Review,
+  ReviewFilters,
+  ReviewImage,
+  ReviewInput,
+  ReviewPhoto,
+  ReviewReportReason,
+  ReviewSummary,
+  ReviewVote,
+  SelectedVariant,
+} from "../types";
 
 /**
  * MB Shop servis siniri. Ekranlar, hook'lar ve StoreContext YALNIZCA bu arayuzlere baglidir; uygulamada
@@ -56,10 +78,31 @@ export interface OrderService {
   cancel(id: string, reason?: string): Promise<Order>;
 }
 
+/**
+ * Urun yorumlari. Onayli alisveris, ortalama/dagilim ve oy sayilari sunucuda hesaplanir. Kurallar (tek aktif yorum,
+ * yalnizca sahibi duzenler/siler, kendi yorumuna oy/rapor yok) sunucuda dogrulanir; istemci yalnizca hatayi gosterir.
+ */
+export interface ReviewService {
+  getSummary(productId: string, signal?: AbortSignal): Promise<ReviewSummary>;
+  list(productId: string, filters: ReviewFilters, page: number, pageSize: number, signal?: AbortSignal): Promise<Page<Review>>;
+  /** Kullanicinin bu urundeki yorumu; yoksa null. */
+  getMine(productId: string, signal?: AbortSignal): Promise<Review | null>;
+  /** Zaten aktif yorum varsa ApiError(409, REVIEW_EXISTS). */
+  create(productId: string, input: ReviewInput): Promise<Review>;
+  update(reviewId: string, input: ReviewInput): Promise<Review>;
+  remove(reviewId: string): Promise<void>;
+  addImage(reviewId: string, photo: ReviewPhoto): Promise<ReviewImage>;
+  removeImage(reviewId: string, imageId: string): Promise<void>;
+  /** null oyu kaldirir. */
+  vote(reviewId: string, isHelpful: boolean | null): Promise<ReviewVote>;
+  report(reviewId: string, reason: ReviewReportReason, description: string | null): Promise<{ alreadyReported: boolean }>;
+}
+
 export type StoreServices = {
   catalog: CatalogService;
   cart: CartService;
   favorites: FavoriteService;
   addresses: AddressService;
   orders: OrderService;
+  reviews: ReviewService;
 };

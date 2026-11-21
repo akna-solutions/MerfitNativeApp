@@ -1,6 +1,8 @@
 import * as storeApi from "../../../services/api/store";
+import * as reviewApi from "../../../services/api/storeReviews";
 import { ApiError } from "../../../services/api/client";
 import { toAddress, toAddressRequest, toCampaign, toCart, toCategory, toCheckoutOptions, toOrder, toOrderListItem, toProduct, toProductQuery, toProductSummary } from "./mappers";
+import { toReview, toReviewImage, toReviewQuery, toReviewSummary, toReviewVote } from "./reviewMappers";
 import { StoreServices } from "./types";
 
 /** Sayisal olmayan bir id (bozuk derin baglanti vb.) sunucuya gitmeden 404 gibi ele alinir. */
@@ -58,6 +60,27 @@ export function createHttpStoreServices(): StoreServices {
       },
       get: async (id, signal) => toOrder(await storeApi.getOrder(numericId(id, "Sipariş"), signal)),
       cancel: async (id, reason) => toOrder(await storeApi.cancelOrder(numericId(id, "Sipariş"), reason)),
+    },
+    reviews: {
+      getSummary: async (productId, signal) => toReviewSummary(await reviewApi.getReviewSummary(numericId(productId, "Ürün"), signal)),
+      list: async (productId, filters, page, pageSize, signal) => {
+        const result = await reviewApi.getReviews(numericId(productId, "Ürün"), toReviewQuery(filters, page, pageSize), signal);
+        return { items: result.items.map(toReview), page: result.page, totalCount: result.totalCount, hasNextPage: result.hasNextPage };
+      },
+      getMine: async (productId, signal) => {
+        const dto = await reviewApi.getMyReview(numericId(productId, "Ürün"), signal);
+        return dto ? toReview(dto) : null;
+      },
+      create: async (productId, input) => toReview(await reviewApi.createReview(numericId(productId, "Ürün"), input)),
+      update: async (reviewId, input) => toReview(await reviewApi.updateReview(numericId(reviewId, "Yorum"), input)),
+      remove: async (reviewId) => reviewApi.deleteReview(numericId(reviewId, "Yorum")),
+      addImage: async (reviewId, photo) => toReviewImage(await reviewApi.uploadReviewImage(numericId(reviewId, "Yorum"), photo)),
+      removeImage: async (reviewId, imageId) => reviewApi.deleteReviewImage(numericId(reviewId, "Yorum"), numericId(imageId, "Fotoğraf")),
+      vote: async (reviewId, isHelpful) => {
+        const id = numericId(reviewId, "Yorum");
+        return toReviewVote(isHelpful === null ? await reviewApi.removeReviewVote(id) : await reviewApi.voteReview(id, isHelpful));
+      },
+      report: async (reviewId, reason, description) => reviewApi.reportReview(numericId(reviewId, "Yorum"), reason, description),
     },
   };
 }

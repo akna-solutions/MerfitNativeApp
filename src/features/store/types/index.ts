@@ -209,3 +209,56 @@ export type ProductFilters = {
 };
 
 export type Page<T> = { items: T[]; page: number; totalCount: number; hasNextPage: boolean };
+
+// ---- Urun yorumlari ----
+
+export type ReviewSort = "newest" | "oldest" | "rating_desc" | "rating_asc" | "helpful";
+export type ReviewReportReason = "Spam" | "Offensive" | "Misleading" | "Irrelevant" | "Other";
+
+export type ReviewFilters = {
+  sort: ReviewSort;
+  /** 1-5; yoksa tum puanlar. */
+  rating?: number;
+  withPhotos?: boolean;
+  verifiedOnly?: boolean;
+};
+
+/** Sunucunun yalnizca yayindaki yorumlardan hesapladigi ozet. */
+export type ReviewSummary = {
+  productId: string;
+  averageRating: number;
+  reviewCount: number;
+  /** 5'ten 1'e. */
+  distribution: { rating: number; count: number; percentage: number }[];
+  withPhotosCount: number;
+  verifiedPurchaseCount: number;
+  myReviewId: string | null;
+  hasVerifiedPurchase: boolean;
+};
+
+export type ReviewImage = { id: string; url: string; width: number; height: number };
+
+export type Review = {
+  id: string;
+  productId: string;
+  rating: number;
+  title: string | null;
+  comment: string;
+  isVerifiedPurchase: boolean;
+  status: "published" | "hidden";
+  createdAt: string;
+  editedAt: string | null;
+  authorName: string;
+  authorAvatar: string | null;
+  images: ReviewImage[];
+  helpfulCount: number;
+  notHelpfulCount: number;
+  myVote: boolean | null;
+  isMine: boolean;
+  reportedByMe: boolean;
+};
+
+export type ReviewInput = { rating: number; title: string | null; comment: string };
+export type ReviewVote = { reviewId: string; helpfulCount: number; notHelpfulCount: number; myVote: boolean | null };
+/** Yuklemeye hazir (cihazda kucultulmus JPEG) fotograf. */
+export type ReviewPhoto = { uri: string; mimeType: "image/jpeg"; fileName: string };
