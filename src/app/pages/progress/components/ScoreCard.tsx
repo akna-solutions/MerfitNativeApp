@@ -1,6 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { GlassSurface } from "../../../../shared/glass/GlassSurface";
+import { glassBlueTint, glassTokens, useLiquidGlass } from "../../../../shared/glass/liquidGlass";
 import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
@@ -12,9 +14,17 @@ type Props = {
 };
 
 export function ScoreCard({ points, weeklyChange, rank, onPress }: Props) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
+  const liquidGlass = useLiquidGlass();
   return (
-    <Pressable onPress={onPress} style={[styles.card, { backgroundColor: colors.card }]}>
+    // iOS 26+: MB FIT puani mavi tonlu Liquid Glass kart; kenardaki mavi cizgi marka vurgusu olarak kalir.
+    <Pressable onPress={onPress} style={({ pressed }) => (liquidGlass && pressed ? styles.pressedGlass : null)}>
+      <GlassSurface
+        enabled={liquidGlass}
+        tintColor={glassBlueTint(isDark)}
+        style={styles.card}
+        fallbackStyle={{ backgroundColor: colors.card }}
+      >
       <View style={styles.textBlock}>
         <Text style={[styles.title, { color: colors.textSecondary }]}>MB FIT Puanın</Text>
         <Text style={[styles.points, { color: colors.text }]}>{points.toLocaleString()}</Text>
@@ -24,11 +34,13 @@ export function ScoreCard({ points, weeklyChange, rank, onPress }: Props) {
         </Text>
       </View>
       <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+      </GlassSurface>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
+  pressedGlass: { transform: [{ scale: 0.985 }] },
   card: {
     flexDirection: "row",
     alignItems: "center",
