@@ -12,8 +12,6 @@ import {
 } from "react-native";
 import { DumbbellSpinner } from "../motion/DumbbellSpinner";
 
-import { GlassSurface } from "../glass/GlassSurface";
-import { glassTokens, useLiquidGlass } from "../glass/liquidGlass";
 import { useTheme } from "../theme/ThemeContext";
 import { WeightReminderController } from "./useWeightReminder";
 import { fromKg, unitLabel } from "./units";
@@ -26,9 +24,6 @@ type Props = { controller: WeightReminderController };
  */
 export function WeightReminderModal({ controller }: Props) {
   const { colors, isDark } = useTheme();
-  // iOS 26+: pencere Liquid Glass'tir, arkadaki ekran hafif karartilmis haliyle camdan bulanik gorunur.
-  const liquidGlass = useLiquidGlass();
-  const glass = glassTokens(isDark);
   const { visible, reminder, unit, saving, errorMessage, save, snooze } = controller;
   const [text, setText] = useState("");
 
@@ -44,14 +39,11 @@ export function WeightReminderModal({ controller }: Props) {
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={() => snooze("later")} statusBarTranslucent>
-      <KeyboardAvoidingView style={[styles.backdrop, liquidGlass && { backgroundColor: glass.dimmedBackdrop }]} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-        <GlassSurface
-          enabled={liquidGlass}
+      <KeyboardAvoidingView style={styles.backdrop} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+        <View
           testID="weight-reminder-modal"
           accessibilityViewIsModal
-          style={styles.card}
-          fallbackStyle={{ backgroundColor: colors.surface, borderColor: colors.border }}
-          glassStyle={{ borderColor: glass.edge }}
+          style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
         >
           <View style={[styles.icon, { backgroundColor: colors.cardActive }]}>
             <Ionicons name="scale-outline" size={24} color={colors.primary} />
@@ -116,7 +108,7 @@ export function WeightReminderModal({ controller }: Props) {
               <Text style={[styles.secondaryLabel, { color: colors.textSecondary }]}>Bu sefer geç</Text>
             </Pressable>
           </View>
-        </GlassSurface>
+        </View>
       </KeyboardAvoidingView>
     </Modal>
   );

@@ -2,8 +2,6 @@ import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { OnboardingButton } from "../onboarding/components/OnboardingButton";
-import { GlassGroup, GlassSurface } from "../../../shared/glass/GlassSurface";
-import { glassTokens, useLiquidGlass } from "../../../shared/glass/liquidGlass";
 import { useTheme } from "../../../shared/theme/ThemeContext";
 import type { SaveStatus } from "./ActiveWorkout";
 import { estimateWorkoutCalories } from "../../../shared/workoutHistory/format";
@@ -51,14 +49,12 @@ export function WorkoutSummary({
         <Text style={[styles.duration, { color: colors.primary }]}>{durationLabel}</Text>
       </View>
 
-      {/* iOS 26+: dort ozet kutusu tek bir cam katmaninda (GlassContainer) toplanir; rekor kartlari opak kalir ki
-          hiyerarsi bozulmasin. */}
-      <GlassGroup spacing={12} style={styles.grid}>
+      <View style={styles.grid}>
         <StatCard label="Egzersizler" value={`${exercises.length}`} />
         <StatCard label="Setler" value={`${setCount}`} />
         <StatCard label="Kalori" value={`${estimatedCalories} kcal`} />
         <StatCard label="Hacim" value={`${volume.toLocaleString()} kg`} />
-      </GlassGroup>
+      </View>
 
       {personalRecords.length > 0 ? (
         <View style={styles.prSection}>
@@ -89,18 +85,12 @@ export function WorkoutSummary({
 }
 
 function StatCard({ label, value }: { label: string; value: string }) {
-  const { colors, isDark } = useTheme();
-  const liquidGlass = useLiquidGlass();
+  const { colors } = useTheme();
   return (
-    <GlassSurface
-      enabled={liquidGlass}
-      style={styles.statCard}
-      fallbackStyle={{ backgroundColor: colors.card, borderColor: colors.border }}
-      glassStyle={{ borderColor: glassTokens(isDark).edge }}
-    >
+    <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
       <Text style={[styles.statValue, { color: colors.text }]}>{value}</Text>
       <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
-    </GlassSurface>
+    </View>
   );
 }
 

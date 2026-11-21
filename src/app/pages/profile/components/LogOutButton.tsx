@@ -1,7 +1,5 @@
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { GlassSurface } from "../../../../shared/glass/GlassSurface";
-import { glassTokens, useLiquidGlass } from "../../../../shared/glass/liquidGlass";
 import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
@@ -17,10 +15,7 @@ export function LogOutButton({
   onConfirm,
   onCancel,
 }: Props) {
-  const { colors, isDark } = useTheme();
-  // iOS 26+: pencere Liquid Glass'tir, arkadaki ekran hafif karartilmis haliyle camdan bulanik gorunur.
-  const liquidGlass = useLiquidGlass();
-  const glass = glassTokens(isDark);
+  const { colors } = useTheme();
   return (
     <>
       <Pressable
@@ -36,15 +31,10 @@ export function LogOutButton({
         animationType="fade"
         onRequestClose={onCancel}
       >
-        <View style={[styles.backdrop, liquidGlass && { backgroundColor: glass.dimmedBackdrop }]}>
+        <View style={styles.backdrop}>
           <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} />
 
-          <GlassSurface
-            enabled={liquidGlass}
-            style={styles.dialog}
-            fallbackStyle={{ backgroundColor: colors.surface, borderColor: colors.border }}
-            glassStyle={{ borderColor: glass.edge }}
-          >
+          <View style={[styles.dialog, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <Text style={[styles.title, { color: colors.text }]}>MB FIT'ten çıkış yapılsın mı?</Text>
             <Text style={[styles.message, { color: colors.textSecondary }]}>
               Hesabından çıkış yapmak istediğine emin misin?
@@ -64,7 +54,7 @@ export function LogOutButton({
                 <Text style={styles.confirmLabel}>Çıkış Yap</Text>
               </Pressable>
             </View>
-          </GlassSurface>
+          </View>
         </View>
       </Modal>
     </>

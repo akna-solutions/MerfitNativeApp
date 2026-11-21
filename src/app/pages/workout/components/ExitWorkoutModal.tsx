@@ -1,7 +1,5 @@
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { GlassSurface } from "../../../../shared/glass/GlassSurface";
-import { glassTokens, useLiquidGlass } from "../../../../shared/glass/liquidGlass";
 import { useTheme } from "../../../../shared/theme/ThemeContext";
 
 type Props = {
@@ -15,10 +13,7 @@ export function ExitWorkoutModal({
   onContinue,
   onSaveAndExit,
 }: Props) {
-  const { colors, isDark } = useTheme();
-  // iOS 26+: pencere Liquid Glass'tir, arkadaki ekran hafif karartilmis haliyle camdan bulanik gorunur.
-  const liquidGlass = useLiquidGlass();
-  const glass = glassTokens(isDark);
+  const { colors } = useTheme();
   return (
     <Modal
       visible={visible}
@@ -26,15 +21,10 @@ export function ExitWorkoutModal({
       animationType="fade"
       onRequestClose={onContinue}
     >
-      <View style={[styles.backdrop, liquidGlass && { backgroundColor: glass.dimmedBackdrop }]}>
+      <View style={styles.backdrop}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onContinue} />
 
-        <GlassSurface
-          enabled={liquidGlass}
-          style={styles.dialog}
-          fallbackStyle={{ backgroundColor: colors.surface, borderColor: colors.border }}
-          glassStyle={{ borderColor: glass.edge }}
-        >
+        <View style={[styles.dialog, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <Text style={[styles.title, { color: colors.text }]}>Antrenmandan çıkılsın mı?</Text>
           <Text style={[styles.message, { color: colors.textSecondary }]}>
             Mevcut ilerlemen kaydedilecek.
@@ -48,7 +38,7 @@ export function ExitWorkoutModal({
               <Text style={[styles.exitLabel, { color: colors.text }]}>Kaydet ve Çık</Text>
             </Pressable>
           </View>
-        </GlassSurface>
+        </View>
       </View>
     </Modal>
   );
