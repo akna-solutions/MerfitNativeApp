@@ -11,13 +11,13 @@ import {
 import { useReducedMotion } from "../../../shared/motion/useReducedMotion";
 import { CircleReveal, RevealLoader, RevealOrigin } from "../../../shared/navigation/CircleReveal";
 import { circleTab, navbarRoute } from "../../../shared/navigation/navbarRoutes";
-import { useTheme } from "../../../shared/theme/ThemeContext";
+import { BRAND_BLACK } from "../../../shared/brand/brandMark";
 import { useStore } from "../../../features/store/hooks";
 
-// Yuvarlak buton gecisinde renkli (MB Shop kirmizi, MB Fit mavi) ekranda donen ikon ve altindaki baslik/aciklama.
+// Yuvarlak buton gecisinde marka siyahi ekranda hedef bolumun yazi logosu ve kisa aciklamasi (bkz. CircleReveal).
 const LOADERS: Partial<Record<NavTab, RevealLoader>> = {
-  store: { icon: "bag-handle", title: "MB Shop", description: "Takviyeler, ekipmanlar ve kampanyalar" },
-  home: { icon: "barbell", title: "MB Fit", description: "Antrenman, beslenme ve ilerlemen" },
+  store: { brand: "shop", title: "MB Shop", description: "Takviyeler, ekipmanlar ve kampanyalar" },
+  home: { brand: "fit", title: "MB Fit", description: "Antrenman, beslenme ve ilerleme" },
 };
 
 // Tab route dosya adları ile navbar'daki NavTab id'leri birebir aynı değil
@@ -44,7 +44,6 @@ const STORE_ROUTES = new Set(["store", "store-categories", "store-cart", "store-
 export default function TabsLayout() {
   const reducedMotion = useReducedMotion();
   const router = useRouter();
-  const { colors } = useTheme();
   const { isLoading: storeLoading } = useStore();
   // Yuvarlak navbar butonundan (Store / uygulamaya don) buyuyen daire animasyonu; null iken animasyon yoktur.
   const [reveal, setReveal] = useState<{ origin: RevealOrigin; target: NavTab; variant: NavVariant } | null>(null);
@@ -89,8 +88,8 @@ export default function TabsLayout() {
     <CircleReveal
       origin={reveal?.origin ?? null}
       baseSize={reveal ? navItemSize(reveal.variant) : undefined}
-      // Iki yone de gecis ekrani mavi (primary).
-      color={colors.primary}
+      // Iki yone de gecis ekrani acilis ekraniyla ayni marka siyahi; ortada hedef bolumun yazi logosu durur.
+      color={BRAND_BLACK}
       onCovered={() => reveal && router.navigate(navbarRoute(reveal.target, reveal.variant))}
       onDone={() => setReveal(null)}
       // MB Shop'a geciste market, MB Fit'e donuste dambil ikonu doner; MB Shop verisi yuklenene kadar ortu kalkmaz.
