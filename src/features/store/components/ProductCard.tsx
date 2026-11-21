@@ -8,7 +8,8 @@ import { useTheme } from "../../../shared/theme/ThemeContext";
 import { useCart, useCategoryIcon, useFavorites } from "../hooks";
 import { storeRoutes } from "../navigation";
 import { ProductSummary } from "../types";
-import { PriceTag, DiscountBadge } from "./PriceTag";
+import { PriceTag } from "./PriceTag";
+import { DiscountSeal, ProductBadgeStack } from "./ProductBadges";
 import { ProductImage } from "./ProductImage";
 
 type Props = {
@@ -60,13 +61,15 @@ function ProductCardBase({ product, width }: Props) {
         testID={`product-card-${product.id}`}
         onPress={openDetail}
         accessibilityRole="button"
-        accessibilityLabel={`${product.brand} ${product.name}, ${product.price} lira${outOfStock ? ", stokta yok" : ""}`}
+        accessibilityLabel={`${product.brand} ${product.name}, ${product.price} lira${product.discountPercentage > 0 ? `, yüzde ${product.discountPercentage} indirim` : ""}${product.badges.length > 0 ? `, ${product.badges.slice(0, 2).map((b) => b.label).join(", ")}` : ""}${outOfStock ? ", stokta yok" : ""}`}
       >
         <View>
           <ProductImage uri={product.image} icon={icon} label={product.brand} style={styles.image} />
+          {/* Sol ust: durum rozetleri; sag ust: favori dugmesi ve altinda indirim muhru. */}
+          <ProductBadgeStack badges={product.badges} max={2} style={styles.badges} testID={`badges-${product.id}`} />
           {product.discountPercentage > 0 ? (
-            <View style={styles.badge}>
-              <DiscountBadge percent={product.discountPercentage} />
+            <View style={styles.seal}>
+              <DiscountSeal percent={product.discountPercentage} size={42} testID={`discount-seal-${product.id}`} />
             </View>
           ) : null}
           {outOfStock ? (
@@ -120,7 +123,9 @@ const styles = StyleSheet.create({
   card: { borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, overflow: "hidden" },
   fill: { flex: 1 },
   image: { width: "100%", aspectRatio: 1 },
-  badge: { position: "absolute", top: 8, left: 8 },
+  // Sag ustteki favori dugmesiyle (30 px) cakismamasi icin sol yigin genisligi sinirlanir.
+  badges: { position: "absolute", top: 8, left: 8, right: 46 },
+  seal: { position: "absolute", top: 42, right: 2 },
   heart: { position: "absolute", top: 8, right: 8, width: 30, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center", opacity: 0.92 },
   soldOut: { position: "absolute", bottom: 8, left: 8, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, opacity: 0.92 },
   soldOutText: { fontSize: 11, fontWeight: "700" },

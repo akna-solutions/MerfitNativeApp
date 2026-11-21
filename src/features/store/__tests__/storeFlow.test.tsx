@@ -236,6 +236,25 @@ describe("Urun detay", () => {
     expect(screen.queryByTestId("recommended-products")).toBeNull();
   });
 
+  it("gorselin ust koselerinde sunucu rozetlerini (en fazla 3) ve indirim muhrunu gosterir", async () => {
+    mockParams = { id: "101" };
+    await renderWithStore(<ProductDetailScreen />);
+    await waitFor(() => expect(screen.getByTestId("detail-discount-seal")).toBeTruthy());
+    const stack = screen.getByTestId("detail-badges");
+    expect(within(stack).getByLabelText("Avantajlı Ürün")).toBeTruthy();
+    expect(within(stack).getByLabelText("Çok Satan")).toBeTruthy();
+    expect(within(stack).getByLabelText("Kargo Bedava")).toBeTruthy();
+    expect(screen.getByTestId("detail-discount-seal").props.accessibilityLabel).toBe("Yüzde 17 indirim");
+  });
+
+  it("rozeti olmayan urunde rozet alani cizilmez", async () => {
+    mockParams = { id: "105" };
+    await renderWithStore(<ProductDetailScreen />);
+    await waitFor(() => expect(screen.getByTestId("product-detail")).toBeTruthy());
+    expect(screen.queryByTestId("detail-badges")).toBeNull();
+    expect(screen.queryByTestId("detail-discount-seal")).toBeNull();
+  });
+
   it("bulunamayan urunde anlasilir mesaj gosterir", async () => {
     mockParams = { id: "999" };
     await renderWithStore(<ProductDetailScreen />);

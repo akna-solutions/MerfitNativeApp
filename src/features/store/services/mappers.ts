@@ -11,7 +11,7 @@ import type {
   StoreProductQuery,
   UpsertStoreAddressRequest,
 } from "../../../services/api/store";
-import { Campaign, Cart, Category, CheckoutOptions, DeliveryAddress, Order, OrderListItem, Product, ProductFilters, ProductSummary, VariantKind } from "../types";
+import { Campaign, Cart, ProductBadge, ProductBadgeCode, Category, CheckoutOptions, DeliveryAddress, Order, OrderListItem, Product, ProductFilters, ProductSummary, VariantKind } from "../types";
 import type { AddressInput } from "./types";
 
 // API DTO'larini (sayisal id'ler) ekranlarin kullandigi modellere (string id'ler) cevirir. Hesap yapilmaz:
@@ -32,6 +32,15 @@ export function toCategory(dto: StoreCategoryDto): Category {
   };
 }
 
+const BADGE_CODES: ProductBadgeCode[] = ["advantageous", "mbfit_pick", "low_stock", "bestseller", "top_rated", "new", "free_shipping"];
+
+/** Bilinmeyen rozet kodlari (daha yeni sunucu) atlanir; sira sunucudaki gibi korunur. */
+export function toBadges(dtos: StoreProductListItemDto["badges"]): ProductBadge[] {
+  return (dtos ?? [])
+    .filter((b) => BADGE_CODES.includes(b.code as ProductBadgeCode) && typeof b.label === "string" && b.label.trim().length > 0)
+    .map((b) => ({ code: b.code as ProductBadgeCode, label: b.label.trim(), ...(b.value != null ? { value: b.value } : {}) }));
+}
+
 export function toProductSummary(dto: StoreProductListItemDto): ProductSummary {
   return {
     id: String(dto.id),
@@ -44,6 +53,7 @@ export function toProductSummary(dto: StoreProductListItemDto): ProductSummary {
     stock: dto.stockQuantity,
     image: dto.imageUrl,
     hasVariants: dto.hasVariants,
+    badges: toBadges(dto.badges),
   };
 }
 

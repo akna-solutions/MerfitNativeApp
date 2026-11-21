@@ -36,6 +36,16 @@ export type VariantGroup = {
 };
 
 /** Liste ve kartlarda gosterilen urun ozeti. */
+/** Sunucunun gercek veriden turettigi (veya admin'in atadigi) urun rozeti kodlari. */
+export type ProductBadgeCode = "advantageous" | "mbfit_pick" | "low_stock" | "bestseller" | "top_rated" | "new" | "free_shipping";
+
+export type ProductBadge = {
+  code: ProductBadgeCode;
+  /** Sunucudan hazir Turkce etiket (orn. "Son 3 Ürün"). */
+  label: string;
+  value?: number;
+};
+
 export type ProductSummary = {
   id: string;
   name: string;
@@ -51,6 +61,8 @@ export type ProductSummary = {
   image: string | null;
   /** true ise sepete eklemeden once secenek secilmelidir. */
   hasVariants: boolean;
+  /** Gorsel kosesindeki rozetler, onem sirasiyla. Indirim discountPercentage ile ayrica cizilir. */
+  badges: ProductBadge[];
 };
 
 /** Urun detay ekrani. */

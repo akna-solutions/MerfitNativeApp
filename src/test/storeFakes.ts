@@ -47,6 +47,7 @@ function product(p: Partial<FakeProduct> & Pick<FakeProduct, "id" | "name" | "br
     stock: 10,
     image: null,
     hasVariants: Boolean(p.variants?.length),
+    badges: [],
     description: `${p.name} açıklaması`,
     categoryName: null,
     images: [],
@@ -74,6 +75,11 @@ export function fakeProducts(): FakeProduct[] {
       originalPrice: 1200,
       isFeatured: true,
       campaignIds: ["1"],
+      badges: [
+        { code: "advantageous", label: "Avantajlı Ürün" },
+        { code: "bestseller", label: "Çok Satan" },
+        { code: "free_shipping", label: "Kargo Bedava" },
+      ],
       variants: [
         { id: "package", label: "Paket", kind: "package", options: [{ id: "1kg", label: "1 kg" }, { id: "2kg", label: "2 kg", priceDelta: 400 }] },
         {
@@ -195,6 +201,7 @@ export function createFakeStore(
     stock: p.stock,
     image: p.image,
     hasVariants: p.hasVariants,
+    badges: p.badges,
   });
   const childIds = (id: string) => categories.filter((c) => c.parentId === id).map((c) => c.id);
   const inCategory = (p: FakeProduct, id: string) => p.categoryId === id || childIds(id).includes(p.categoryId);

@@ -7,6 +7,7 @@ import { useTheme } from "../../../shared/theme/ThemeContext";
 import { CartButton } from "../components/HeaderButtons";
 import { EmptyState } from "../components/EmptyState";
 import { DiscountBadge, PriceTag } from "../components/PriceTag";
+import { DiscountSeal, ProductBadgeStack } from "../components/ProductBadges";
 import { ProductImage } from "../components/ProductImage";
 import { ProductReviewsSection } from "../components/reviews/ProductReviewsSection";
 import { QuantityStepper } from "../components/QuantityStepper";
@@ -184,6 +185,13 @@ function ProductDetailContent({ product }: { product: Product }) {
           renderItem={({ item }) => <ProductImage uri={item} icon={icon} label={product.brand} iconSize={64} style={{ width, height: width * 0.82 }} />}
           getItemLayout={(_, index) => ({ length: width, offset: width * index, index })}
         />
+        {/* Galerinin ust koseleri: sol ustte rozetler, sag ustte indirim muhru (kaydirmayi engellemez). */}
+        <ProductBadgeStack badges={product.badges} max={3} size="md" style={styles.galleryBadges} testID="detail-badges" />
+        {product.discountPercentage > 0 ? (
+          <View style={styles.gallerySeal} pointerEvents="none">
+            <DiscountSeal percent={product.discountPercentage} size={58} testID="detail-discount-seal" />
+          </View>
+        ) : null}
         {slides.length > 1 ? (
           <View style={styles.dots} accessibilityLabel={`Görsel ${page + 1} / ${slides.length}`}>
             {slides.map((_, i) => (
@@ -320,6 +328,8 @@ const styles = StyleSheet.create({
   content: { paddingBottom: 24 },
   headerButton: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", borderWidth: StyleSheet.hairlineWidth },
   dots: { flexDirection: "row", justifyContent: "center", gap: 6, marginTop: 10 },
+  galleryBadges: { position: "absolute", top: 12, left: GUTTER, right: 90 },
+  gallerySeal: { position: "absolute", top: 10, right: 12 },
   dot: { width: 7, height: 7, borderRadius: 3.5 },
   body: { paddingHorizontal: GUTTER, paddingTop: 16, gap: 6 },
   brand: { fontSize: 13, fontWeight: "700" },
