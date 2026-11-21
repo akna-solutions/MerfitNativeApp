@@ -196,3 +196,24 @@ describe("Oneriler", () => {
     expect(result.personalized).toBe(false);
   });
 });
+
+describe("urun rozetleri", () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { toBadges, toProductSummary } = require("../services/mappers") as typeof import("../services/mappers");
+
+  it("bilinmeyen kodlari ve bos etiketleri atar, sirayi ve degeri korur; eski sunucuda bos liste doner", () => {
+    expect(
+      toBadges([
+        { code: "low_stock", label: "Son 2 Ürün", value: 2 },
+        { code: "mystery", label: "Gizemli" },
+        { code: "new", label: " " },
+        { code: "bestseller", label: "Çok Satan", value: null },
+      ]),
+    ).toEqual([
+      { code: "low_stock", label: "Son 2 Ürün", value: 2 },
+      { code: "bestseller", label: "Çok Satan" },
+    ]);
+    const base = { id: 7, name: "Kreatin", slug: "kreatin", brand: "MBFit", sku: "K-1", categoryId: 1, price: 400, originalPrice: 400, discountPercentage: 0, stockQuantity: 5, inStock: true, imageUrl: null, hasVariants: false, isFeatured: false, createdAt: "2026-10-01T00:00:00Z" };
+    expect(toProductSummary(base).badges).toEqual([]);
+  });
+});

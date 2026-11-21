@@ -39,7 +39,11 @@ export type StoreProductListItemDto = {
   hasVariants: boolean;
   isFeatured: boolean;
   createdAt: string;
+  /** Eski sunucularda yoktur. */
+  badges?: StoreProductBadgeDto[];
 };
+
+export type StoreProductBadgeDto = { code: string; label: string; value?: number | null };
 
 export type StoreVariantOptionDto = { id: string; label: string; priceDelta?: number; inStock?: boolean; swatch?: string | null };
 export type StoreVariantGroupDto = { id: string; label: string; kind: string; options: StoreVariantOptionDto[] };
