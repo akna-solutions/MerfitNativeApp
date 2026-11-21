@@ -13,12 +13,10 @@ import { QuantityStepper } from "../components/QuantityStepper";
 import { GUTTER, ProductRow, SectionHeader } from "../components/StoreSections";
 import { StoreScreenShell } from "../components/StoreScreenShell";
 import { DumbbellSpinner } from "../../../shared/motion/DumbbellSpinner";
-import { useCart, useCategoryIcon, useFavorites, useProductDetail, useProductQuery } from "../hooks";
+import { useCart, useCategoryIcon, useFavorites, useProductDetail, useProductRecommendations } from "../hooks";
 import { storeRoutes } from "../navigation";
 import { Product, SelectedVariant, VariantGroup } from "../types";
 import { formatPrice, isVariantSelectionComplete, maxQuantityFor, originalUnitPriceFor, unitPriceFor } from "../utils/pricing";
-
-const RELATED_LIMIT = 8;
 
 function stockInfo(product: Product): { label: string; tone: "ok" | "low" | "out" } {
   if (product.stock <= 0) return { label: "Stokta yok", tone: "out" };
@@ -74,11 +72,10 @@ function ProductDetailContent({ product }: { product: Product }) {
   const icon = useCategoryIcon(product.categoryId);
 
   const slides = product.images.length > 0 ? product.images : [null];
-  const similar = useProductQuery({ categoryId: product.categoryId, excludeId: product.id }, { pageSize: RELATED_LIMIT });
-  const sameBrand = useProductQuery({ brands: [product.brand], excludeId: product.id }, { pageSize: RELATED_LIMIT });
-  // Ayni markadan seridinde benzer urunlerde zaten gosterilenler tekrar edilmez.
-  const similarIds = new Set(similar.items.map((p) => p.id));
-  const related = sameBrand.items.filter((p) => !similarIds.has(p.id));
+  // Siralama sunucuda (kategori, marka, fiyat, ad benzerligi, birlikte satin alma, ilgi alanlari); iki satir birbirini tekrar etmez.
+  const { recommendations } = useProductRecommendations(product.id);
+  const similar = recommendations?.similar ?? [];
+  const recommended = recommendations?.recommended ?? [];
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => setPage(Math.round(e.nativeEvent.contentOffset.x / width));
 
@@ -261,16 +258,16 @@ function ProductDetailContent({ product }: { product: Product }) {
           <ProductReviewsSection productId={product.id} />
         </View>
 
-        {similar.items.length > 0 ? (
+        {similar.length > 0 ? (
           <View style={styles.relatedBlock} testID="similar-products">
             <SectionHeader title="Benzer Ürünler" />
-            <ProductRow products={similar.items} />
+            <ProductRow products={similar} />
           </View>
         ) : null}
-        {related.length > 0 ? (
-          <View style={styles.relatedBlock} testID="related-products">
-            <SectionHeader title={`${product.brand} Ürünleri`} />
-            <ProductRow products={related} />
+        {recommended.length > 0 ? (
+          <View style={styles.relatedBlock} testID="recommended-products">
+            <SectionHeader title={recommendations?.personalized ? "Senin İçin Önerilenler" : "Bunlar da İlgini Çekebilir"} />
+            <ProductRow products={recommended} />
           </View>
         ) : null}
       </ScrollView>

@@ -182,3 +182,17 @@ describe("Yorum servisleri", () => {
     expect(request).not.toHaveBeenCalled();
   });
 });
+
+describe("Oneriler", () => {
+  beforeEach(() => request.mockReset());
+
+  it("benzer ve onerilen urunleri ozet modele cevirir", async () => {
+    const item = { id: 7, name: "Kreatin", slug: "kreatin", brand: "MBFit", sku: "K-1", categoryId: 1, price: 400, originalPrice: 400, discountPercentage: 0, stockQuantity: 5, inStock: true, imageUrl: null, hasVariants: false, isFeatured: false, createdAt: "2026-10-01T00:00:00Z" };
+    request.mockResolvedValueOnce({ productId: 101, similar: [item], recommended: [{ ...item, id: 8 }], personalized: false });
+    const result = await services.catalog.getRecommendations("101");
+    expect(request).toHaveBeenCalledWith("/api/store/products/101/recommendations", { query: { limit: undefined }, signal: undefined });
+    expect(result.similar[0]).toMatchObject({ id: "7", categoryId: "1", stock: 5 });
+    expect(result.recommended.map((p) => p.id)).toEqual(["8"]);
+    expect(result.personalized).toBe(false);
+  });
+});

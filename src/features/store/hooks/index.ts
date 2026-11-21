@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 import { describeError, useStore } from "../state/StoreContext";
-import { CheckoutOptions, Order, OrderListItem, Product, ProductFilters, ProductSummary, Review, ReviewFilters, ReviewSummary } from "../types";
+import { CheckoutOptions, Order, OrderListItem, Product, ProductFilters, ProductRecommendations, ProductSummary, Review, ReviewFilters, ReviewSummary } from "../types";
 import { FALLBACK_PRODUCT_ICON } from "../components/categoryIcons";
 
 export { useStore } from "../state/StoreContext";
@@ -74,6 +74,13 @@ export function useProductDetail(id: string | undefined) {
   const { services } = useStore();
   const result = useServerData<Product>(id ? (signal) => services.catalog.getProduct(id, signal) : null, [services, id]);
   return { product: result.data, isLoading: result.isLoading, error: result.error, notFound: result.notFound || !id, reload: result.reload };
+}
+
+/** Urun detayindaki benzer ve onerilen urunler (sunucu algoritmasi). Hata olursa satirlar gizlenir. */
+export function useProductRecommendations(id: string | undefined) {
+  const { services } = useStore();
+  const result = useServerData<ProductRecommendations>(id ? (signal) => services.catalog.getRecommendations(id, signal) : null, [services, id]);
+  return { recommendations: result.data, isLoading: result.isLoading, error: result.error };
 }
 
 export function useOrderDetail(id: string | undefined) {

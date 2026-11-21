@@ -132,6 +132,8 @@ export type FakeStore = {
   /** Sunucu onayli alisveris kararini taklit eder: bu urunleri teslim alinmis siparislerde satin aldi. */
   purchasedProductIds: string[];
   uploadedPhotos: string[];
+  /** Gizlilik ayarindaki "kisisellestirilmis oneriler". */
+  personalizedRecommendations: boolean;
 };
 
 export type FakeReview = Omit<Review, "isMine" | "myVote" | "reportedByMe"> & { mine: boolean; myVote: boolean | null; reportedByMe: boolean; deleted?: boolean };
@@ -178,6 +180,7 @@ export function createFakeStore(
     reports: [],
     purchasedProductIds: init.purchasedProductIds ?? [],
     uploadedPhotos: [],
+    personalizedRecommendations: true,
   };
 
   const find = (id: string) => products.find((p) => p.id === id && p.isActive);
@@ -383,6 +386,17 @@ export function createFakeStore(
           if (!p) throw notFound("Ürün bulunamadı.");
           const { isActive: _a, isFeatured: _f, createdAt: _c, campaignIds: _ids, ...rest } = p;
           return { ...rest, categoryName: categories.find((c) => c.id === p.categoryId)?.name ?? null };
+        }),
+      // Sunucu algoritmasinin kaba taklidi: benzer = ayni/alt kategori, onerilen = sepette olmayan, stoktaki digerleri.
+      getRecommendations: (id) =>
+        later(() => {
+          const p = find(id);
+          if (!p) throw notFound("Ürün bulunamadı.");
+          const others = products.filter((x) => x.isActive && x.id !== id);
+          const similar = others.filter((x) => inCategory(x, p.categoryId) || inCategory(p, x.categoryId)).slice(0, 8);
+          const cartIds = state.cartRows.map((r) => r.productId);
+          const recommended = others.filter((x) => !similar.includes(x) && x.stock > 0 && !cartIds.includes(x.id)).slice(0, 8);
+          return { similar: similar.map(summary), recommended: recommended.map(summary), personalized: state.personalizedRecommendations };
         }),
     },
     cart: {

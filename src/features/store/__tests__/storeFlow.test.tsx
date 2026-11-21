@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react-native";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react-native";
 import { ReactNode } from "react";
 import { Alert } from "react-native";
 
@@ -199,6 +199,43 @@ describe("Urun listesi", () => {
 });
 
 describe("Urun detay", () => {
+  it("benzer ve onerilen urunleri sunucunun algoritmasindan gosterir; iki satir birbirini tekrar etmez", async () => {
+    mockParams = { id: "101" };
+    const fake = createFakeStore({ cart: [{ productId: "105", quantity: 1, selectedVariant: {} }] });
+    const spy = jest.spyOn(fake.services.catalog, "getRecommendations");
+    await renderWithStore(<ProductDetailScreen />, fake);
+    await waitFor(() => expect(screen.getByTestId("similar-products")).toBeTruthy());
+    expect(spy).toHaveBeenCalledWith("101", expect.anything());
+
+    const ids = (testID: string) =>
+      within(screen.getByTestId(testID))
+        .queryAllByTestId(/^product-card-\d+$/)
+        .map((n) => n.props.testID as string);
+    // Protein (1) ve alt kategorisi Protein Bar (4).
+    expect(ids("similar-products")).toEqual(["product-card-102", "product-card-103", "product-card-106"]);
+    // Stokta olmayan ve sepetteki urun onerilmez.
+    expect(ids("recommended-products")).toEqual(["product-card-104"]);
+    expect(screen.getByText("Senin İçin Önerilenler")).toBeTruthy();
+  });
+
+  it("kisisellestirme kapaliysa genel baslik kullanir", async () => {
+    mockParams = { id: "101" };
+    const fake = createFakeStore();
+    fake.personalizedRecommendations = false;
+    await renderWithStore(<ProductDetailScreen />, fake);
+    await waitFor(() => expect(screen.getByText("Bunlar da İlgini Çekebilir")).toBeTruthy());
+  });
+
+  it("oneri alinamazsa satirlar gizlenir ve sayfa calisir", async () => {
+    mockParams = { id: "101" };
+    const failing = createFakeStore();
+    failing.services.catalog.getRecommendations = () => Promise.reject(new NetworkError());
+    await renderWithStore(<ProductDetailScreen />, failing);
+    await waitFor(() => expect(screen.getByTestId("add-to-cart")).toBeTruthy());
+    expect(screen.queryByTestId("similar-products")).toBeNull();
+    expect(screen.queryByTestId("recommended-products")).toBeNull();
+  });
+
   it("bulunamayan urunde anlasilir mesaj gosterir", async () => {
     mockParams = { id: "999" };
     await renderWithStore(<ProductDetailScreen />);

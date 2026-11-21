@@ -209,6 +209,19 @@ export function getProduct(id: number, signal?: AbortSignal) {
   return apiRequest<StoreProductDetailDto>(`/api/store/products/${id}`, { signal });
 }
 
+/** Urun detayindaki "Benzer Urunler" ve "Senin Icin Onerilenler"; sunucu puanlar, iki liste birbirini tekrar etmez. */
+export type StoreProductRecommendationsDto = {
+  productId: number;
+  similar: StoreProductListItemDto[];
+  recommended: StoreProductListItemDto[];
+  /** false: kullanici gizlilik ayarinda kisisellestirilmis onerileri kapatmis. */
+  personalized: boolean;
+};
+
+export function getProductRecommendations(id: number, limit?: number, signal?: AbortSignal) {
+  return apiRequest<StoreProductRecommendationsDto>(`/api/store/products/${id}/recommendations`, { query: { limit }, signal });
+}
+
 export function getCart(signal?: AbortSignal) {
   return apiRequest<StoreCartDto>("/api/store/cart", { signal });
 }
