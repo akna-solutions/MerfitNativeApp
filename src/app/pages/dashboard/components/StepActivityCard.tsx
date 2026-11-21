@@ -1,8 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { GlassSurface } from "../../../../shared/glass/GlassSurface";
-import { glassTokens, useLiquidGlass } from "../../../../shared/glass/liquidGlass";
 import { DumbbellSpinner } from "../../../../shared/motion/DumbbellSpinner";
 import { StepRing } from "../../../../shared/steps/components/StepRing";
 import { formatKcal, formatKm, formatPercent, formatSteps } from "../../../../shared/steps/format";
@@ -32,8 +30,7 @@ const RING_STROKE = 11;
  * Karta dokununca gunluk aktivite detayi acilir.
  */
 export function StepActivityCard({ status, ready, steps, goal, settings, mustOpenSettings, onPress, onEnable, onOpenSettings }: Props) {
-  const { colors, isDark } = useTheme();
-  const liquidGlass = useLiquidGlass();
+  const { colors } = useTheme();
   const progress = goalProgress(steps, goal);
   const { distanceKm, calories } = estimateFromSteps(steps, settings);
   // Izin butonu olan durumlarda kart dugme icinde dugme olmasin diye tiklanabilir degil; "Detay" baglantisi calisir.
@@ -138,21 +135,13 @@ export function StepActivityCard({ status, ready, steps, goal, settings, mustOpe
       ? `Bugün ${formatSteps(steps)} adım, hedef ${formatSteps(goal)}. ${formatPercent(progress.percent)} tamamlandı. Detay için dokun`
       : "Günlük adım. Detay için dokun";
 
-  // iOS 26+: kart Liquid Glass yuzeydir (ana sayfadaki birincil aktivite ozeti). Diger platformlarda mevcut kart.
-  const surface = (
-    <GlassSurface
-      enabled={liquidGlass}
-      style={styles.card}
-      fallbackStyle={{ backgroundColor: colors.card, borderColor: colors.border }}
-      glassStyle={{ borderColor: glassTokens(isDark).edge }}
-    >
-      {header}
-      {renderBody()}
-    </GlassSurface>
-  );
-
   if (hasInlineAction) {
-    return <View testID="step-activity-card">{surface}</View>;
+    return (
+      <View testID="step-activity-card" style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        {header}
+        {renderBody()}
+      </View>
+    );
   }
 
   return (
@@ -161,12 +150,10 @@ export function StepActivityCard({ status, ready, steps, goal, settings, mustOpe
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={label}
-      // Cam yuzeyde opaklik efekti bozar; basili geri bildirim hafif kuculmedir.
-      style={({ pressed }) =>
-        liquidGlass ? (pressed ? styles.pressedGlass : null) : { opacity: pressed ? 0.92 : 1 }
-      }
+      style={({ pressed }) => [styles.card, { backgroundColor: colors.card, borderColor: colors.border, opacity: pressed ? 0.92 : 1 }]}
     >
-      {surface}
+      {header}
+      {renderBody()}
     </Pressable>
   );
 }
@@ -219,7 +206,6 @@ function notice(
 
 const styles = StyleSheet.create({
   card: { borderRadius: 20, padding: 16, borderWidth: StyleSheet.hairlineWidth },
-  pressedGlass: { transform: [{ scale: 0.985 }] },
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   headerLeft: { flexDirection: "row", alignItems: "center", gap: 8 },
   headerRight: { flexDirection: "row", alignItems: "center", gap: 2 },

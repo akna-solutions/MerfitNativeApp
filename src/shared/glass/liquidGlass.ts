@@ -79,8 +79,3 @@ export function glassTokens(isDark: boolean) {
     ? { edge: "rgba(255,255,255,0.16)", inactiveIcon: "rgba(255,255,255,0.78)", dimmedBackdrop: "rgba(0,0,0,0.35)" }
     : { edge: "rgba(255,255,255,0.65)", inactiveIcon: "rgba(11,13,18,0.62)", dimmedBackdrop: "rgba(0,0,0,0.22)" };
 }
-
-/** MB Fit mavisiyle cok hafif tonlanmis cam: puan / Plus gibi vurgu kartlari icin (mor ya da baska renk yok). */
-export function glassBlueTint(isDark: boolean) {
-  return isDark ? "rgba(62,123,250,0.16)" : "rgba(29,81,192,0.10)";
-}
