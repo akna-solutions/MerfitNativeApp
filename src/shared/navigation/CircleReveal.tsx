@@ -12,6 +12,7 @@ import Animated, {
 import { scheduleOnRN } from "react-native-worklets";
 
 import { RevealOrigin, revealRadius } from "./revealRadius";
+import { BrandBackdrop } from "../brand/BrandBackdrop";
 import { BrandWordmark } from "../brand/BrandMark";
 import { BRAND_BLUE } from "../brand/brandMark";
 
@@ -158,6 +159,8 @@ export function CircleReveal({ origin, color, onCovered, onDone, loader, ready =
       />
       {showLoader ? (
         <Animated.View testID="circle-reveal-loader" pointerEvents="none" style={[StyleSheet.absoluteFill, styles.loader, loaderStyle]}>
+          {/* Acilis ekraniyla ayni zemin: hedef bolume gore (antrenman ya da alisveris) cok soluk ikon deseni. */}
+          <BrandBackdrop variant={loader!.brand} />
           <View style={styles.loaderBody} accessibilityRole="progressbar" accessibilityLabel={`${loader!.title} yükleniyor`}>
             <BrandWordmark variant={loader!.brand} width={loader!.brand === "shop" ? 200 : 168} />
             <Text style={styles.loaderDescription}>{loader!.description}</Text>
@@ -178,10 +181,10 @@ const styles = StyleSheet.create({
   loader: { alignItems: "center", justifyContent: "center" },
   loaderBody: { alignItems: "center", paddingHorizontal: 40 },
   loaderDescription: {
-    color: "rgba(255,255,255,0.7)",
-    fontSize: 13,
-    fontWeight: "500",
-    letterSpacing: 0.3,
+    color: "rgba(255,255,255,0.78)",
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 1.6,
     marginTop: 18,
     textAlign: "center",
   },
