@@ -102,7 +102,6 @@ describe("ActivityContent", () => {
       hasPendingSync: false,
       requestPermission: jest.fn(),
       openSettings: jest.fn(),
-      setDailyGoal: jest.fn(async () => undefined),
       syncNow: jest.fn(async () => undefined),
       ...overrides,
     };
@@ -132,29 +131,13 @@ describe("ActivityContent", () => {
     await waitFor(() => expect(screen.getByTestId("activity-compare")).toBeTruthy());
   });
 
-  it("hedef secilince setDailyGoal cagrilir", async () => {
-    const value = counter();
+  it("hedef duzenlenemez; sunucunun belirledigi hedef ve aciklamasi gosterilir", async () => {
+    const value = counter({ settings: { ...settings, goalSource: "auto", goalReason: "Hedefin aktivite seviyene göre otomatik belirlendi." } });
     await render(<ActivityContent counter={value} loadSummary={async () => summary()} />);
 
-    await fireEvent.press(screen.getByTestId("activity-goal-button"));
-    await fireEvent.press(screen.getByTestId("goal-option-12500"));
-    await fireEvent.press(screen.getByTestId("goal-save"));
-    expect(value.setDailyGoal).toHaveBeenCalledWith(12500);
-  });
-
-  it("ozel hedef sinirlar disindaysa kaydedilemez", async () => {
-    const value = counter();
-    await render(<ActivityContent counter={value} loadSummary={async () => summary()} />);
-
-    await fireEvent.press(screen.getByTestId("activity-goal-button"));
-    await fireEvent.press(screen.getByTestId("goal-option-custom"));
-    await fireEvent.changeText(screen.getByTestId("goal-custom-input"), "500");
-    await fireEvent.press(screen.getByTestId("goal-save"));
-    expect(value.setDailyGoal).not.toHaveBeenCalled();
-
-    await fireEvent.changeText(screen.getByTestId("goal-custom-input"), "8000");
-    await fireEvent.press(screen.getByTestId("goal-save"));
-    expect(value.setDailyGoal).toHaveBeenCalledWith(8000);
+    expect(screen.queryByTestId("activity-goal-button")).toBeNull();
+    expect(screen.getByTestId("activity-goal-tile")).toBeTruthy();
+    expect(screen.getByText("Hedefin aktivite seviyene göre otomatik belirlendi.")).toBeTruthy();
   });
 
   it("sunucuya ulasilamazsa yerel veriyle calistigini soyler", async () => {

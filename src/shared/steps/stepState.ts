@@ -42,14 +42,13 @@ export type StepState = {
   days: Record<string, LocalStepDay>;
   /** Gun -> sunucunun kabul ettigi saatlik verinin imzasi. Imza degismediyse gun tekrar gonderilmez. */
   synced: Record<string, string>;
+  /** Sunucunun son gonderdigi ayarlar; gunluk adim hedefi profile gore sunucuda belirlenir. */
   settings: StepSettings | null;
-  /** Cevrimdisiyken degistirilen ve henuz sunucuya yazilamayan hedef. */
-  pendingGoal: number | null;
   lastSyncAt: number | null;
 };
 
 export function emptyStepState(owner: string | null): StepState {
-  return { version: STEP_STATE_VERSION, owner, days: {}, synced: {}, settings: null, pendingGoal: null, lastSyncAt: null };
+  return { version: STEP_STATE_VERSION, owner, days: {}, synced: {}, settings: null, lastSyncAt: null };
 }
 
 export function emptyHourly(): number[] {
@@ -220,7 +219,6 @@ export function parseStoredState(raw: string | null): StepState | null {
       days,
       synced: value.synced && typeof value.synced === "object" ? { ...value.synced } : {},
       settings: value.settings ?? null,
-      pendingGoal: typeof value.pendingGoal === "number" ? value.pendingGoal : null,
       lastSyncAt: typeof value.lastSyncAt === "number" ? value.lastSyncAt : null,
     };
   } catch {
@@ -229,5 +227,5 @@ export function parseStoredState(raw: string | null): StepState | null {
 }
 
 export function effectiveGoal(state: StepState): number {
-  return state.pendingGoal ?? state.settings?.dailyGoal ?? DEFAULT_STEP_SETTINGS.dailyGoal;
+  return state.settings?.dailyGoal ?? DEFAULT_STEP_SETTINGS.dailyGoal;
 }

@@ -3,7 +3,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 import { AppState, AppStateStatus, Linking, Platform } from "react-native";
 
 import { isApiError, NetworkError } from "../../services/api/client";
-import { getStepDay, getStepSettings, StepSettings, syncSteps, updateStepGoal } from "../../services/api/steps";
+import { getStepDay, getStepSettings, StepSettings, syncSteps } from "../../services/api/steps";
 import { requestAchievementCheck } from "../achievements/useAchievementCelebration";
 import { useAuth } from "../auth/AuthContext";
 import { addDays, toDateKey } from "../calendar/dates";
@@ -67,7 +67,6 @@ export type StepCounterValue = {
   hasPendingSync: boolean;
   requestPermission: () => Promise<void>;
   openSettings: () => void;
-  setDailyGoal: (goal: number) => Promise<void>;
   syncNow: () => Promise<void>;
 };
 
@@ -119,7 +118,7 @@ export function StepCounterProvider({ children }: { children: ReactNode }) {
       if (next === stateRef.current) return;
       stateRef.current = next;
       setSnapshot(next);
-      setHasPendingSync(pendingSyncDays(next, new Date()).length > 0 || next.pendingGoal !== null);
+      setHasPendingSync(pendingSyncDays(next, new Date()).length > 0);
       persist(options.immediate);
     },
     [persist],
@@ -195,13 +194,6 @@ export function StepCounterProvider({ children }: { children: ReactNode }) {
       lastSyncAttempt.current = now;
       try {
         let state = stateRef.current;
-        if (state.pendingGoal !== null) {
-          const goal = state.pendingGoal;
-          const settings = await updateStepGoal(goal, toDateKey(new Date()));
-          state = stateRef.current;
-          update({ ...state, settings, pendingGoal: state.pendingGoal === goal ? null : state.pendingGoal });
-        }
-
         const days = pendingSyncDays(stateRef.current, new Date());
         if (days.length > 0) {
           const response = await syncSteps({
@@ -210,12 +202,13 @@ export function StepCounterProvider({ children }: { children: ReactNode }) {
             platform: Platform.OS === "ios" ? "ios" : "android",
           });
           state = markSynced(stateRef.current, days, response.days, Date.now());
-          update({ ...state, settings: state.pendingGoal === null ? response.settings : state.settings }, { immediate: true });
+          update({ ...state, settings: response.settings }, { immediate: true });
           if (response.days.some((d) => d.status === "accepted")) {
             // Adim basarisi kazanilmis olabilir; kutlama bir sonraki ekran odaginda gosterilir.
             requestAchievementCheck();
           }
-        } else if (!stateRef.current.settings) {
+        } else if (!stateRef.current.settings || stateRef.current.settings.goalSource !== "auto") {
+          // Hedef sunucuda profile gore belirlenir; eski surumden kalan (kullanicinin sectigi) hedef yenilenir.
           const settings = await getStepSettings();
           update({ ...stateRef.current, settings });
         }
@@ -257,7 +250,7 @@ export function StepCounterProvider({ children }: { children: ReactNode }) {
       state = pruneDays(state, new Date());
       stateRef.current = state;
       setSnapshot(state);
-      setHasPendingSync(pendingSyncDays(state, new Date()).length > 0 || state.pendingGoal !== null);
+      setHasPendingSync(pendingSyncDays(state, new Date()).length > 0);
       setReady(true);
 
       const status = await checkPermission(false);
@@ -343,7 +336,7 @@ export function StepCounterProvider({ children }: { children: ReactNode }) {
       }
       if (supportsHistory() && stopWatch.current) void refreshFromHistory(false);
       const last = stateRef.current.lastSyncAt ?? 0;
-      if (Date.now() - last > SYNC_INTERVAL_MS || stateRef.current.pendingGoal !== null) void sync();
+      if (Date.now() - last > SYNC_INTERVAL_MS) void sync();
     }, TICK_MS);
     return () => clearInterval(id);
   }, [signedIn, refreshFromHistory, sync, update]);
@@ -355,7 +348,7 @@ export function StepCounterProvider({ children }: { children: ReactNode }) {
     try {
       subscription = Network.addNetworkStateListener((state) => {
         const current = stateRef.current;
-        const pending = current.pendingGoal !== null || pendingSyncDays(current, new Date()).length > 0;
+        const pending = pendingSyncDays(current, new Date()).length > 0;
         if (state.isConnected && state.isInternetReachable !== false && pending) {
           void sync({ force: true });
         }
@@ -391,15 +384,6 @@ export function StepCounterProvider({ children }: { children: ReactNode }) {
     void Linking.openSettings();
   }, []);
 
-  const setDailyGoal = useCallback(
-    async (goal: number) => {
-      // Yuzde aninda guncellenir; sunucu yazimi basarisiz olursa hedef bekleyen olarak saklanir ve sonra gonderilir.
-      update({ ...stateRef.current, pendingGoal: goal }, { immediate: true });
-      await sync({ force: true });
-    },
-    [sync, update],
-  );
-
   const syncNow = useCallback(() => sync({ force: true }), [sync]);
 
   const value = useMemo<StepCounterValue>(() => {
@@ -418,10 +402,9 @@ export function StepCounterProvider({ children }: { children: ReactNode }) {
       hasPendingSync,
       requestPermission,
       openSettings,
-      setDailyGoal,
       syncNow,
     };
-  }, [snapshot, todayKey, sensor, ready, hasPendingSync, requestPermission, openSettings, setDailyGoal, syncNow]);
+  }, [snapshot, todayKey, sensor, ready, hasPendingSync, requestPermission, openSettings, syncNow]);
 
   return <StepCounterContext.Provider value={value}>{children}</StepCounterContext.Provider>;
 }

@@ -41,7 +41,6 @@ jest.mock("../stepSensor", () => ({
 jest.mock("../../../services/api/steps", () => ({
   syncSteps: jest.fn(),
   getStepSettings: jest.fn(),
-  updateStepGoal: jest.fn(),
   getStepDay: jest.fn(),
   getWeeklyStepSummary: jest.fn(),
 }));
@@ -115,7 +114,6 @@ beforeEach(() => {
   api.getStepDay.mockImplementation(async (date: string) => emptyDay(date));
   api.getStepSettings.mockResolvedValue(SETTINGS);
   api.syncSteps.mockImplementation(acceptAll);
-  api.updateStepGoal.mockImplementation(async (goal: number) => ({ ...SETTINGS, dailyGoal: goal }));
 });
 
 const todayKey = () => toDateKey(new Date());
@@ -201,25 +199,23 @@ describe("StepCounterProvider", () => {
     await utils.unmount();
   });
 
-  it("9) hedef degisince yuzde aninda guncellenir; sunucuya yazilamazsa bekleyen hedef korunur", async () => {
-    api.updateStepGoal.mockRejectedValue(new NetworkError());
+  it("9) hedef sunucudan gelir; eski surumden kalan yerel hedef yerine sunucu hedefi kullanilir", async () => {
+    const stale: StepState = {
+      version: 1, owner: null, synced: {}, lastSyncAt: null, days: {},
+      settings: { ...SETTINGS, dailyGoal: 3000 },
+    };
+    mockStored = JSON.stringify({ ...stale, pendingGoal: 3000 });
+    api.getStepSettings.mockResolvedValue({ ...SETTINGS, dailyGoal: 7500, goalSource: "auto" });
     const utils = await mount();
 
     await act(async () => {
-      await latest!.setDailyGoal(7500);
-    });
-
-    expect(latest?.dailyGoal).toBe(7500);
-    expect(latest?.hasPendingSync).toBe(true);
-    expect(JSON.parse(mockStored!).pendingGoal).toBe(7500);
-
-    api.updateStepGoal.mockImplementation(async (goal: number) => ({ ...SETTINGS, dailyGoal: goal }));
-    await act(async () => {
       await latest!.syncNow();
     });
-    expect(api.updateStepGoal).toHaveBeenLastCalledWith(7500, todayKey());
+
+    expect(api.getStepSettings).toHaveBeenCalled();
     expect(latest?.dailyGoal).toBe(7500);
     expect(latest?.hasPendingSync).toBe(false);
+    expect((latest as unknown as Record<string, unknown>).setDailyGoal).toBeUndefined();
     await utils.unmount();
   });
 
@@ -270,7 +266,7 @@ describe("StepCounterProvider", () => {
 
   it("baska bir kullanicinin cihazdaki verisi yuklenmez", async () => {
     const other: StepState = {
-      version: 1, owner: "mehmet", synced: {}, settings: null, pendingGoal: null, lastSyncAt: null,
+      version: 1, owner: "mehmet", synced: {}, settings: null, lastSyncAt: null,
       days: { [todayKey()]: { hourly: new Array(24).fill(100), offsetMinutes: 180 } },
     };
     mockStored = JSON.stringify(other);

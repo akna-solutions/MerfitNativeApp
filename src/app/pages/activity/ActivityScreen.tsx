@@ -13,7 +13,6 @@ import { estimateFromSteps, goalProgress } from "../../../shared/steps/stepState
 import { buildWeekStats } from "../../../shared/steps/weekStats";
 import { useTheme } from "../../../shared/theme/ThemeContext";
 import { HourlyStepsChart } from "./components/HourlyStepsChart";
-import { StepGoalSheet } from "./components/StepGoalSheet";
 import { WeeklyStepsChart } from "./components/WeeklyStepsChart";
 
 function dayLabel(key: string, todayKey: string): string {
@@ -44,7 +43,6 @@ export function ActivityContent({ counter, loadSummary = getWeeklyStepSummary }:
   const { colors } = useTheme();
   const [summary, setSummary] = useState<StepWeeklySummary | null>(null);
   const [summaryFailed, setSummaryFailed] = useState(false);
-  const [goalOpen, setGoalOpen] = useState(false);
   const { todayKey, todaySteps, dailyGoal, settings, days } = counter;
 
   useFocusEffect(
@@ -118,25 +116,26 @@ export function ActivityContent({ counter, loadSummary = getWeeklyStepSummary }:
         <View style={styles.tiles}>
           <Tile icon="navigate-outline" label="Mesafe" value={formatKm(today.distanceKm)} />
           <Tile icon="flame-outline" label="Kalori" value={formatKcal(today.calories)} />
-          <Pressable
+          <View
             style={[styles.tile, { backgroundColor: colors.inputBackground }]}
-            onPress={() => setGoalOpen(true)}
-            accessibilityRole="button"
-            accessibilityLabel={`Günlük hedef ${formatSteps(dailyGoal)} adım. Değiştirmek için dokun`}
-            testID="activity-goal-button"
+            accessible
+            accessibilityLabel={`Günlük hedef ${formatSteps(dailyGoal)} adım, profiline göre otomatik belirlendi`}
+            testID="activity-goal-tile"
           >
             <View style={styles.tileHeader}>
               <Ionicons name="flag-outline" size={14} color={colors.iconActive} />
               <Text style={[styles.tileLabel, { color: colors.textSecondary }]}>Hedef</Text>
-              <Ionicons name="create-outline" size={13} color={colors.primary} />
             </View>
             <Text style={[styles.tileValue, { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>
               {formatSteps(dailyGoal)}
             </Text>
-          </Pressable>
+          </View>
         </View>
         <Text style={[styles.estimateNote, { color: colors.textSecondary }]}>
           Mesafe ve kalori boy ve kilona göre tahmini hesaplanır.
+        </Text>
+        <Text style={[styles.estimateNote, { color: colors.textSecondary }]} testID="activity-goal-reason">
+          {settings.goalReason ?? "Günlük adım hedefin profiline göre otomatik belirlenir."}
         </Text>
       </View>
 
@@ -201,15 +200,6 @@ export function ActivityContent({ counter, loadSummary = getWeeklyStepSummary }:
           </Text>
         ) : null}
       </View>
-
-      <StepGoalSheet
-        visible={goalOpen}
-        currentGoal={dailyGoal}
-        minGoal={settings.minDailyGoal}
-        maxGoal={settings.maxDailyGoal}
-        onClose={() => setGoalOpen(false)}
-        onSave={(goal) => void counter.setDailyGoal(goal)}
-      />
     </ProfileDetailShell>
   );
 }
