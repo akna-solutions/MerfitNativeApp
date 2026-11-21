@@ -3,6 +3,8 @@ import {
   CompleteWorkoutSessionRequest,
   LogWorkoutSetRequest,
   PagedResult,
+  SubmitWorkoutFeedbackRequest,
+  WorkoutFeedback,
   WorkoutHistoryItem,
   WorkoutSession,
   WorkoutSessionExercise,
@@ -12,13 +14,22 @@ import {
 /** POST /api/workout-sessions - secilen antrenman icin yeni bir oturum baslatir. workoutPlanDayId
  * verilirse (kisisel plandan baslatildiysa) hedef set/tekrar degerleri kisisel plandan okunur. */
 export async function startWorkoutSession(
-  workoutId: number,
+  workoutId: number | null,
   workoutPlanDayId?: number,
 ): Promise<WorkoutSession> {
-  return apiRequest<WorkoutSession>("/api/workout-sessions", {
-    method: "POST",
-    body: workoutPlanDayId ? { workoutId, workoutPlanDayId } : { workoutId },
-  });
+  // Kisisel antrenman motoru gunlerinde katalog antrenmani yoktur: yalnizca plan gunu kimligi gonderilir.
+  const body: { workoutId?: number; workoutPlanDayId?: number } = {};
+  if (workoutId !== null && Number.isFinite(workoutId) && workoutId > 0) body.workoutId = workoutId;
+  if (workoutPlanDayId) body.workoutPlanDayId = workoutPlanDayId;
+  return apiRequest<WorkoutSession>("/api/workout-sessions", { method: "POST", body });
+}
+
+/** POST /api/workout-sessions/{id}/feedback - antrenman sonu kisa degerlendirme (tekrar gonderim gunceller). */
+export async function submitWorkoutFeedback(
+  sessionId: number,
+  request: SubmitWorkoutFeedbackRequest,
+): Promise<WorkoutFeedback> {
+  return apiRequest<WorkoutFeedback>(`/api/workout-sessions/${sessionId}/feedback`, { method: "POST", body: request });
 }
 
 /** GET /api/workout-sessions - tamamlanan antrenmanlarin gecmisi (en yeniden eskiye, sayfali). */

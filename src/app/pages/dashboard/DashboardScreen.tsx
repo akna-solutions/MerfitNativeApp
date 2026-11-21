@@ -1,4 +1,5 @@
 import { useFocusEffect, useRouter } from "expo-router";
+import { activeWorkoutParams } from "../../../shared/workout/planDays";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
@@ -304,16 +305,9 @@ export function DashboardScreen() {
 
   const goToPersonalWorkout = () => {
     if (!todayPlan?.day) return;
-    router.push({
-      pathname: "/pages/workout/active/[id]",
-      params: {
-        id: String(todayPlan.day.workout.id),
-        title: todayPlan.day.workout.title,
-        workoutPlanDayId: todayPlan.workoutPlanDayId
-          ? String(todayPlan.workoutPlanDayId)
-          : undefined,
-      },
-    } as never);
+    const params = activeWorkoutParams(todayPlan.day.workout, todayPlan.workoutPlanDayId ?? todayPlan.day.workoutPlanDayId);
+    if (!params) return;
+    router.push({ pathname: "/pages/workout/active/[id]", params } as never);
   };
 
   // Haftalik aktivitede bir gune dokununca takvim perdesi ana sayfanin ustunde acilir; Ilerleme'ye gecilmez.

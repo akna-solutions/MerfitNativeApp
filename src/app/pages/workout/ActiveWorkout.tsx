@@ -39,7 +39,8 @@ import { requestAchievementCheck } from "../../../shared/achievements/useAchieve
 import { DumbbellDashPanel } from "../../../shared/miniGame/dumbbellDash/DumbbellDashPanel";
 import { useTheme } from "../../../shared/theme/ThemeContext";
 import { adjustRestEndsAt, remainingRestSeconds, restEndsAt } from "../../../shared/workout/restClock";
-import { initialWeight } from "../../../shared/workout/progression";
+import { initialWeight, nextSetNumber } from "../../../shared/workout/progression";
+import { SetQualityInput } from "./components/SetQualityInput";
 import { estimateWorkoutCalories, formatKg } from "../../../shared/workoutHistory/format";
 import { Exercise, ExerciseProgress, WorkoutPhase, WorkoutSession } from "./types";
 import { WorkoutSummary } from "./WorkoutSummary";
@@ -119,8 +120,15 @@ function mapApiSession(api: ApiWorkoutSession): {
       previousBest: best,
       repsMax: ex.targetRepsMax ?? null,
       progression: ex.progression
-        ? { message: ex.progression.message, suggestedWeightKg: ex.progression.suggestedWeightKg }
+        ? {
+            message: ex.progression.message,
+            suggestedWeightKg: ex.progression.suggestedWeightKg,
+            previousWeightKg: ex.progression.previousWeightKg,
+            isConfident: ex.progression.isConfident,
+          }
         : null,
+      exerciseId: ex.exerciseId,
+      targetRir: ex.targetRir ?? null,
     };
   });
 
@@ -150,6 +158,10 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
   const [elapsedSec, setElapsedSec] = useState(0);
   const [exitModalVisible, setExitModalVisible] = useState(false);
   const [inputError, setInputError] = useState<string | null>(null);
+  // Set kalitesi: RIR (opsiyonel), isinma ve basarisiz set isaretleri. Her setten sonra sifirlanir.
+  const [rirInput, setRirInput] = useState<number | null>(null);
+  const [isWarmupSet, setIsWarmupSet] = useState(false);
+  const [isFailedSet, setIsFailedSet] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [saveError, setSaveError] = useState<string | null>(null);
   // Dinlenirken oynanan mini oyun. Yalnizca dinlenme ekraninda acilabilir; antrenman durumuna dokunmaz.
@@ -172,7 +184,9 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
     let isMounted = true;
     (async () => {
       try {
-        const numericWorkoutId = Number(workoutId);
+        // Kisisel antrenman motoru gunlerinde katalog antrenmani yoktur (id "day-<planDayId>" gelir).
+        const parsedWorkoutId = Number(workoutId);
+        const numericWorkoutId = Number.isFinite(parsedWorkoutId) && parsedWorkoutId > 0 ? parsedWorkoutId : null;
         const numericPlanDayId = workoutPlanDayId ? Number(workoutPlanDayId) : undefined;
         const apiSession = await startWorkoutSession(numericWorkoutId, numericPlanDayId);
         if (!isMounted) return;
@@ -215,6 +229,9 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
     // girdiği değer korunur (aynı ağırlıkla devam etmek en yaygın durum).
     setWeightInput(initialWeightFor(currentExercise));
     setInputError(null);
+    setRirInput(null);
+    setIsWarmupSet(false);
+    setIsFailedSet(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentExercise?.id]);
 
@@ -418,29 +435,45 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
     }
     setInputError(null);
 
-    const setNumber = currentProgress.currentSet;
-
-    setProgress((prev) => {
-      const entry = prev[currentExercise.id];
-      return {
-        ...prev,
-        [currentExercise.id]: {
-          ...entry,
-          completedSets: [...entry.completedSets, { weight, reps }],
-        },
-      };
-    });
+    // Isinma setleri de numara alir ama calisma seti sayacina, hacme ve progresyona sayilmaz.
+    const warmupCount = currentProgress.warmupSets ?? 0;
+    const setNumber = nextSetNumber(currentProgress.completedSets.length, warmupCount);
+    const isWarmup = isWarmupSet;
+    const isCompleted = !isFailedSet;
+    const rir = isWarmup ? null : rirInput;
 
     // Seti sunucuya kaydet (arka planda) - kullanıcı akışını bloklamıyoruz. Başarısız
     // kayıtlar antrenman tamamlanırken tekrar denenir (bkz. flushSetLogs).
     const entry: SetLogEntry = {
       sessionExerciseId: Number(currentExercise.id),
-      request: { setNumber, weightKg: weight > 0 ? weight : null, reps },
+      request: { setNumber, weightKg: weight > 0 ? weight : null, reps, rir, isWarmup, isCompleted },
       status: "pending",
       promise: Promise.resolve(),
     };
     setLogs.current.set(`${currentExercise.id}:${setNumber}`, entry);
     sendSetLog(entry, sessionId);
+    setRirInput(null);
+    setIsWarmupSet(false);
+    setIsFailedSet(false);
+
+    if (isWarmup) {
+      setProgress((prev) => ({
+        ...prev,
+        [currentExercise.id]: { ...prev[currentExercise.id], warmupSets: warmupCount + 1 },
+      }));
+      return;
+    }
+
+    setProgress((prev) => {
+      const progressEntry = prev[currentExercise.id];
+      return {
+        ...prev,
+        [currentExercise.id]: {
+          ...progressEntry,
+          completedSets: [...progressEntry.completedSets, { weight, reps, rir, isCompleted }],
+        },
+      };
+    });
 
     const isLastSetOfExercise =
       currentProgress.completedSets.length + 1 >= currentExercise.sets;
@@ -535,6 +568,7 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
         personalRecords={personalRecords}
         saveStatus={saveStatus}
         serverCalories={serverCalories}
+        sessionId={sessionId}
         onDone={handleDone}
         onViewHistory={
           saveStatus === "saved" ? () => router.replace("/pages/workout/history") : undefined
@@ -664,6 +698,25 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
                   }
                   error={inputError}
                 />
+                <SetQualityInput
+                  rir={rirInput}
+                  onRirChange={setRirInput}
+                  targetRir={currentExercise.targetRir ?? null}
+                  isWarmup={isWarmupSet}
+                  onWarmupChange={(value) => {
+                    setIsWarmupSet(value);
+                    if (value) {
+                      setIsFailedSet(false);
+                      setRirInput(null);
+                    }
+                  }}
+                  isFailed={isFailedSet}
+                  onFailedChange={(value) => {
+                    setIsFailedSet(value);
+                    if (value) setIsWarmupSet(false);
+                  }}
+                  warmupCount={currentProgress.warmupSets ?? 0}
+                />
               </>
             )}
           </ScrollView>
@@ -671,7 +724,7 @@ export function ActiveWorkout({ workoutId, workoutTitle, workoutPlanDayId }: Pro
           {phase === "exercise" ? (
             <View style={styles.footer}>
               <OnboardingButton
-                label="Seti Tamamla"
+                label={isWarmupSet ? "Isınma Setini Kaydet" : "Seti Tamamla"}
                 onPress={handleCompleteSet}
               />
             </View>

@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { OnboardingButton } from "../onboarding/components/OnboardingButton";
@@ -6,6 +6,7 @@ import { useTheme } from "../../../shared/theme/ThemeContext";
 import type { SaveStatus } from "./ActiveWorkout";
 import { estimateWorkoutCalories } from "../../../shared/workoutHistory/format";
 import { Exercise, ExerciseProgress } from "./types";
+import { WorkoutFeedbackCard } from "./components/WorkoutFeedbackCard";
 
 type Props = {
   title: string;
@@ -22,6 +23,8 @@ type Props = {
    * kalori dengesi ayni degeri gosterir). Kayit bitene kadar null: o arada yerel tahmin gosterilir.
    */
   serverCalories?: number | null;
+  /** Sunucu oturum kimligi; kayit tamamlaninca kisa degerlendirme gosterilir. */
+  sessionId?: number | null;
 };
 
 export function WorkoutSummary({
@@ -34,6 +37,7 @@ export function WorkoutSummary({
   onDone,
   onViewHistory,
   serverCalories = null,
+  sessionId = null,
 }: Props) {
   const { colors } = useTheme();
   const setCount = Object.values(progress).reduce(
@@ -42,7 +46,7 @@ export function WorkoutSummary({
   );
   const volume = Object.values(progress).reduce(
     (sum, item) =>
-      sum + item.completedSets.reduce((s, set) => s + set.weight * set.reps, 0),
+      sum + item.completedSets.reduce((s, set) => (set.isCompleted === false ? s : s + set.weight * set.reps), 0),
     0,
   );
   const estimatedCalories = serverCalories !== null ? Math.round(serverCalories) : estimateWorkoutCalories(setCount);
@@ -55,6 +59,7 @@ export function WorkoutSummary({
         <Text style={[styles.duration, { color: colors.primary }]}>{durationLabel}</Text>
       </View>
 
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
       <View style={styles.grid}>
         <StatCard label="Egzersizler" value={`${exercises.length}`} />
         <StatCard label="Setler" value={`${setCount}`} />
@@ -77,6 +82,9 @@ export function WorkoutSummary({
           ))}
         </View>
       ) : null}
+
+      {saveStatus === "saved" && sessionId ? <WorkoutFeedbackCard sessionId={sessionId} exercises={exercises} /> : null}
+      </ScrollView>
 
       <View style={styles.footer}>
         <OnboardingButton label="Bitti" onPress={onDone} isLoading={saveStatus === "saving"} />
@@ -157,6 +165,8 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   prValue: { fontSize: 12, marginTop: 3 },
-  footer: { marginTop: "auto", paddingBottom: 16 },
+  scroll: { flex: 1 },
+  scrollContent: { paddingBottom: 16 },
+  footer: { paddingTop: 8, paddingBottom: 16 },
   historyGap: { marginTop: 8 },
 });
